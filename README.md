@@ -1,12 +1,9 @@
-meu-projeto-teia/
-├── functions/
-│   └── api/
-│       └── graph.js      <-- A API Backend que lê o banco D1
-├── public/ (ou src/)
-│   ├── index.html        <-- O código Frontend que a IA gerou
-│   ├── style.css
-│   └── app.js
-├── schema.sql            <-- O arquivo com as tabelas SQL
-└── wrangler.toml          <-- Configuração opcional do Cloudflare CLI
+# 🛡️ Mapeamento de Redes & Esquemas de Corrupção no Brasil
 
-Esse projeto é para um website que será usado para criar um mapa da corrupcao no Brasil.
+Aplicação interativa em React / Next.js com D3 e React-Force-Graph para visualização de grafos relacionais entre políticos, partidos, empresas e esquemas de corrupção.
+
+## 🚀 Tecnologias
+- **Next.js (App Router)**
+- **Tailwind CSS & Lucide Icons**
+- **React-Force-Graph-2D & D3-Force**
+- **Cloudflare D1 Database & Cloudflare Pages (Wrangler)**
