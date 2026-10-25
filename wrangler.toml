@@ -7,6 +7,8 @@ compatibility_flags = ["nodejs_compat"]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
+pages_build_output_dir = ".open-next/assets"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "corruption_graph_db"
