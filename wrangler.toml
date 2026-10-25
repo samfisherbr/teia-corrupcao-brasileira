@@ -1,1 +1,8 @@
+name = "politica-grafos-app"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = ".next"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "corruption_graph_db"
+database_id = "your-d1-database-id-here"
