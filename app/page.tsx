@@ -1,5 +1,7 @@
 'use client';
 
+export const runtime = 'edge';
+
 import React, { useState, useMemo, useRef } from 'react';
 import SidebarControls from '../components/SidebarControls';
 import NetworkGraph from '../components/NetworkGraph';
