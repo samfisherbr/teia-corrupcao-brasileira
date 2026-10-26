@@ -42,45 +42,6 @@ export default function HeaderBar({
           />
         </div>
       </div>
-
-      {/* Category Pills & Toggle */}
-      <div className="flex items-center space-x-3">
-        <button
-          onClick={() => setActiveCategory(activeCategory === 'transactions' ? 'all' : 'transactions')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-            activeCategory === 'transactions'
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 glow-green'
-              : 'bg-slate-800/60 text-slate-300 border border-slate-700/50 hover:bg-slate-800'
-          }`}
-        >
-          <DollarSign className="w-3.5 h-3.5 text-amber-400" />
-          <span>Transactions</span>
-        </button>
-
-        <button
-          onClick={() => setActiveCategory(activeCategory === 'contracts' ? 'all' : 'contracts')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-            activeCategory === 'contracts'
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 glow-cyan'
-              : 'bg-slate-800/60 text-slate-300 border border-slate-700/50 hover:bg-slate-800'
-          }`}
-        >
-          <Building className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Contracts</span>
-        </button>
-
-        <button
-          onClick={() => setActiveCategory(activeCategory === 'processes' ? 'all' : 'processes')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-            activeCategory === 'processes'
-              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50'
-              : 'bg-slate-800/60 text-slate-300 border border-slate-700/50 hover:bg-slate-800'
-          }`}
-        >
-          <Scale className="w-3.5 h-3.5 text-purple-400" />
-          <span>Processes</span>
-        </button>
-      </div>
     </header>
   );
 }
