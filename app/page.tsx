@@ -1,7 +1,10 @@
 'use client';
 
+export const runtime = 'edge';
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import HeaderBar from '@/components/HeaderBar';
+import HeaderBar, { ActivePage } from '@/components/HeaderBar';
+import HeaderOverlay from '@/components/HeaderOverlay';
 import NetworkGraph from '@/components/NetworkGraph';
 import TimelineWidget from '@/components/TimelineWidget';
 import SidebarControls from '@/components/SidebarControls';
@@ -11,7 +14,10 @@ import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/g
 export default function Page() {
   const graphRef = useRef<any>(null);
 
-  // Initialize EMPTY graph data (NO MOCK DATA ALLOWED)
+  // View state for sliding panels ('graph' | 'infographics' | 'glossary')
+  const [activePage, setActivePage] = useState<ActivePage>('graph');
+
+  // Initialize EMPTY graph data (connected to Cloudflare D1 Database)
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,8 +72,9 @@ export default function Page() {
       const matchYear = link.year >= startYearFilter;
       const matchStatus = statusFilters[link.status];
       const matchCategory = activeCategory === 'all' || 
-        (activeCategory === 'transactions' && link.type === 'suspect_transactions') ||
-        (activeCategory === 'contracts' && link.type === 'direct_financing');
+        (activeCategory === 'transactions' && link.type === 'transaction') ||
+        (activeCategory === 'contracts' && link.type === 'contract') ||
+        (activeCategory === 'processes' && link.type === 'process');
       return matchYear && matchStatus && matchCategory;
     });
 
@@ -103,14 +110,17 @@ export default function Page() {
 
   return (
     <div className="relative h-screen w-screen bg-[#080d16] bg-grid-pattern text-slate-100 font-sans overflow-hidden flex flex-col">
-      <HeaderBar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-      />
+      {/* Permanent Header Bar */}
+      <HeaderBar activePage={activePage} setActivePage={setActivePage} />
 
       <div className="flex flex-1 w-full h-[calc(100vh-4rem)] relative overflow-hidden">
+        {/* Sliding White Page Overlay (Infographics & Glossary) covering network graph and sidebar */}
+        <HeaderOverlay 
+          activePage={activePage} 
+          onClose={() => setActivePage('graph')} 
+          graphData={graphData} 
+        />
+
         <SidebarControls
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
