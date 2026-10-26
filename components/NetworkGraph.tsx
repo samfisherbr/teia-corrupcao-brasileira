@@ -56,13 +56,13 @@ export default function NetworkGraph({
   if (graphRef.current) {
     // Repulsion force between bubbles (negative value pushes nodes apart)
     const chargeForce = graphRef.current.d3Force('charge');
-    if (chargeForce) chargeForce.strength(-120);
+    if (chargeForce) chargeForce.strength(-500);
 
     // Link distance and tightness
     const linkForce = graphRef.current.d3Force('link');
     if (linkForce) {
       linkForce.distance(120);
-      linkForce.strength(0.1);
+      linkForce.strength(0.3);
     }
 
     // Center force targeting screen middle
