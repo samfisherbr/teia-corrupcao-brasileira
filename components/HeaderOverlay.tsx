@@ -18,8 +18,8 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
 
   return (
     <div
-      className={`absolute inset-x-0 bottom-0 top-16 z-40 bg-white text-slate-900 transition-transform duration-500 ease-in-out shadow-2xl overflow-y-auto ${
-        isOpen ? 'translate-y-0' : '-translate-y-full'
+      className={`absolute inset-0 z-40 bg-white text-slate-900 transition-transform duration-500 ease-in-out shadow-2xl overflow-y-auto ${
+        isOpen ? 'translate-y-0 pointer-events-auto' : '-translate-y-full pointer-events-none'
       }`}
     >
       <div className="max-w-5xl mx-auto px-8 py-10">
