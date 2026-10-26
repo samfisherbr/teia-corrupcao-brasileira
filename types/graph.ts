@@ -9,6 +9,12 @@ export interface GraphNode {
   party?: string;
   image_url: string;
   summary: string;
+  full_description?: string;
+  estimatedImpact?: string;
+  start_year?: number;
+  end_year?: number;
+  legal_status?: string;
+  key_sources?: { title: string; url: string }[];
   status?: LinkStatus;
   estimatedImpact?: string;
   x?: number;
