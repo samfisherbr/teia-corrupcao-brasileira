@@ -25,10 +25,8 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
         url: 'https://g1.globo.com/Noticias/Politica/0,,AA1251927-5601,00.html'
       }
     ]
-  }
-};
+  },
 
-export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
   esquema_mensalao: {
     context:
       "O Escândalo do Mensalão estourou em 2005 durante o primeiro mandato do governo Luiz Inácio Lula da Silva, a partir de denúncias do então deputado federal Roberto Jefferson. Tratou-se de um amplo esquema de cooptação política no Congresso Nacional, com a compra de apoio parlamentar de diversos partidos para a aprovação de projetos de interesse do Poder Executivo, financiado por recursos públicos e valerioduto de publicidade.",
