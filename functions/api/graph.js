@@ -2,7 +2,6 @@ export async function onRequest(context) {
   const { env } = context;
 
   try {
-    // Consulta os nós e conexões no Cloudflare D1 Database
     const { results: nodes } = await env.DB.prepare("SELECT * FROM nodes").all();
     const { results: links } = await env.DB.prepare("SELECT * FROM links").all();
 
