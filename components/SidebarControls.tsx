@@ -5,14 +5,14 @@ import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2 } f
 import { NodeType, LinkStatus } from '@/types/graph';
 
 export const NODE_TYPES: Record<NodeType, { label: string; color: string; icon: React.ElementType }> = {
-  politician: { label: 'Político', color: '#00f0ff', icon: UserCheck },
+  politician: { label: 'Político', color: '#00c3d1', icon: UserCheck },
   party: { label: 'Partido', color: '#a855f7', icon: Layers },
-  scheme: { label: 'Esquema de Corrupção', color: '#ff00c8', icon: ShieldAlert },
-  company: { label: 'Empresa / Operador', color: '#0aff96', icon: Building2 }
+  scheme: { label: 'Esquema de Corrupção', color: '#cc01a0', icon: ShieldAlert },
+  company: { label: 'Empresa / Operador', color: '#00c771', icon: Building2 }
 };
 
 export const STATUS_COLORS: Record<LinkStatus, string> = {
-  confirmed: '#ff0055',
+  confirmed: '#b1003b',
   under_investigation: '#f59e0b',
   acquitted: '#10b981'
 };

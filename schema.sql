@@ -1,31 +1,31 @@
-CREATE TABLE IF NOT EXISTS nodes (
-  id TEXT PRIMARY KEY,
-  label TEXT NOT NULL,
-  type TEXT CHECK(type IN ('politician', 'party', 'scheme', 'company')),
-  party TEXT,
-  image_url TEXT,
-  summary TEXT
-);
+1. TABELA DE ENTIDADES (NÓS / NODES):
+Apresente uma tabela com as seguintes colunas exatas:
+| id | label | type | party | summary | image_url |
 
-CREATE TABLE IF NOT EXISTS links (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  source TEXT NOT NULL,
-  target TEXT NOT NULL,
-  relation TEXT NOT NULL,
-  status TEXT CHECK(status IN ('confirmed', 'under_investigation', 'acquitted')),
-  amount TEXT,
-  year INTEGER,
-  source_url TEXT,
-  FOREIGN KEY (source) REFERENCES nodes(id),
-  FOREIGN KEY (target) REFERENCES nodes(id)
-);
+Regras para os campos da Tabela de Entidades:
+- id: Identificador único em minúsculas e sem espaços (ex: pol_fulano, partido_pt, empresa_planam, esquema_sanguessugas).
+- label: Nome completo ou oficial da pessoa/instituição.
+- type: Selecione EXATAMENTE um dos valores: politician | party | scheme | company
+- party: Sigla oficial do partido (se for político) ou NULL.
+- summary: Descrição curta e objetiva sobre a entidade e sua história.
+- image_url: Link direto para imagem pública válida (Wikipedia/Commons ou portal governamental terminando em .jpg, .png, .svg) ou a palavra NULL (não invente links nem use svgs genéricos).
 
-INSERT INTO nodes (id, label, type, party, image_url, summary) VALUES
-('esquema_sanguessugas', 'Operação Sanguessuga (Máfia das Ambulâncias)', 'scheme', 'N/A', 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982', 'Esquema criminoso articulado entre empresários e parlamentares para superfaturar ambulâncias.'),
-('emp_planam', 'Grupo Planam', 'company', 'N/A', 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab', 'Empresa que liderava o consórcio de firmas de fachada.'),
-('emp_luiz_vedoin', 'Luiz Antônio Trevisan Vedoin', 'company', 'N/A', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d', 'Empresário mentor e operador financeiro.'),
-('pol_lino_rossi', 'Lino Rossi', 'politician', 'PP', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e', 'Deputado cooptador de emendas orçamentárias.');
+2. TABELA DE CONEXÕES E VÍNCULOS (LINKS):
+Apresente uma tabela com as seguintes colunas exatas:
+| source | target | relation | type | status | amount | year | source_url |
 
-INSERT INTO links (source, target, relation, status, amount, year, source_url) VALUES
-('emp_luiz_vedoin', 'esquema_sanguessugas', 'Réu confesso e operador financeiro', 'confirmed', 'R$ 110.000.000', 2001, 'https://www.congressoemfoco.com.br'),
-('pol_lino_rossi', 'esquema_sanguessugas', 'Intermediação e emendas superfaturadas', 'confirmed', 'R$ 3.040.000', 2000, 'https://www1.folha.uol.com.br');
+Regras para os campos da Tabela de Conexões:
+- source: ID do nó de origem (ex: pol_fulano ou empresa_planam).
+- target: ID do nó de destino (ex: esquema_sanguessugas ou pol_sicrano).
+- relation: Resumo factual neutro de 1 a 2 frases sobre a atuação no caso.
+- type: Categoria operacional obrigatória — selecione EXATAMENTE um:
+  - transaction (fluxos financeiros, propinas, transferências)
+  - contract (licitações, compras públicas, acordos comerciais)
+  - process (investigações judiciais, CPIs, indiciamentos, denúncias)
+- status: Status jurídico — selecione EXATAMENTE um:
+  - confirmed (condenado, réu confesso ou delação homologada)
+  - under_investigation (suspeito, investigado, indiciado ou citado)
+  - acquitted (absolvido, processo arquivado ou anulado)
+- amount: Cifra financeira citada (ex: "R$ 5.000.000") ou NULL.
+- year: Ano principal do fato (ex: 2004) ou NULL.
+- source_url: Link/URL direta e exata da reportagem ou documento oficial que comprova o vínculo.

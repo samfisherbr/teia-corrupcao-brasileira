@@ -18,14 +18,14 @@ interface NetworkGraphProps {
 }
 
 const COLOR_MAP = {
-  scheme: '#ffffff',     // Magenta for Corruption Schemes
-  politician: '#00f0ff', // Cyan for Politicians
-  company: '#0aff96',    // Green for Companies
-  party: '#a855f7'       // Purple for Parties
+  scheme: '#ffffff',     // White for Corruption Schemes
+  politician: '#00d5e4', // Cyan for Politicians
+  company: '#09cc77',    // Green for Companies
+  party: '#934ad8'       // Purple for Parties
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  confirmed: '#ff0055',
+  confirmed: '#b1003b',
   under_investigation: '#f59e0b',
   acquitted: '#10b981'
 };
@@ -144,11 +144,11 @@ export default function NetworkGraph({
 
     let size = 12;
     if (node.type === 'scheme') {
-      size = 28;
+      size = 40;
     } else if (node.type === 'politician') {
-      size = 18;
+      size = 25;
     } else if (node.type === 'company') {
-      size = 14;
+      size = 15;
     }
 
     ctx.save();
@@ -208,7 +208,7 @@ export default function NetworkGraph({
           ctx.arc(node.x, node.y, node.type === 'scheme' ? 35 : 22, 0, 2 * Math.PI);
           ctx.fill();
         }}
-        linkColor={(link: any) => STATUS_COLORS[link.status] || '#ff0055'}
+        linkColor={(link: any) => STATUS_COLORS[link.status] || '#b1003b'}
         linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.5 : 1.8)}
         linkLineDash={(link: any) => (link.status === 'under_investigation' ? [4, 4] : undefined)}
         linkDirectionalParticles={(link: any) => (link.status === 'under_investigation' ? 3 : 0)}
