@@ -1,9 +1,9 @@
 import React from 'react';
-import './globals.tsx';
+import './globals.css';
 
 export const metadata = {
-  title: 'Investigação de Esquemas de Corrupção - Brasil',
-  description: 'Visualização de grafos de conexões entre políticos, empresas e esquemas.',
+  title: 'CORRWEB',
+  description: 'Mapeamento de Redes Relacionais e Investigação de Corrupção no Brasil',
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className="dark">
-      <body className="bg-slate-950 text-slate-100 antialiased selection:bg-blue-500 selection:text-white">
+      <body className="bg-[#080d16] text-slate-100 antialiased selection:bg-cyan-500 selection:text-black">
         {children}
       </body>
     </html>
