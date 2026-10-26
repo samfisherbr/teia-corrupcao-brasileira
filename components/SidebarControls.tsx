@@ -50,7 +50,7 @@ export default function SidebarControls({
         </div>
         <div>
           <h1 className="text-sm font-bold text-slate-100 leading-tight">Painel de Controle</h1>
-          <p className="text-[11px] text-slate-400 font-mono">INQUEST v2.4</p>
+          <p className="text-[11px] text-slate-400 font-mono">CORRWEB</p>
         </div>
       </div>
 

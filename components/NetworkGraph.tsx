@@ -17,10 +17,10 @@ interface NetworkGraphProps {
 }
 
 const COLOR_MAP = {
-  politician: '#00f0ff',
-  company: '#0aff96',
-  scheme: '#ff00c8',
-  party: '#a855f7'
+  scheme: '#ff00c8',     // Magenta for Corruption Schemes
+  politician: '#00f0ff', // Cyan for Politicians
+  company: '#0aff96',    // Green for Companies
+  party: '#a855f7'       // Purple for Parties
 };
 
 export default function NetworkGraph({
@@ -33,7 +33,9 @@ export default function NetworkGraph({
 }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
+  const imgCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
+  // Responsive Canvas Size Tracking
   useEffect(() => {
     if (!containerRef.current) return;
     const updateSize = () => {
@@ -50,36 +52,82 @@ export default function NetworkGraph({
     return () => observer.disconnect();
   }, []);
 
+  // Helper: Preload and cache node profile images
+  const getNodeImage = (url: string) => {
+    if (!url) return null;
+    if (imgCacheRef.current.has(url)) {
+      return imgCacheRef.current.get(url)!;
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = url;
+    imgCacheRef.current.set(url, img);
+    return img;
+  };
+
+  // Custom 2D Canvas Renderer for Glowing Nodes and Pictures
   const drawNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const isSelected = selectedNode?.id === node.id;
-    const size = node.type === 'politician' && node.id === 'pol_carlos_alves' ? 18 : 12;
     const color = COLOR_MAP[node.type as keyof typeof COLOR_MAP] || '#00f0ff';
 
+    // -----------------------------------------------------------------
+    // NODE SIZE HIERARCHY: Scheme is ALWAYS the largest bubble
+    // -----------------------------------------------------------------
+    let size = 12;
+    if (node.type === 'scheme') {
+      size = 28; // LARGEST BUBBLE for "Esquema de Corrupção"
+    } else if (node.type === 'politician') {
+      size = 18;
+    } else if (node.type === 'company') {
+      size = 14;
+    }
+
     ctx.save();
+
+    // 1. Outer Glow Aura
     ctx.beginPath();
-    ctx.arc(node.x, node.y, size + 6, 0, 2 * Math.PI);
-    ctx.fillStyle = isSelected ? `${color}33` : `${color}11`;
+    ctx.arc(node.x, node.y, size + 8, 0, 2 * Math.PI);
+    ctx.fillStyle = isSelected ? `${color}44` : `${color}18`;
     ctx.fill();
 
+    // 2. Double Ring Outer Border
     ctx.beginPath();
     ctx.arc(node.x, node.y, size + 3, 0, 2 * Math.PI);
     ctx.strokeStyle = color;
-    ctx.lineWidth = isSelected ? 2.5 / globalScale : 1.5 / globalScale;
+    ctx.lineWidth = isSelected ? 3 / globalScale : 1.8 / globalScale;
     ctx.stroke();
 
+    // 3. Inner Circle Clipping Mask & Image Drawing
     ctx.beginPath();
     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
     ctx.fillStyle = '#080d16';
     ctx.fill();
+
+    if (node.image_url) {
+      const img = getNodeImage(node.image_url);
+      if (img && img.complete && img.naturalWidth > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
+        ctx.clip(); // Clip image to inside the circle
+        ctx.drawImage(img, node.x - size, node.y - size, size * 2, size * 2);
+        ctx.restore();
+      }
+    }
+
+    // Inner Stroke Ring
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
     ctx.strokeStyle = color;
     ctx.lineWidth = 1 / globalScale;
     ctx.stroke();
 
+    // 4. Node Label Below Bubble
     const label = node.label || '';
-    ctx.font = `${isSelected ? 'bold' : 'normal'} ${10 / globalScale}px Inter, sans-serif`;
+    ctx.font = `${isSelected ? 'bold' : '500'} ${Math.max(10, 11 / globalScale)}px Inter, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillStyle = isSelected ? '#ffffff' : '#94a3b8';
-    ctx.fillText(label, node.x, node.y + size + 12 / globalScale);
+    ctx.fillStyle = isSelected ? '#ffffff' : '#cbd5e1';
+    ctx.fillText(label, node.x, node.y + size + 14 / globalScale);
 
     ctx.restore();
   }, [selectedNode]);
@@ -95,11 +143,11 @@ export default function NetworkGraph({
         nodePointerAreaPaint={(node: any, color, ctx) => {
           ctx.fillStyle = color;
           ctx.beginPath();
-          ctx.arc(node.x, node.y, 16, 0, 2 * Math.PI);
+          ctx.arc(node.x, node.y, node.type === 'scheme' ? 30 : 20, 0, 2 * Math.PI);
           ctx.fill();
         }}
         linkColor={(link: any) => link.type === 'suspect_transactions' ? '#f59e0b' : '#ff0055'}
-        linkWidth={(link: any) => (selectedLink?.id === link.id ? 3 : 1.5)}
+        linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.5 : 1.8)}
         linkLineDash={(link: any) => link.type === 'suspect_transactions' ? [4, 4] : undefined}
         linkDirectionalParticles={(link: any) => link.type === 'suspect_transactions' ? 3 : 0}
         linkDirectionalParticleSpeed={0.005}
@@ -107,10 +155,13 @@ export default function NetworkGraph({
         linkDirectionalParticleColor={() => '#f59e0b'}
         onNodeClick={(node: any) => onSelectNode(node)}
         onLinkClick={(link: any) => onSelectLink(link)}
-        cooldownTicks={100}
+        cooldownTicks={120}
+        d3AlphaDecay={0.02}
+        d3VelocityDecay={0.3}
         backgroundColor="#080d16"
       />
 
+      {/* Top Right Floating Connection Legend */}
       <div className="absolute top-4 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-10 font-mono">
         <div className="flex items-center space-x-2">
           <span className="w-4 h-0.5 bg-red-500 inline-block shadow-[0_0_8px_#ff0055]" />
@@ -122,6 +173,7 @@ export default function NetworkGraph({
         </div>
       </div>
 
+      {/* Bottom Left Camera Controls */}
       <div className="absolute bottom-6 left-6 flex items-center space-x-1.5 bg-[#0e1726]/90 border border-slate-800 rounded-lg p-1 z-10">
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}
