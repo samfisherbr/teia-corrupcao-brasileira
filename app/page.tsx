@@ -71,10 +71,13 @@ export default function Page() {
     const validLinks = graphData.links.filter(link => {
       const matchYear = link.year >= startYearFilter;
       const matchStatus = statusFilters[link.status];
+      
+      const linkTypeStr = (link.type as string) || '';
       const matchCategory = activeCategory === 'all' || 
-        (activeCategory === 'transactions' && link.type === 'transaction') ||
-        (activeCategory === 'contracts' && link.type === 'contract') ||
-        (activeCategory === 'processes' && link.type === 'process');
+        (activeCategory === 'transactions' && (linkTypeStr === 'suspect_transactions' || linkTypeStr === 'transaction')) ||
+        (activeCategory === 'contracts' && (linkTypeStr === 'direct_financing' || linkTypeStr === 'contract')) ||
+        (activeCategory === 'processes' && linkTypeStr === 'process');
+
       return matchYear && matchStatus && matchCategory;
     });
 
