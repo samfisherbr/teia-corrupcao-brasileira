@@ -121,8 +121,9 @@ export default function NetworkGraph({
       graphRef.current.d3Force(
         'collide',
         forceCollide().radius((node: any) => {
-          if (node.type === 'scheme') return 55;
-          if (node.type === 'politician') return 40;
+          if (node.type === 'scheme') return 60;
+          if (node.type === 'party' || node.type === 'company') return 45;
+          if (node.type === 'politician') return 20;
           return 30;
         }).strength(1)
       );
@@ -145,9 +146,9 @@ export default function NetworkGraph({
     let size = 12;
     if (node.type === 'scheme') {
       size = 40;
-    } else if (node.type === 'politician') {
+    } else if (node.type === 'company' || node.type === 'party') {
       size = 25;
-    } else if (node.type === 'company') {
+    } else if (node.type === 'politician') {
       size = 15;
     }
 
