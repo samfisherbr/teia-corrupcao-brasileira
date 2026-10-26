@@ -24,11 +24,10 @@ const COLOR_MAP = {
   party: '#a855f7'       // Purple for Parties
 };
 
-// Dynamic color mapping based on legal status
 const STATUS_COLORS: Record<string, string> = {
-  confirmed: '#ff0055',           // Glowing Red for Confirmed/Sentenced
-  under_investigation: '#f59e0b', // Amber for Under Investigation
-  acquitted: '#10b981'            // Emerald Green for Acquitted/Dismissed
+  confirmed: '#ff0055',
+  under_investigation: '#f59e0b',
+  acquitted: '#10b981'
 };
 
 export default function NetworkGraph({
@@ -41,9 +40,12 @@ export default function NetworkGraph({
 }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
+  
+  // Image Cache Map & Preload Completion Tracker
   const imgCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  const [, setImagesLoaded] = useState<boolean>(false);
 
-  // 1. Responsive Canvas Size Tracking
+  // 1. Dynamic Resize Observer for Instant Canvas Scaling
   useEffect(() => {
     if (!containerRef.current) return;
     const updateSize = () => {
@@ -60,7 +62,49 @@ export default function NetworkGraph({
     return () => observer.disconnect();
   }, []);
 
-  // 2. Programmatic D3 Physics Configuration
+  // 2. Preload Node Images Prior to Initial Canvas Render
+  useEffect(() => {
+    if (!graphData.nodes || graphData.nodes.length === 0) return;
+
+    let loadedCount = 0;
+    const nodesWithImages = graphData.nodes.filter((node) => node.image_url);
+
+    if (nodesWithImages.length === 0) {
+      setImagesLoaded(true);
+      return;
+    }
+
+    nodesWithImages.forEach((node) => {
+      if (!node.image_url) return;
+
+      if (imgCacheRef.current.has(node.image_url)) {
+        loadedCount++;
+        if (loadedCount === nodesWithImages.length) setImagesLoaded(true);
+        return;
+      }
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = node.image_url;
+      img.onload = () => {
+        imgCacheRef.current.set(node.image_url!, img);
+        loadedCount++;
+        if (loadedCount === nodesWithImages.length) {
+          setImagesLoaded(true);
+          // Re-heat simulation and refresh view on initial load completion
+          if (graphRef.current) {
+            graphRef.current.d3ReheatSimulation();
+          }
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === nodesWithImages.length) setImagesLoaded(true);
+      };
+    });
+  }, [graphData.nodes, graphRef]);
+
+  // 3. Configure D3 Physics & Collision Forces
   useEffect(() => {
     if (graphRef.current) {
       const chargeForce = graphRef.current.d3Force('charge');
@@ -91,22 +135,9 @@ export default function NetworkGraph({
 
       graphRef.current.d3ReheatSimulation();
     }
-  }, [dimensions, graphData]);
+  }, [dimensions, graphData, graphRef]);
 
-  // Preload and cache node profile images
-  const getNodeImage = (url: string) => {
-    if (!url) return null;
-    if (imgCacheRef.current.has(url)) {
-      return imgCacheRef.current.get(url)!;
-    }
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = url;
-    imgCacheRef.current.set(url, img);
-    return img;
-  };
-
-  // Custom 2D Canvas Renderer
+  // 4. Safe Custom 2D Canvas Node Renderer
   const drawNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const isSelected = selectedNode?.id === node.id;
     const color = COLOR_MAP[node.type as keyof typeof COLOR_MAP] || '#00f0ff';
@@ -128,21 +159,21 @@ export default function NetworkGraph({
     ctx.fillStyle = isSelected ? `${color}44` : `${color}18`;
     ctx.fill();
 
-    // Outer Border
+    // Outer Border Ring
     ctx.beginPath();
     ctx.arc(node.x, node.y, size + 3, 0, 2 * Math.PI);
     ctx.strokeStyle = color;
     ctx.lineWidth = isSelected ? 3 / globalScale : 1.8 / globalScale;
     ctx.stroke();
 
-    // Inner Circle & Image
+    // Inner Circle & Avatar Image Clipping
     ctx.beginPath();
     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
     ctx.fillStyle = '#080d16';
     ctx.fill();
 
     if (node.image_url) {
-      const img = getNodeImage(node.image_url);
+      const img = imgCacheRef.current.get(node.image_url);
       if (img && img.complete && img.naturalWidth > 0) {
         ctx.save();
         ctx.beginPath();
@@ -153,7 +184,7 @@ export default function NetworkGraph({
       }
     }
 
-    // Label Text
+    // Node Label Text
     const label = node.label || '';
     ctx.font = `${isSelected ? 'bold' : '500'} ${Math.max(10, 11 / globalScale)}px Inter, sans-serif`;
     ctx.textAlign = 'center';
@@ -177,8 +208,6 @@ export default function NetworkGraph({
           ctx.arc(node.x, node.y, node.type === 'scheme' ? 35 : 22, 0, 2 * Math.PI);
           ctx.fill();
         }}
-
-        /* Dynamic Link Color & Particle Animation based on Status */
         linkColor={(link: any) => STATUS_COLORS[link.status] || '#ff0055'}
         linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.5 : 1.8)}
         linkLineDash={(link: any) => (link.status === 'under_investigation' ? [4, 4] : undefined)}
@@ -186,7 +215,6 @@ export default function NetworkGraph({
         linkDirectionalParticleSpeed={0.005}
         linkDirectionalParticleWidth={2.5}
         linkDirectionalParticleColor={(link: any) => STATUS_COLORS[link.status] || '#f59e0b'}
-
         onNodeClick={(node: any) => onSelectNode(node)}
         onLinkClick={(link: any) => onSelectLink(link)}
         cooldownTicks={150}
@@ -195,23 +223,7 @@ export default function NetworkGraph({
         backgroundColor="#080d16"
       />
 
-      {/* Dynamic Status Legend */}
-      <div className="absolute top-4 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-10 font-mono">
-        <div className="flex items-center space-x-2">
-          <span className="w-4 h-0.5 bg-[#ff0055] inline-block shadow-[0_0_8px_#ff0055]" />
-          <span className="text-slate-300">CONFIRMED / SENTENCED</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="w-4 h-0.5 border-b border-dashed border-[#f59e0b] inline-block" />
-          <span className="text-slate-300">UNDER INVESTIGATION</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="w-4 h-0.5 bg-[#10b981] inline-block shadow-[0_0_8px_#10b981]" />
-          <span className="text-slate-300">ACQUITTED / ARCHIVED</span>
-        </div>
-      </div>
-
-      {/* Bottom Left Camera Controls */}
+      {/* Camera Controls */}
       <div className="absolute bottom-6 left-6 flex items-center space-x-1.5 bg-[#0e1726]/90 border border-slate-800 rounded-lg p-1 z-10">
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}
