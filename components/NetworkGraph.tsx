@@ -24,6 +24,13 @@ const COLOR_MAP = {
   party: '#a855f7'       // Purple for Parties
 };
 
+// Dynamic color mapping based on legal status
+const STATUS_COLORS: Record<string, string> = {
+  confirmed: '#ff0055',           // Glowing Red for Confirmed/Sentenced
+  under_investigation: '#f59e0b', // Amber for Under Investigation
+  acquitted: '#10b981'            // Emerald Green for Acquitted/Dismissed
+};
+
 export default function NetworkGraph({
   graphRef,
   graphData,
@@ -53,23 +60,20 @@ export default function NetworkGraph({
     return () => observer.disconnect();
   }, []);
 
-  // 2. Programmatic D3 Physics Configuration (Spreads out tightly clustered nodes)
+  // 2. Programmatic D3 Physics Configuration
   useEffect(() => {
     if (graphRef.current) {
-      // Repulsion force: Scheme nodes push away at -1000, others at -500
       const chargeForce = graphRef.current.d3Force('charge');
       if (chargeForce) {
         chargeForce.strength((node: any) => (node.type === 'scheme' ? -1000 : -500));
       }
 
-      // Link distance: Increased to 200px so connected nodes stay further apart
       const linkForce = graphRef.current.d3Force('link');
       if (linkForce) {
         linkForce.distance(200);
         linkForce.strength(0.15);
       }
 
-      // Collision Force: Hard collision boundary based on bubble radius
       graphRef.current.d3Force(
         'collide',
         forceCollide().radius((node: any) => {
@@ -79,7 +83,6 @@ export default function NetworkGraph({
         }).strength(1)
       );
 
-      // Center Force targeting screen middle
       const centerForce = graphRef.current.d3Force('center');
       if (centerForce) {
         centerForce.x(dimensions.width / 2);
@@ -119,20 +122,20 @@ export default function NetworkGraph({
 
     ctx.save();
 
-    // 1. Outer Glow
+    // Outer Glow
     ctx.beginPath();
     ctx.arc(node.x, node.y, size + 8, 0, 2 * Math.PI);
     ctx.fillStyle = isSelected ? `${color}44` : `${color}18`;
     ctx.fill();
 
-    // 2. Double Ring Outer Border
+    // Outer Border
     ctx.beginPath();
     ctx.arc(node.x, node.y, size + 3, 0, 2 * Math.PI);
     ctx.strokeStyle = color;
     ctx.lineWidth = isSelected ? 3 / globalScale : 1.8 / globalScale;
     ctx.stroke();
 
-    // 3. Inner Circle & Profile Image
+    // Inner Circle & Image
     ctx.beginPath();
     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
     ctx.fillStyle = '#080d16';
@@ -150,14 +153,7 @@ export default function NetworkGraph({
       }
     }
 
-    // Inner Ring
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1 / globalScale;
-    ctx.stroke();
-
-    // 4. Label Text
+    // Label Text
     const label = node.label || '';
     ctx.font = `${isSelected ? 'bold' : '500'} ${Math.max(10, 11 / globalScale)}px Inter, sans-serif`;
     ctx.textAlign = 'center';
@@ -181,13 +177,16 @@ export default function NetworkGraph({
           ctx.arc(node.x, node.y, node.type === 'scheme' ? 35 : 22, 0, 2 * Math.PI);
           ctx.fill();
         }}
-        linkColor={(link: any) => link.type === 'suspect_transactions' ? '#f59e0b' : '#ff0055'}
+
+        /* Dynamic Link Color & Particle Animation based on Status */
+        linkColor={(link: any) => STATUS_COLORS[link.status] || '#ff0055'}
         linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.5 : 1.8)}
-        linkLineDash={(link: any) => link.type === 'suspect_transactions' ? [4, 4] : undefined}
-        linkDirectionalParticles={(link: any) => link.type === 'suspect_transactions' ? 3 : 0}
+        linkLineDash={(link: any) => (link.status === 'under_investigation' ? [4, 4] : undefined)}
+        linkDirectionalParticles={(link: any) => (link.status === 'under_investigation' ? 3 : 0)}
         linkDirectionalParticleSpeed={0.005}
         linkDirectionalParticleWidth={2.5}
-        linkDirectionalParticleColor={() => '#f59e0b'}
+        linkDirectionalParticleColor={(link: any) => STATUS_COLORS[link.status] || '#f59e0b'}
+
         onNodeClick={(node: any) => onSelectNode(node)}
         onLinkClick={(link: any) => onSelectLink(link)}
         cooldownTicks={150}
@@ -196,15 +195,19 @@ export default function NetworkGraph({
         backgroundColor="#080d16"
       />
 
-      {/* Top Right Floating Legend */}
+      {/* Dynamic Status Legend */}
       <div className="absolute top-4 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-10 font-mono">
         <div className="flex items-center space-x-2">
-          <span className="w-4 h-0.5 bg-red-500 inline-block shadow-[0_0_8px_#ff0055]" />
-          <span className="text-slate-300">DIRECT FINANCING</span>
+          <span className="w-4 h-0.5 bg-[#ff0055] inline-block shadow-[0_0_8px_#ff0055]" />
+          <span className="text-slate-300">CONFIRMED / SENTENCED</span>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="w-4 h-0.5 border-b border-dashed border-amber-400 inline-block" />
-          <span className="text-slate-300">SUSPECT TRANSACTIONS</span>
+          <span className="w-4 h-0.5 border-b border-dashed border-[#f59e0b] inline-block" />
+          <span className="text-slate-300">UNDER INVESTIGATION</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="w-4 h-0.5 bg-[#10b981] inline-block shadow-[0_0_8px_#10b981]" />
+          <span className="text-slate-300">ACQUITTED / ARCHIVED</span>
         </div>
       </div>
 
