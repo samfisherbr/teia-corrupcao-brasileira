@@ -1,25 +1,21 @@
 'use client';
 
-export const runtime = 'edge';
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import HeaderBar from '../components/HeaderBar';
-import NetworkGraph from '../components/NetworkGraph';
-import TimelineWidget from '../components/TimelineWidget';
-import SidebarControls from '../components/SidebarControls';
-import InspectorDrawer from '../components/InspectorDrawer';
-import { INITIAL_DATA } from '../data/sanguesugadata';
-import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '../types/graph';
+import HeaderBar from '@/components/HeaderBar';
+import NetworkGraph from '@/components/NetworkGraph';
+import TimelineWidget from '@/components/TimelineWidget';
+import SidebarControls from '@/components/SidebarControls';
+import InspectorDrawer from '@/components/InspectorDrawer';
+import { INITIAL_DATA } from '@/data/sanguesugadata';
+import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/graph';
 
 export default function Page() {
   const graphRef = useRef<any>(null);
 
-  // Graph Data State (fetches API or falls back to static seed data)
   const [graphData, setGraphData] = useState<GraphData>(INITIAL_DATA);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(INITIAL_DATA.nodes[0]);
   const [selectedLink, setSelectedLink] = useState<GraphLink | null>(null);
 
-  // Filter States
   const [searchQuery, setSearchQuery] = useState('');
   const [startYearFilter, setStartYearFilter] = useState(2014);
   const [activeCategory, setActiveCategory] = useState<'all' | 'transactions' | 'contracts' | 'processes'>('all');
@@ -35,7 +31,6 @@ export default function Page() {
     acquitted: true
   });
 
-  // Fetch live API data if available
   useEffect(() => {
     async function loadData() {
       try {
@@ -53,7 +48,6 @@ export default function Page() {
     loadData();
   }, []);
 
-  // Compute filtered graph data dynamically
   const filteredData = useMemo(() => {
     const validLinks = graphData.links.filter(link => {
       const matchYear = link.year >= startYearFilter;
@@ -86,9 +80,16 @@ export default function Page() {
     };
   }, [graphData, startYearFilter, typeFilters, statusFilters, searchQuery, activeCategory]);
 
+  const toggleTypeFilter = (type: NodeType) => {
+    setTypeFilters(prev => ({ ...prev, [type]: !prev[type] }));
+  };
+
+  const toggleStatusFilter = (status: LinkStatus) => {
+    setStatusFilters(prev => ({ ...prev, [status]: !prev[status] }));
+  };
+
   return (
     <div className="relative h-screen w-full bg-[#080d16] bg-grid-pattern text-slate-100 font-sans overflow-hidden flex flex-col">
-      {/* Top Navigation Bar */}
       <HeaderBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -96,45 +97,57 @@ export default function Page() {
         setActiveCategory={setActiveCategory}
       />
 
-      {/* Main Canvas Visualizer */}
-      <main className="relative flex-1 w-full h-full">
-        <NetworkGraph
-          graphRef={graphRef}
-          graphData={filteredData}
+      <div className="flex flex-1 w-full h-full relative overflow-hidden">
+        <SidebarControls
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          startYearFilter={startYearFilter}
+          setStartYearFilter={setStartYearFilter}
+          typeFilters={typeFilters}
+          toggleTypeFilter={toggleTypeFilter}
+          statusFilters={statusFilters}
+          toggleStatusFilter={toggleStatusFilter}
+          nodeCount={filteredData.nodes.length}
+          linkCount={filteredData.links.length}
+        />
+
+        <main className="relative flex-1 w-full h-full">
+          <NetworkGraph
+            graphRef={graphRef}
+            graphData={filteredData}
+            selectedNode={selectedNode}
+            selectedLink={selectedLink}
+            onSelectNode={(node) => {
+              setSelectedNode(node);
+              setSelectedLink(null);
+            }}
+            onSelectLink={(link) => {
+              setSelectedLink(link);
+              setSelectedNode(null);
+            }}
+          />
+
+          <TimelineWidget
+            startYear={startYearFilter}
+            setStartYear={setStartYearFilter}
+          />
+        </main>
+
+        <InspectorDrawer
           selectedNode={selectedNode}
           selectedLink={selectedLink}
-          onSelectNode={(node) => {
-            setSelectedNode(node);
+          onClose={() => {
+            setSelectedNode(null);
             setSelectedLink(null);
           }}
+          filteredData={filteredData}
+          fullNodes={graphData.nodes}
           onSelectLink={(link) => {
             setSelectedLink(link);
             setSelectedNode(null);
           }}
         />
-
-        {/* Floating Bottom Timeline Slider */}
-        <TimelineWidget
-          startYear={startYearFilter}
-          setStartYear={setStartYearFilter}
-        />
-      </main>
-
-      {/* Right-side Glassmorphism Dossier Panel */}
-      <InspectorDrawer
-        selectedNode={selectedNode}
-        selectedLink={selectedLink}
-        onClose={() => {
-          setSelectedNode(null);
-          setSelectedLink(null);
-        }}
-        filteredData={filteredData}
-        fullNodes={graphData.nodes}
-        onSelectLink={(link) => {
-          setSelectedLink(link);
-          setSelectedNode(null);
-        }}
-      />
+      </div>
     </div>
   );
 }
