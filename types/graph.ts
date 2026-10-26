@@ -16,7 +16,6 @@ export interface GraphNode {
   legal_status?: string;
   key_sources?: { title: string; url: string }[];
   status?: LinkStatus;
-  estimatedImpact?: string;
   x?: number;
   y?: number;
   fx?: number | null;
