@@ -52,6 +52,31 @@ export default function NetworkGraph({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+  if (graphRef.current) {
+    // Repulsion force between bubbles (negative value pushes nodes apart)
+    const chargeForce = graphRef.current.d3Force('charge');
+    if (chargeForce) chargeForce.strength(-120);
+
+    // Link distance and tightness
+    const linkForce = graphRef.current.d3Force('link');
+    if (linkForce) {
+      linkForce.distance(120);
+      linkForce.strength(0.1);
+    }
+
+    // Center force targeting screen middle
+    const centerForce = graphRef.current.d3Force('center');
+    if (centerForce) {
+      centerForce.x(dimensions.width / 2);
+      centerForce.y(dimensions.height / 2);
+    }
+
+    // Re-heat simulation to apply updated physics parameters
+    graphRef.current.d3ReheatSimulation();
+  }
+}, [dimensions, graphData]);
+
   // Helper: Preload and cache node profile images
   const getNodeImage = (url: string) => {
     if (!url) return null;
@@ -158,10 +183,6 @@ export default function NetworkGraph({
         cooldownTicks={120}
         d3AlphaDecay={0.02}
         d3VelocityDecay={0.3}
-        d3Force="charge"
-        d3ForceCharge={-120}
-        d3ForceLink={{ distance: 120, strength: 0.1 }}
-        d3ForceCenter={{ x: dimensions.width / 2, y: dimensions.height / 2 }}
         backgroundColor="#080d16"
       />
 
