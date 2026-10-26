@@ -18,7 +18,7 @@ interface NetworkGraphProps {
 }
 
 const COLOR_MAP = {
-  scheme: '#ff00c8',     // Magenta for Corruption Schemes
+  scheme: '#ffffff',     // Magenta for Corruption Schemes
   politician: '#00f0ff', // Cyan for Politicians
   company: '#0aff96',    // Green for Companies
   party: '#a855f7'       // Purple for Parties
