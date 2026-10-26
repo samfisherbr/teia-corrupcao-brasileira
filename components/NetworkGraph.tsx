@@ -76,10 +76,10 @@ export default function NetworkGraph({
     let size = 12;
     if (node.type === 'scheme') {
       size = 28; // LARGEST BUBBLE for "Esquema de Corrupção"
-    } else if (node.type === 'politician') {
-      size = 18;
     } else if (node.type === 'company') {
-      size = 14;
+      size = 18;
+    } else if (node.type === 'politician') {
+      size = 10;
     }
 
     ctx.save();
@@ -158,6 +158,10 @@ export default function NetworkGraph({
         cooldownTicks={120}
         d3AlphaDecay={0.02}
         d3VelocityDecay={0.3}
+        d3Force="charge"
+        d3ForceCharge={-120}
+        d3ForceLink={{ distance: 120, strength: 0.1 }}
+        d3ForceCenter={{ x: dimensions.width / 2, y: dimensions.height / 2 }}
         backgroundColor="#080d16"
       />
 
