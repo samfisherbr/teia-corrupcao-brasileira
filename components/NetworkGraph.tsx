@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Plus, Minus, Maximize, RotateCcw } from 'lucide-react';
-import { GraphData, GraphNode, GraphLink } from '../types/graph';
+import { Plus, Minus, Maximize } from 'lucide-react';
+import { GraphData, GraphNode, GraphLink } from '@/types/graph';
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 
@@ -31,8 +31,25 @@ export default function NetworkGraph({
   onSelectNode,
   onSelectLink
 }: NetworkGraphProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
 
-  // Custom 2D Canvas Node Renderer
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const updateSize = () => {
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight
+        });
+      }
+    };
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   const drawNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const isSelected = selectedNode?.id === node.id;
     const size = node.type === 'politician' && node.id === 'pol_carlos_alves' ? 18 : 12;
@@ -68,9 +85,11 @@ export default function NetworkGraph({
   }, [selectedNode]);
 
   return (
-    <div className="relative w-full h-full bg-[#080d16]">
+    <div ref={containerRef} className="relative w-full h-full flex-1 bg-[#080d16] overflow-hidden">
       <ForceGraph2D
         ref={graphRef}
+        width={dimensions.width}
+        height={dimensions.height}
         graphData={graphData}
         nodeCanvasObject={drawNode}
         nodePointerAreaPaint={(node: any, color, ctx) => {
@@ -92,8 +111,7 @@ export default function NetworkGraph({
         backgroundColor="#080d16"
       />
 
-      {/* Top Right Floating Connection Legend */}
-      <div className="absolute top-4 right-96 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-10 font-mono">
+      <div className="absolute top-4 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-10 font-mono">
         <div className="flex items-center space-x-2">
           <span className="w-4 h-0.5 bg-red-500 inline-block shadow-[0_0_8px_#ff0055]" />
           <span className="text-slate-300">DIRECT FINANCING</span>
@@ -104,7 +122,6 @@ export default function NetworkGraph({
         </div>
       </div>
 
-      {/* Bottom Left Floating Camera Controls */}
       <div className="absolute bottom-6 left-6 flex items-center space-x-1.5 bg-[#0e1726]/90 border border-slate-800 rounded-lg p-1 z-10">
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}

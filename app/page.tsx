@@ -17,7 +17,7 @@ export default function Page() {
   const [selectedLink, setSelectedLink] = useState<GraphLink | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [startYearFilter, setStartYearFilter] = useState(2014);
+  const [startYearFilter, setStartYearFilter] = useState(2000);
   const [activeCategory, setActiveCategory] = useState<'all' | 'transactions' | 'contracts' | 'processes'>('all');
   const [typeFilters, setTypeFilters] = useState<Record<NodeType, boolean>>({
     politician: true,
@@ -89,7 +89,7 @@ export default function Page() {
   };
 
   return (
-    <div className="relative h-screen w-full bg-[#080d16] bg-grid-pattern text-slate-100 font-sans overflow-hidden flex flex-col">
+    <div className="relative h-screen w-screen bg-[#080d16] bg-grid-pattern text-slate-100 font-sans overflow-hidden flex flex-col">
       <HeaderBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -97,7 +97,7 @@ export default function Page() {
         setActiveCategory={setActiveCategory}
       />
 
-      <div className="flex flex-1 w-full h-full relative overflow-hidden">
+      <div className="flex flex-1 w-full h-[calc(100vh-4rem)] relative overflow-hidden">
         <SidebarControls
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -111,7 +111,7 @@ export default function Page() {
           linkCount={filteredData.links.length}
         />
 
-        <main className="relative flex-1 w-full h-full">
+        <main className="relative flex-1 w-full h-full overflow-hidden bg-[#080d16]">
           <NetworkGraph
             graphRef={graphRef}
             graphData={filteredData}
