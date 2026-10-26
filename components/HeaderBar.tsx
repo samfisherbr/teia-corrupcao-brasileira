@@ -25,7 +25,7 @@ export default function HeaderBar({
         </div>
         <div className="flex items-baseline space-x-2">
           <span className="font-mono font-bold text-slate-100 tracking-wider text-sm">CORRWEB:</span>
-          <span className="text-slate-300 text-xs font-medium">Network Visualizer v2.4</span>
+          <span className="text-slate-300 text-xs font-medium">Corruption Visualizer</span>
         </div>
       </div>
 
