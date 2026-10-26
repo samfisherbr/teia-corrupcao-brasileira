@@ -24,7 +24,7 @@ export default function HeaderBar({
           <Share2 className="w-4 h-4" />
         </div>
         <div className="flex items-baseline space-x-2">
-          <span className="font-mono font-bold text-slate-100 tracking-wider text-sm">INQUEST:</span>
+          <span className="font-mono font-bold text-slate-100 tracking-wider text-sm">CORRWEB:</span>
           <span className="text-slate-300 text-xs font-medium">Network Visualizer v2.4</span>
         </div>
       </div>

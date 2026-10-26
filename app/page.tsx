@@ -6,14 +6,17 @@ import NetworkGraph from '@/components/NetworkGraph';
 import TimelineWidget from '@/components/TimelineWidget';
 import SidebarControls from '@/components/SidebarControls';
 import InspectorDrawer from '@/components/InspectorDrawer';
-import { INITIAL_DATA } from '@/data/sanguesugadata';
 import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/graph';
 
 export default function Page() {
   const graphRef = useRef<any>(null);
 
-  const [graphData, setGraphData] = useState<GraphData>(INITIAL_DATA);
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(INITIAL_DATA.nodes[0]);
+  // Initialize EMPTY graph data (NO MOCK DATA ALLOWED)
+  const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [selectedLink, setSelectedLink] = useState<GraphLink | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,21 +34,31 @@ export default function Page() {
     acquitted: true
   });
 
+  // Fetch strictly from Cloudflare D1 Database endpoint
   useEffect(() => {
-    async function loadData() {
+    async function loadDataFromD1() {
+      setIsLoading(true);
+      setError(null);
       try {
         const res = await fetch('/api/graph');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.nodes && data.nodes.length > 0) {
-            setGraphData(data);
+        if (!res.ok) {
+          throw new Error(`D1 API returned status ${res.status}`);
+        }
+        const data = await res.json();
+        if (data.nodes && data.links) {
+          setGraphData(data);
+          if (data.nodes.length > 0) {
+            setSelectedNode(data.nodes[0]);
           }
         }
-      } catch (e) {
-        console.log('Using fallback local dataset');
+      } catch (e: any) {
+        console.error('Failed to load data from Cloudflare D1:', e);
+        setError(e.message || 'Error connecting to D1 Database');
+      } finally {
+        setIsLoading(false);
       }
     }
-    loadData();
+    loadDataFromD1();
   }, []);
 
   const filteredData = useMemo(() => {
@@ -112,20 +125,38 @@ export default function Page() {
         />
 
         <main className="relative flex-1 w-full h-full overflow-hidden bg-[#080d16]">
-          <NetworkGraph
-            graphRef={graphRef}
-            graphData={filteredData}
-            selectedNode={selectedNode}
-            selectedLink={selectedLink}
-            onSelectNode={(node) => {
-              setSelectedNode(node);
-              setSelectedLink(null);
-            }}
-            onSelectLink={(link) => {
-              setSelectedLink(link);
-              setSelectedNode(null);
-            }}
-          />
+          {isLoading ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30">
+              <div className="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
+              <span className="text-xs font-mono text-cyan-400">Loading Cloudflare D1 Database...</span>
+            </div>
+          ) : error ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30 p-6 text-center">
+              <span className="text-red-400 font-mono text-sm mb-2">D1 Database Connection Failure</span>
+              <p className="text-slate-400 text-xs max-w-md mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-200 rounded border border-slate-700"
+              >
+                Retry Request
+              </button>
+            </div>
+          ) : (
+            <NetworkGraph
+              graphRef={graphRef}
+              graphData={filteredData}
+              selectedNode={selectedNode}
+              selectedLink={selectedLink}
+              onSelectNode={(node) => {
+                setSelectedNode(node);
+                setSelectedLink(null);
+              }}
+              onSelectLink={(link) => {
+                setSelectedLink(link);
+                setSelectedNode(null);
+              }}
+            />
+          )}
 
           <TimelineWidget
             startYear={startYearFilter}
