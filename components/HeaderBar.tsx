@@ -28,20 +28,6 @@ export default function HeaderBar({
           <span className="text-slate-300 text-xs font-medium">Corruption Visualizer</span>
         </div>
       </div>
-
-      {/* Search Input Bar */}
-      <div className="flex-1 max-w-xl mx-8">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search politician, company, process..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#0e1726]/80 border border-slate-700/60 rounded-full pl-10 pr-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500/50 transition-all"
-          />
-        </div>
-      </div>
     </header>
   );
 }
