@@ -24,18 +24,35 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
   };
 
   // Helper to retrieve all nodes connected to a specific scheme
+  // NEW 2-HOP BFS HELPER:
   const getConnectedEntities = (schemeId: string) => {
-    const connectedNodeIds = new Set<string>();
+    const visited = new Set<string>([schemeId]);
+    let currentLevel = new Set<string>([schemeId]);
 
-    graphData.links.forEach((link) => {
-      const sId = typeof link.source === 'object' ? (link.source as any).id : link.source;
-      const tId = typeof link.target === 'object' ? (link.target as any).id : link.target;
+    // Perform a 2-hop traversal (direct + indirect connections)
+    for (let depth = 0; depth < 2; depth++) {
+      const nextLevel = new Set<string>();
 
-      if (sId === schemeId) connectedNodeIds.add(tId);
-      if (tId === schemeId) connectedNodeIds.add(sId);
-    });
+      graphData.links.forEach((link) => {
+        const sId = typeof link.source === 'object' ? (link.source as any).id : String(link.source);
+        const tId = typeof link.target === 'object' ? (link.target as any).id : String(link.target);
 
-    return graphData.nodes.filter((node) => connectedNodeIds.has(node.id));
+        if (currentLevel.has(sId) && !visited.has(tId)) {
+          nextLevel.add(tId);
+          visited.add(tId);
+        } else if (currentLevel.has(tId) && !visited.has(sId)) {
+          nextLevel.add(sId);
+          visited.add(sId);
+        }
+      });
+
+      currentLevel = nextLevel;
+    }
+
+    // Exclude the scheme node itself
+    visited.delete(schemeId);
+
+    return graphData.nodes.filter((node) => visited.has(node.id));
   };
 
   return (
