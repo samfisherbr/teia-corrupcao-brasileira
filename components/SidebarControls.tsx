@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen } from 'lucide-react';
+import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen, SlidersVertical } from 'lucide-react';
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 
 export const NODE_TYPES: Record<NodeType, { label: string; color: string; icon: React.ElementType }> = {
@@ -53,10 +53,11 @@ export default function SidebarControls({
 
   return (
     <aside className="w-80 bg-[#090f1b] border-r border-slate-800/80 flex flex-col z-20 shadow-xl h-full">
+      
       {/* Cabeçalho */}
       <div className="p-4 border-b border-slate-800/80 flex items-center space-x-3">
         <div className="p-2 bg-cyan-950/60 border border-cyan-800/50 rounded-lg text-cyan-400">
-          <ShieldAlert className="w-5 h-5" />
+          <SlidersVertical className="w-5 h-5" />
         </div>
         <div>
           <h1 className="text-sm font-bold text-slate-100 leading-tight">Painel de Controle</h1>
@@ -80,39 +81,6 @@ export default function SidebarControls({
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-[#0e1726] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
             />
-          </div>
-        </div>
-
-        {/* 🚀 NOVO ÍNDICE DE ESQUEMAS DE CORRUPÇÃO ROLÁVEL */}
-        <div>
-          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5 text-pink-500" />
-            Índice de Esquemas
-          </label>
-          <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
-            {schemeNodes.length === 0 ? (
-              <span className="text-xs text-slate-600 italic block p-1">Nenhum esquema encontrado</span>
-            ) : (
-              schemeNodes.map((scheme) => {
-                const isSelected = selectedNode?.id === scheme.id;
-                return (
-                  <button
-                    key={scheme.id}
-                    onClick={() => onSelectScheme(scheme)}
-                    className={`w-full text-left p-2 rounded-lg border text-xs transition-all flex items-center justify-between group ${
-                      isSelected
-                        ? 'bg-pink-950/40 border-pink-500/80 text-pink-200 shadow-[0_0_10px_rgba(204,1,160,0.2)]'
-                        : 'bg-[#0e1726] border-slate-800 text-slate-300 hover:border-slate-700 hover:text-slate-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2 truncate">
-                      <span className="w-2 h-2 rounded-full bg-[#cc01a0] flex-shrink-0" />
-                      <span className="font-medium truncate">{scheme.label}</span>
-                    </div>
-                  </button>
-                );
-              })
-            )}
           </div>
         </div>
 
@@ -194,6 +162,39 @@ export default function SidebarControls({
                 <span>{st.label}</span>
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* ÍNDICE DE ESQUEMAS DE CORRUPÇÃO ROLÁVEL */}
+        <div>
+          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5 text-pink-500" />
+            Índice de Esquemas
+          </label>
+          <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+            {schemeNodes.length === 0 ? (
+              <span className="text-xs text-slate-600 italic block p-1">Nenhum esquema encontrado</span>
+            ) : (
+              schemeNodes.map((scheme) => {
+                const isSelected = selectedNode?.id === scheme.id;
+                return (
+                  <button
+                    key={scheme.id}
+                    onClick={() => onSelectScheme(scheme)}
+                    className={`w-full text-left p-2 rounded-lg border text-xs transition-all flex items-center justify-between group ${
+                      isSelected
+                        ? 'bg-pink-950/40 border-pink-500/80 text-pink-200 shadow-[0_0_10px_rgba(204,1,160,0.2)]'
+                        : 'bg-[#0e1726] border-slate-800 text-slate-300 hover:border-slate-700 hover:text-slate-100'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2 truncate">
+                      <span className="w-2 h-2 rounded-full bg-[#cc01a0] flex-shrink-0" />
+                      <span className="font-medium truncate">{scheme.label}</span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
