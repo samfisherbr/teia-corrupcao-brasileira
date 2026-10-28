@@ -9,7 +9,7 @@ interface TimelineWidgetProps {
 
 export default function TimelineWidget({ startYear, setStartYear }: TimelineWidgetProps) {
   return (
-    <div className="absolute bottom-6 right-96 z-10 w-96 glass-panel rounded-xl p-4 border border-slate-800 bg-[#0e1726]/90 backdrop-blur-md shadow-2xl">
+    <div className="hidden md:block absolute bottom-6 right-96 z-10 w-96 glass-panel rounded-xl p-4 border border-slate-800 bg-[#0e1726]/90 backdrop-blur-md shadow-2xl">
       <div className="flex justify-between items-center mb-2">
         <span className="text-[10px] font-mono font-semibold text-slate-400 tracking-wider uppercase">
           INVESTIGATION TIMELINE (2000 - 2026)

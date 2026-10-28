@@ -52,7 +52,7 @@ export default function SidebarControls({
   const schemeNodes = nodes.filter((node) => node.type === 'scheme');
 
   return (
-    <aside className="w-80 bg-[#090f1b] border-r border-slate-800/80 flex flex-col z-20 shadow-xl h-full">
+    <aside className="hidden md:flex w-80 bg-[#090f1b] border-r border-slate-800/80 flex flex-col z-20 shadow-xl h-full">
       
       {/* Cabeçalho */}
       <div className="p-4 border-b border-slate-800/80 flex items-center space-x-3">
