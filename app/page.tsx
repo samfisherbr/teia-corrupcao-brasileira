@@ -53,9 +53,6 @@ export default function Page() {
         const data = await res.json();
         if (data.nodes && data.links) {
           setGraphData(data);
-          if (data.nodes.length > 0) {
-            setSelectedNode(data.nodes[0]);
-          }
         }
       } catch (e: any) {
         console.error('Failed to load data from Cloudflare D1:', e);
