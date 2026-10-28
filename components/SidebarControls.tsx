@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen, SlidersVertical } from 'lucide-react';
+import { SlidersVertical } from 'lucide-react/icons/sliders-vertical';
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 
 export const NODE_TYPES: Record<NodeType, { label: string; color: string; icon: React.ElementType }> = {
