@@ -8,6 +8,23 @@ import { GraphData, GraphNode, GraphLink } from '@/types/graph';
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 
+// 1. Defina o callback para centralizar e enquadrar a teia no final da simulação física
+const handleEngineStop = useCallback(() => {
+  if (graphRef.current) {
+    // zoomToFit(duração_ms, padding_px)
+    graphRef.current.zoomToFit(400, 60);
+  }
+}, [graphRef]);
+
+return (
+  <ForceGraph2D
+    ref={graphRef}
+    // ... mantendo todas as outras props existentes
+    onEngineStop={handleEngineStop} // Dispara o enquadramento geral automaticamente
+    cooldownTicks={100}
+  />
+);
+
 interface NetworkGraphProps {
   graphRef: any;
   graphData: GraphData;
@@ -115,15 +132,15 @@ export default function NetworkGraph({
       const linkForce = graphRef.current.d3Force('link');
       if (linkForce) {
         linkForce.distance(200);
-        linkForce.strength(0.15);
+        linkForce.strength(0.4);
       }
 
       graphRef.current.d3Force(
         'collide',
         forceCollide().radius((node: any) => {
           if (node.type === 'scheme') return 100;
-          if (node.type === 'party' || node.type === 'company') return 50;
-          if (node.type === 'politician') return 20;
+          if (node.type === 'party' || node.type === 'company') return 80;
+          if (node.type === 'politician') return 30;
           return 30;
         }).strength(1)
       );

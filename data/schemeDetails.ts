@@ -33,7 +33,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
     mechanism:
       "O esquema operava por meio da utilização de contratos de publicidade da administração pública e de empresas estatais com agências de publicidade do empresário Marcos Valério (como a SMP&B e a DNA Propaganda). Recursos provenientes dessas agências, somados a empréstimos bancários fictícios ou fraudulentos (em instituições como o Banco Rural e BMG), eram repassados periodicamente a parlamentares e dirigentes partidários em troca de sustentação e votos em matérias legislativas de interesse do governo.",
     impact:
-      "R$ 101.600.000 (Valores repassados e movimentados ilegalmente apurados no âmbito da Ação Penal 470)",
+      "R$ 101.600.000 (Valores repassados e movimentados ilegalmente)",
     legalStatus:
       "A apuração principal culminou no julgamento do STF na Ação Penal 470 (AP 470), resultando na condenação de 24 réus por crimes como corrupção ativa, corrupção passiva, lavagem de dinheiro, peculato e formação de quadrilha, incluindo importantes figuras políticas e empresariais. Ao longo dos anos seguintes, diversos condenados cumpriram penas e tiveram suas penas extintas ou perdoadas por indutos presidenciais.",
     sources: [

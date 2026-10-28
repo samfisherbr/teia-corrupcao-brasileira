@@ -24,7 +24,7 @@ export default function HeaderBar({ activePage, setActivePage }: HeaderBarProps)
           </div>
           <div className="flex items-baseline space-x-2">
             <span className="font-mono font-bold text-slate-100 tracking-wider text-sm">CORRWEB:</span>
-            <span className="text-slate-300 text-xs font-medium">Corruption Visualizer</span>
+            <span className="text-slate-300 text-xs font-medium">Visualizador de corrupção</span>
           </div>
         </div>
 
@@ -39,7 +39,7 @@ export default function HeaderBar({ activePage, setActivePage }: HeaderBarProps)
             }`}
           >
             <PieChart className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Infographics</span>
+            <span>Infográficos</span>
           </button>
 
           <button
@@ -51,7 +51,7 @@ export default function HeaderBar({ activePage, setActivePage }: HeaderBarProps)
             }`}
           >
             <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Glossary</span>
+            <span>Glosário</span>
           </button>
         </nav>
       </div>
