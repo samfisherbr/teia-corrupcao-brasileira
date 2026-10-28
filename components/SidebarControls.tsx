@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen, SlidersVertical } from 'lucide-react';
+import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen } from 'lucide-react';
 import { SlidersVertical } from 'lucide-react/icons/sliders-vertical';
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 
