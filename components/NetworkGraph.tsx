@@ -25,9 +25,9 @@ const COLOR_MAP = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  confirmed: '#c50202',
-  under_investigation: '#f59e0b',
-  acquitted: '#10b981'
+  confirmed: '#ff0000ad',
+  under_investigation: '#fffb00b2',
+  acquitted: '#00ffaaab'
 };
 
 export default function NetworkGraph({
@@ -40,7 +40,7 @@ export default function NetworkGraph({
 }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
-  
+
   const imgCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const [, setImagesLoaded] = useState<boolean>(false);
 
@@ -121,13 +121,13 @@ export default function NetworkGraph({
       const linkForce = graphRef.current.d3Force('link');
       if (linkForce) {
         linkForce.distance(200);
-        linkForce.strength(0.3);
+        linkForce.strength(0.15);
       }
 
       graphRef.current.d3Force(
         'collide',
         forceCollide().radius((node: any) => {
-          if (node.type === 'scheme') return 100;
+          if (node.type === 'scheme') return 200;
           if (node.type === 'company') return 80;
           if (node.type === 'party') return 80;
           if (node.type === 'politician') return 40;
@@ -204,12 +204,68 @@ export default function NetworkGraph({
       }
     }
 
-    // Rótulo de Texto
-    const label = node.label || '';
-    ctx.font = `${isSelected ? 'bold' : '500'} ${Math.max(10, 11 / globalScale)}px Inter, sans-serif`;
+    // -----------------------------------------------------------------
+    // 2. CONFIGURAÇÃO CUSTOMIZADA DE RÓTULOS POR TIPO DE NÓ
+    // -----------------------------------------------------------------
+    let primaryLabel = node.label || '';
+    let subLabel = ''; // Sub-rótulo opcional (ex: partido na segunda linha)
+    let fontSize = Math.max(10, 11 / globalScale);
+    let fontWeight = isSelected ? '700' : '500';
+    let fontColor = isSelected ? '#ffffff' : '#cbd5e1';
+
+    switch (node.type) {
+      case 'politician':
+        // Inclui a sigla do partido se existir
+        if (node.party && node.party !== 'N/A' && node.party !== 'NULL') {
+          subLabel = `(${node.party})`;
+        }
+        fontColor = isSelected ? '#ffffff' : '#a5f3fc'; // Tom ciano para políticos
+        break;
+
+      case 'scheme':
+        // Destaque maior para o Esquema Principal
+        if (node.party === 'scheme') {
+          primaryLabel = primaryLabel.toUpperCase();
+          fontSize = Math.max(14, 15 / globalScale);
+        } else{
+          fontSize = Math.max(12, 13 / globalScale);
+        }
+        
+        fontWeight = '700';
+        fontColor = isSelected ? '#ffffff' : '#fef08a'; // Tom amarelo/dourado
+        break;
+
+      case 'company':
+        fontColor = isSelected ? '#ffffff' : '#6ee7b7'; // Tom verde para empresas
+        break;
+
+      case 'party':
+        fontWeight = '600';
+        fontColor = isSelected ? '#ffffff' : '#c7d2fe'; // Tom roxo para partidos
+        break;
+
+      default:
+        break;
+    }
+
+    // 3. Renderização no Canvas
+    ctx.font = `${fontWeight} ${fontSize}px Inter, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillStyle = isSelected ? '#ffffff' : '#cbd5e1';
-    ctx.fillText(label, node.x, node.y + size + 14 / globalScale);
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = fontColor;
+
+    const labelYPosition = node.y + size + 10 / globalScale;
+
+    // Linha Principal (Nome da Entidade)
+    ctx.fillText(primaryLabel, node.x, labelYPosition);
+
+    // Segunda Linha Opcional (Ex: Partido do Político)
+    if (subLabel) {
+      const subFontSize = Math.max(9, 10 / globalScale);
+      ctx.font = `400 ${subFontSize}px Inter, sans-serif`;
+      ctx.fillStyle = isSelected ? '#e0f2fe' : '#94a3b8';
+      ctx.fillText(subLabel, node.x, labelYPosition + fontSize + 2 / globalScale);
+    }
 
     ctx.restore();
   }, [selectedNode]);
