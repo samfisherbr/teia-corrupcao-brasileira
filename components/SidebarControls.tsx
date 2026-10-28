@@ -188,7 +188,7 @@ export default function SidebarControls({
                     }`}
                   >
                     <div className="flex items-center space-x-2 truncate">
-                      <span className="w-2 h-2 rounded-full bg-[#cc01a0] flex-shrink-0" />
+                      <span className="w-2 h-2 rounded-full bg-[#d1e000] flex-shrink-0" />
                       <span className="font-medium truncate">{scheme.label}</span>
                     </div>
                   </button>
