@@ -114,6 +114,13 @@ export default function NetworkGraph({
   useEffect(() => {
     if (graphRef.current) {
       const chargeForce = graphRef.current.d3Force('charge');
+      const isMobile = dimensions.width < 768;
+
+      // Adjust force constants for mobile screens vs desktop
+      const chargeStrength = isMobile ? -300 : -500;
+      const schemeCharge = isMobile ? -600 : -1000;
+      const linkDistance = isMobile ? 100 : 200;
+      
       if (chargeForce) {
         chargeForce.strength((node: any) => (node.type === 'scheme' ? -1000 : -500));
       }
