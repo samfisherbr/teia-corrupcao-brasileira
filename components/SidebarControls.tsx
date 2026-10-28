@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen } from 'lucide-react';
-import { SlidersVertical } from 'lucide-react/icons/sliders-vertical';
+import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen, Component } from 'lucide-react';
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 
 export const NODE_TYPES: Record<NodeType, { label: string; color: string; icon: React.ElementType }> = {
@@ -58,7 +57,7 @@ export default function SidebarControls({
       {/* Cabeçalho */}
       <div className="p-4 border-b border-slate-800/80 flex items-center space-x-3">
         <div className="p-2 bg-cyan-950/60 border border-cyan-800/50 rounded-lg text-cyan-400">
-          <SlidersVertical className="w-5 h-5" />
+          <Component className="w-5 h-5" />
         </div>
         <div>
           <h1 className="text-sm font-bold text-slate-100 leading-tight">Painel de Controle</h1>
