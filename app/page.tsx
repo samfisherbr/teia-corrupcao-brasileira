@@ -108,6 +108,25 @@ export default function Page() {
     setStatusFilters(prev => ({ ...prev, [status]: !prev[status] }));
   };
 
+  const handleSelectSchemeFromIndex = (schemeNode: GraphNode) => {
+  setSelectedNode(schemeNode);
+  setSelectedLink(null);
+
+  if (graphRef.current) {
+    // Pega as coordenadas x e y do nó dentro da simulação D3
+    const x = (schemeNode as any).x || 0;
+    const y = (schemeNode as any).y || 0;
+    
+    // Centraliza a câmera e aplica o zoom no nó selecionado
+    if (typeof graphRef.current.centerAt === 'function') {
+      graphRef.current.centerAt(x, y, 600);
+    }
+    if (typeof graphRef.current.zoom === 'function') {
+      graphRef.current.zoom(2.5, 600);
+    }
+  }
+};
+
   return (
     <div className="relative h-screen w-screen bg-[#080d16] bg-grid-pattern text-slate-100 font-sans overflow-hidden flex flex-col">
       {/* Permanent Header Bar */}
@@ -132,6 +151,9 @@ export default function Page() {
           toggleStatusFilter={toggleStatusFilter}
           nodeCount={filteredData.nodes.length}
           linkCount={filteredData.links.length}
+          nodes={filteredData.nodes}
+          selectedNode={selectedNode}
+          onSelectScheme={handleSelectSchemeFromIndex}
         />
 
         <main className="relative flex-1 w-full h-full overflow-hidden bg-[#080d16]">

@@ -18,14 +18,14 @@ interface NetworkGraphProps {
 }
 
 const COLOR_MAP = {
-  scheme: '#ff00c8',     // Magenta para Esquemas
-  politician: '#00f0ff', // Ciano para Políticos
-  company: '#0aff96',    // Verde para Empresas
-  party: '#a855f7'       // Roxo para Partidos
+  scheme: '#d1e000',     // Magenta para Esquemas
+  politician: '#00bdca', // Ciano para Políticos
+  company: '#00cc74',    // Verde para Empresas
+  party: '#1713e4'       // Roxo para Partidos
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  confirmed: '#ff0055',
+  confirmed: '#c50202',
   under_investigation: '#f59e0b',
   acquitted: '#10b981'
 };
@@ -121,13 +121,15 @@ export default function NetworkGraph({
       const linkForce = graphRef.current.d3Force('link');
       if (linkForce) {
         linkForce.distance(200);
-        linkForce.strength(0.15);
+        linkForce.strength(0.3);
       }
 
       graphRef.current.d3Force(
         'collide',
         forceCollide().radius((node: any) => {
-          if (node.type === 'scheme') return 55;
+          if (node.type === 'scheme') return 100;
+          if (node.type === 'company') return 80;
+          if (node.type === 'party') return 80;
           if (node.type === 'politician') return 40;
           return 30;
         }).strength(1)
@@ -160,11 +162,13 @@ export default function NetworkGraph({
 
     let size = 12;
     if (node.type === 'scheme') {
-      size = 28;
+      size = 50;
+    } else if (node.type === 'party') {
+      size = 30;
     } else if (node.type === 'politician') {
-      size = 18;
+      size = 15;
     } else if (node.type === 'company') {
-      size = 14;
+      size = 30;
     }
 
     ctx.save();

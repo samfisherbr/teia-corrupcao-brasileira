@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2 } from 'lucide-react';
-import { NodeType, LinkStatus } from '@/types/graph';
+import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen } from 'lucide-react';
+import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 
 export const NODE_TYPES: Record<NodeType, { label: string; color: string; icon: React.ElementType }> = {
   politician: { label: 'Político', color: '#00c3d1', icon: UserCheck },
@@ -28,6 +28,9 @@ interface SidebarControlsProps {
   toggleStatusFilter: (status: LinkStatus) => void;
   nodeCount: number;
   linkCount: number;
+  nodes: GraphNode[];
+  selectedNode: GraphNode | null;
+  onSelectScheme: (node: GraphNode) => void;
 }
 
 export default function SidebarControls({
@@ -40,21 +43,30 @@ export default function SidebarControls({
   statusFilters,
   toggleStatusFilter,
   nodeCount,
-  linkCount
+  linkCount,
+  nodes,
+  selectedNode,
+  onSelectScheme
 }: SidebarControlsProps) {
+  // Filtra apenas as entidades do tipo "Esquema de Corrupção"
+  const schemeNodes = nodes.filter((node) => node.type === 'scheme');
+
   return (
-    <aside className="w-80 bg-[#090f1b] border-r border-slate-800/80 flex flex-col z-20 shadow-xl">
+    <aside className="w-80 bg-[#090f1b] border-r border-slate-800/80 flex flex-col z-20 shadow-xl h-full">
+      {/* Cabeçalho */}
       <div className="p-4 border-b border-slate-800/80 flex items-center space-x-3">
         <div className="p-2 bg-cyan-950/60 border border-cyan-800/50 rounded-lg text-cyan-400">
           <ShieldAlert className="w-5 h-5" />
         </div>
         <div>
           <h1 className="text-sm font-bold text-slate-100 leading-tight">Painel de Controle</h1>
-          <p className="text-[11px] text-slate-400 font-mono">CORRWEB</p>
+          <p className="text-[11px] text-slate-400 font-mono">CORRWEB Visualizer</p>
         </div>
       </div>
 
+      {/* Conteúdo Rolável */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
+        {/* Busca */}
         <div>
           <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
             Buscar Entidade
@@ -71,6 +83,40 @@ export default function SidebarControls({
           </div>
         </div>
 
+        {/* 🚀 NOVO ÍNDICE DE ESQUEMAS DE CORRUPÇÃO ROLÁVEL */}
+        <div>
+          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5 text-pink-500" />
+            Índice de Esquemas
+          </label>
+          <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+            {schemeNodes.length === 0 ? (
+              <span className="text-xs text-slate-600 italic block p-1">Nenhum esquema encontrado</span>
+            ) : (
+              schemeNodes.map((scheme) => {
+                const isSelected = selectedNode?.id === scheme.id;
+                return (
+                  <button
+                    key={scheme.id}
+                    onClick={() => onSelectScheme(scheme)}
+                    className={`w-full text-left p-2 rounded-lg border text-xs transition-all flex items-center justify-between group ${
+                      isSelected
+                        ? 'bg-pink-950/40 border-pink-500/80 text-pink-200 shadow-[0_0_10px_rgba(204,1,160,0.2)]'
+                        : 'bg-[#0e1726] border-slate-800 text-slate-300 hover:border-slate-700 hover:text-slate-100'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2 truncate">
+                      <span className="w-2 h-2 rounded-full bg-[#cc01a0] flex-shrink-0" />
+                      <span className="font-medium truncate">{scheme.label}</span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Filtro por Ano */}
         <div>
           <div className="flex justify-between items-center mb-2">
             <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -92,6 +138,7 @@ export default function SidebarControls({
           />
         </div>
 
+        {/* Tipos de Entidade */}
         <div>
           <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
             <Filter className="w-3.5 h-3.5 text-cyan-400" />
@@ -107,16 +154,13 @@ export default function SidebarControls({
                   key={typeKey}
                   onClick={() => toggleTypeFilter(typeKey)}
                   className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg border text-xs transition-all ${
-                    active 
-                      ? 'bg-slate-800/80 border-slate-700 text-slate-200' 
+                    active
+                      ? 'bg-slate-800/80 border-slate-700 text-slate-200'
                       : 'bg-slate-950/40 border-slate-900 text-slate-600 opacity-60'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5">
-                    <span 
-                      className="w-2.5 h-2.5 rounded-full" 
-                      style={{ backgroundColor: cfg.color }} 
-                    />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
                     <IconComp className="w-3.5 h-3.5 text-slate-400" />
                     <span>{cfg.label}</span>
                   </div>
@@ -126,6 +170,7 @@ export default function SidebarControls({
           </div>
         </div>
 
+        {/* Status Jurídico */}
         <div>
           <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block">
             Status Jurídico
@@ -153,6 +198,7 @@ export default function SidebarControls({
         </div>
       </div>
 
+      {/* Rodapé do Painel */}
       <div className="p-3 border-t border-slate-800/80 bg-[#080d16] text-[11px] font-mono text-slate-400 flex justify-between items-center">
         <span>Nós: <strong className="text-cyan-400">{nodeCount}</strong></span>
         <span>Conexões: <strong className="text-cyan-400">{linkCount}</strong></span>
