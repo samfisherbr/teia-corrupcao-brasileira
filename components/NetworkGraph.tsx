@@ -120,7 +120,7 @@ export default function NetworkGraph({
       const chargeStrength = isMobile ? -300 : -500;
       const schemeCharge = isMobile ? -600 : -1000;
       const linkDistance = isMobile ? 100 : 200;
-      
+
       if (chargeForce) {
         chargeForce.strength((node: any) => (node.type === 'scheme' ? -1000 : -500));
       }
@@ -156,11 +156,23 @@ export default function NetworkGraph({
   const handleEngineStop = useCallback(() => {
     if (graphRef.current && !hasInitialFitRef.current) {
       if (typeof graphRef.current.zoomToFit === 'function') {
-        graphRef.current.zoomToFit(400, 60);
-        hasInitialFitRef.current = true; // Bloqueia reenquadramentos futuros causados por arrastes/zoom do usuário
+        const isMobile = dimensions.width < 768;
+        const padding = isMobile ? 20 : 60;
+
+        graphRef.current.zoomToFit(400, padding);
+
+        if (isMobile && typeof graphRef.current.zoom === 'function') {
+          setTimeout(() => {
+            if (graphRef.current && graphRef.current.zoom() < 0.65) {
+              graphRef.current.zoom(0.75, 300);
+            }
+          }, 100);
+        }
+
+        hasInitialFitRef.current = true;
       }
     }
-  }, [graphRef]);
+  }, [graphRef, dimensions.width]);
 
   // 5. Renderizador customizado do Canvas 2D
   const drawNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
@@ -234,10 +246,10 @@ export default function NetworkGraph({
         if (node.party === 'scheme') {
           primaryLabel = primaryLabel.toUpperCase();
           fontSize = Math.max(14, 15 / globalScale);
-        } else{
+        } else {
           fontSize = Math.max(12, 13 / globalScale);
         }
-        
+
         fontWeight = '700';
         fontColor = isSelected ? '#ffffff' : '#fef08a'; // Tom amarelo/dourado
         break;
@@ -308,14 +320,15 @@ export default function NetworkGraph({
       />
 
       {/* Botões de Controle de Câmera */}
-      <div className="absolute bottom-6 left-6 flex items-center space-x-1.5 bg-[#0e1726]/90 border border-slate-800 rounded-lg p-1 z-10">
+      <div className="absolute bottom-16 md:bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
         <button
           onClick={() => {
             if (graphRef.current && typeof graphRef.current.zoom === 'function') {
               graphRef.current.zoom(graphRef.current.zoom() * 1.2, 400);
             }
           }}
-          className="p-1.5 hover:bg-slate-800 text-slate-300 rounded transition-colors"
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          aria-label="Zoom in"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -325,17 +338,19 @@ export default function NetworkGraph({
               graphRef.current.zoom(graphRef.current.zoom() / 1.2, 400);
             }
           }}
-          className="p-1.5 hover:bg-slate-800 text-slate-300 rounded transition-colors"
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          aria-label="Zoom out"
         >
           <Minus className="w-4 h-4" />
         </button>
         <button
           onClick={() => {
             if (graphRef.current && typeof graphRef.current.zoomToFit === 'function') {
-              graphRef.current.zoomToFit(400, 50);
+              const isMobile = dimensions.width < 768;
+              graphRef.current.zoomToFit(400, isMobile ? 20 : 50);
             }
           }}
-          className="px-2 py-1 hover:bg-slate-800 text-slate-300 text-xs font-mono rounded transition-colors"
+          className="px-2.5 py-1.5 md:py-1 hover:bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-mono rounded transition-colors"
         >
           refocus
         </button>
@@ -344,7 +359,8 @@ export default function NetworkGraph({
             if (!document.fullscreenElement) document.documentElement.requestFullscreen();
             else document.exitFullscreen();
           }}
-          className="p-1.5 hover:bg-slate-800 text-slate-300 rounded transition-colors"
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          aria-label="Toggle fullscreen"
         >
           <Maximize className="w-4 h-4" />
         </button>
