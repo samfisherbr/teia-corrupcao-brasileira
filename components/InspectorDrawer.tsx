@@ -51,7 +51,7 @@ export default function InspectorDrawer({
     : { sourceNode: null, targetNode: null };
 
   return (
-    <aside className="w-96 bg-slate-900 border-l border-slate-800 flex flex-col z-20 shadow-2xl animate-in slide-in-from-right duration-200">
+     <aside className="absolute inset-y-0 right-0 w-full md:w-96 bg-[#0c1322]/95 backdrop-blur-xl border-l border-slate-800 flex flex-col z-30 shadow-2xl animate-in slide-in-from-right duration-200">
       {/* Topo do Drawer */}
       <div className="p-4 border-b border-slate-800 flex justify-between items-center">
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
