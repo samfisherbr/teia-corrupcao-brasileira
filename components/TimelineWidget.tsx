@@ -1,3 +1,4 @@
+{/*
 'use client';
 
 import React from 'react';
@@ -6,6 +7,7 @@ interface TimelineWidgetProps {
   startYear: number;
   setStartYear: (year: number) => void;
 }
+
 
 export default function TimelineWidget({ startYear, setStartYear }: TimelineWidgetProps) {
   return (
@@ -38,3 +40,4 @@ export default function TimelineWidget({ startYear, setStartYear }: TimelineWidg
     </div>
   );
 }
+*/}
