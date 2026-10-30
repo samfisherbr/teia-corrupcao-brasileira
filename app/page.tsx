@@ -189,11 +189,12 @@ export default function Page() {
               }}
             />
           )}
-
+        {/*Commenting out TimelineWidget for now, as it may not be needed in the current design.
           <TimelineWidget
             startYear={startYearFilter}
             setStartYear={setStartYearFilter}
           />
+        */}
         </main>
 
         <InspectorDrawer
