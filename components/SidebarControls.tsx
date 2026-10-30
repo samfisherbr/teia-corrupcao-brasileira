@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen, Component } from 'lucide-react';
+import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen, Component, Scale } from 'lucide-react';
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 
 export const NODE_TYPES: Record<NodeType, { label: string; color: string; icon: React.ElementType }> = {
