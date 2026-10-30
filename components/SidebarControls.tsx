@@ -141,6 +141,7 @@ export default function SidebarControls({
         {/* Status Jurídico */}
         <div>
           <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block">
+            <Scale className="w-3.5 h-3.5 text-cyan-400" />
             Status Jurídico
           </label>
           <div className="space-y-1.5">
@@ -168,7 +169,7 @@ export default function SidebarControls({
         {/* ÍNDICE DE ESQUEMAS DE CORRUPÇÃO ROLÁVEL */}
         <div>
           <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5 text-pink-500" />
+            <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
             Índice de Esquemas
           </label>
           <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
