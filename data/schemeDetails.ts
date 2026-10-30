@@ -132,7 +132,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
     ]
   },
 
-  esquema_lavajato: {
+  esquema_lava_jato: {
     context:
       "Deflagrada em março de 2014 pela Polícia Federal e pelo Ministério Público Federal, a Operação Lava Jato teve início a partir da apuração de uma rede de doleiros que utilizava postos de combustíveis e lavanderias para lavagem de dinheiro. A investigação expandiu-se rapidamente ao revelar um megaesquema sistêmico de corrupção, cartelização e propinas envolvendo a Petrobras, grandes empreiteiras nacionais, órgãos públicos e lideranças de diversos partidos políticos.",
     mechanism:
