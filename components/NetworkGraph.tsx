@@ -117,7 +117,7 @@ export default function NetworkGraph({
       const isMobile = dimensions.width < 768;
 
       // Adjust force constants for mobile screens vs desktop
-      const chargeStrength = isMobile ? -300 : -500;
+      const chargeStrength = isMobile ? -1200 : -600;
       const schemeCharge = isMobile ? -600 : -1000;
       const linkDistance = isMobile ? 100 : 200;
 
@@ -227,58 +227,54 @@ export default function NetworkGraph({
     // 2. CONFIGURAÇÃO CUSTOMIZADA DE RÓTULOS POR TIPO DE NÓ
     // -----------------------------------------------------------------
     let primaryLabel = node.label || '';
-    let subLabel = ''; // Sub-rótulo opcional (ex: partido na segunda linha)
+    let subLabel = '';
     let fontSize = Math.max(10, 11 / globalScale);
     let fontWeight = isSelected ? '700' : '500';
     let fontColor = isSelected ? '#ffffff' : '#cbd5e1';
 
     switch (node.type) {
       case 'politician':
-        // Inclui a sigla do partido se existir
         if (node.party && node.party !== 'N/A' && node.party !== 'NULL') {
           subLabel = `(${node.party})`;
         }
-        fontColor = isSelected ? '#ffffff' : '#a5f3fc'; // Tom ciano para políticos
+        fontColor = isSelected ? '#ffffff' : '#a5f3fc';
         break;
 
       case 'scheme':
-        // Destaque maior para o Esquema Principal
-        if (node.party === 'scheme') {
-          primaryLabel = primaryLabel.toUpperCase();
-          fontSize = Math.max(14, 15 / globalScale);
-        } else {
-          fontSize = Math.max(12, 13 / globalScale);
-        }
-
+        primaryLabel = primaryLabel.toUpperCase();
+        fontSize = Math.max(13, 14 / globalScale);
         fontWeight = '700';
-        fontColor = isSelected ? '#ffffff' : '#fef08a'; // Tom amarelo/dourado
+        fontColor = isSelected ? '#ffffff' : '#fef08a';
         break;
 
       case 'company':
-        fontColor = isSelected ? '#ffffff' : '#6ee7b7'; // Tom verde para empresas
+        fontColor = isSelected ? '#ffffff' : '#6ee7b7';
         break;
 
       case 'party':
         fontWeight = '600';
-        fontColor = isSelected ? '#ffffff' : '#c7d2fe'; // Tom roxo para partidos
+        fontColor = isSelected ? '#ffffff' : '#c7d2fe';
         break;
 
       default:
         break;
     }
 
-    // 3. Renderização no Canvas
+    // -----------------------------------------------------------------
+    // 3. RENDERIZAÇÃO NO CANVAS (Ajuste no Y para afastar o texto da bolha)
+    // -----------------------------------------------------------------
     ctx.font = `${fontWeight} ${fontSize}px Inter, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = fontColor;
 
-    const labelYPosition = node.y + size + 10 / globalScale;
+    // Posiciona o texto com folga proporcional ao tamanho da bolha
+    const labelYPosition = node.y + size + 8 / globalScale;
 
-    // Linha Principal (Nome da Entidade)
+    // Linha Principal
     ctx.fillText(primaryLabel, node.x, labelYPosition);
 
-    // Segunda Linha Opcional (Ex: Partido do Político)
+    // Segunda Linha (Partido/Sigla)
     if (subLabel) {
       const subFontSize = Math.max(9, 10 / globalScale);
       ctx.font = `400 ${subFontSize}px Inter, sans-serif`;
