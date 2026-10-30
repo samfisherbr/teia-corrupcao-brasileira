@@ -6,7 +6,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import HeaderBar, { ActivePage } from '@/components/HeaderBar';
 import HeaderOverlay from '@/components/HeaderOverlay';
 import NetworkGraph from '@/components/NetworkGraph';
-import TimelineWidget from '@/components/TimelineWidget';
+//import TimelineWidget from '@/components/TimelineWidget';
 import SidebarControls from '@/components/SidebarControls';
 import InspectorDrawer from '@/components/InspectorDrawer';
 import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/graph';
