@@ -37,7 +37,7 @@ export default function HeaderBar({ activePage, setActivePage }: HeaderBarProps)
         <nav className="flex items-center space-x-1 sm:space-x-2 border-l border-slate-800/80 pl-2 sm:pl-6 shrink-0">
           <button
             onClick={() => setActivePage(activePage === 'infographics' ? 'graph' : 'infographics')}
-            className={`flex items-center space-x-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition-all ${
+            className={`flex items-center space-x-1.5 px-2 sm:px-3 py-1 sm:py-3.75 rounded-lg text-[11px] sm:text-xs font-medium transition-all ${
               activePage === 'infographics'
                 ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 glow-cyan'
                 : 'text-slate-300 hover:text-cyan-400 hover:bg-slate-800/60 border border-transparent hover:border-slate-700/60'

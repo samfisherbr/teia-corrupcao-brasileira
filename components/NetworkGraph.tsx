@@ -261,25 +261,41 @@ export default function NetworkGraph({
     }
 
     // -----------------------------------------------------------------
-    // 3. RENDERIZAÇÃO NO CANVAS (Ajuste no Y para afastar o texto da bolha)
+    // 3. RENDERIZAÇÃO PROGRESSIVA DE RÓTULOS (Level of Detail por Zoom)
     // -----------------------------------------------------------------
-    ctx.font = `${fontWeight} ${fontSize}px Inter, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = fontColor;
+    const isScheme = node.type === 'scheme';
+    const isPartyOrCompany = node.type === 'party' || node.type === 'company';
+    const isPolitician = node.type === 'politician';
 
-    // Posiciona o texto com folga proporcional ao tamanho da bolha
-    const labelYPosition = node.y + size + 8 / globalScale;
+    // Regras de visibilidade por nível de zoom:
+    // 1. Nós selecionados e Esquemas SEMPRE mostram seus rótulos
+    // 2. Partidos e Empresas aparecem no zoom intermediário (globalScale >= 0.6)
+    // 3. Políticos aparecem apenas quando houver zoom próximo (globalScale >= 1.1)
+    const shouldShowLabel =
+      isSelected ||
+      isScheme ||
+      (isPartyOrCompany && globalScale >= 0.6) ||
+      (isPolitician && globalScale >= 1.1);
 
-    // Linha Principal
-    ctx.fillText(primaryLabel, node.x, labelYPosition);
+    if (shouldShowLabel) {
+      ctx.font = `${fontWeight} ${fontSize}px Inter, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = fontColor;
 
-    // Segunda Linha (Partido/Sigla)
-    if (subLabel) {
-      const subFontSize = Math.max(9, 10 / globalScale);
-      ctx.font = `400 ${subFontSize}px Inter, sans-serif`;
-      ctx.fillStyle = isSelected ? '#e0f2fe' : '#94a3b8';
-      ctx.fillText(subLabel, node.x, labelYPosition + fontSize + 2 / globalScale);
+      // Posiciona o texto com folga proporcional ao tamanho da bolha
+      const labelYPosition = node.y + size + 8 / globalScale;
+
+      // Linha Principal
+      ctx.fillText(primaryLabel, node.x, labelYPosition);
+
+      // Segunda Linha (Ex: Sigla do Partido) — só aparece com zoom mais próximo
+      if (subLabel && globalScale >= 1.3) {
+        const subFontSize = Math.max(9, 10 / globalScale);
+        ctx.font = `400 ${subFontSize}px Inter, sans-serif`;
+        ctx.fillStyle = isSelected ? '#e0f2fe' : '#94a3b8';
+        ctx.fillText(subLabel, node.x, labelYPosition + fontSize + 2 / globalScale);
+      }
     }
 
     ctx.restore();
