@@ -135,9 +135,9 @@ export default function NetworkGraph({
         'collide',
         forceCollide().radius((node: any) => {
           if (node.type === 'scheme') return 200;
-          if (node.type === 'company') return 80;
-          if (node.type === 'party') return 80;
-          if (node.type === 'politician') return 40;
+          if (node.type === 'company') return 100;
+          if (node.type === 'party') return 100;
+          if (node.type === 'politician') return 50;
           return 30;
         }).strength(1)
       );
