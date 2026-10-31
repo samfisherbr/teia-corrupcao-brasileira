@@ -16,7 +16,6 @@ import {
   BarChart3,
   Layers,
   Activity,
-  Scale,
   TrendingUp,
   ShieldAlert
 } from 'lucide-react';
@@ -27,7 +26,7 @@ interface HeaderOverlayProps {
   graphData: GraphData;
 }
 
-// Helper para extrair e converter strings monetárias (ex: "R$ 110.000.000") em números
+// Helper para extrair e converter strings monetárias em números
 function parseMonetaryValue(amountStr?: string | null): number {
   if (!amountStr || amountStr === 'NULL' || amountStr === 'N/A') return 0;
   const numericOnly = amountStr.replace(/[^0-9]/g, '');
@@ -116,10 +115,12 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
     let acquitted = 0;
 
     graphData.links.forEach((link) => {
-      // Tipos de conexão (compatível com os esquemas antigos e novos)
-      if (link.type === 'transaction' || link.type === 'suspect_transactions' || link.type === 'suspect_transaction') {
+      const linkType = (link.type as string) || '';
+
+      // Tipos de conexão (compatível com tipos legados e novos)
+      if (linkType === 'transaction' || linkType === 'suspect_transactions' || linkType === 'suspect_transaction') {
         transactions++;
-      } else if (link.type === 'contract' || link.type === 'direct_financing') {
+      } else if (linkType === 'contract' || linkType === 'direct_financing') {
         contracts++;
       } else {
         processes++;
@@ -137,7 +138,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
         typeKey: 'transaction',
         count: transactions,
         percentage: Math.round((transactions / totalLinks) * 100),
-        color: '#f59e0b', // Amber
+        color: '#f59e0b',
         bgClass: 'bg-amber-500'
       },
       {
@@ -145,7 +146,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
         typeKey: 'contract',
         count: contracts,
         percentage: Math.round((contracts / totalLinks) * 100),
-        color: '#10b981', // Emerald
+        color: '#10b981',
         bgClass: 'bg-emerald-500'
       },
       {
@@ -153,7 +154,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
         typeKey: 'process',
         count: processes,
         percentage: Math.round((processes / totalLinks) * 100),
-        color: '#3b82f6', // Blue
+        color: '#3b82f6',
         bgClass: 'bg-blue-500'
       }
     ];
@@ -203,8 +204,6 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
     });
 
     const grandTotal = schemeAmounts.reduce((acc, curr) => acc + curr.amount, 0);
-
-    // Ordenar do maior para o menor valor financeiro
     schemeAmounts.sort((a, b) => b.amount - a.amount);
 
     return {
@@ -218,7 +217,6 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
     setExpandedSchemeId((prev) => (prev === id ? null : id));
   };
 
-  // Helper para buscar nós conectados a um esquema
   const getConnectedEntities = (schemeId: string) => {
     const connectedNodeIds = new Set<string>();
 
@@ -240,12 +238,9 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-10">
-        {/* =================================================================== */}
-        {/* PAINEL DE INFOGRÁFICOS                                              */}
-        {/* =================================================================== */}
+        {/* PAINEL DE INFOGRÁFICOS */}
         {activePage === 'infographics' && (
           <div className="space-y-10 animate-in fade-in duration-300">
-            {/* Header Title */}
             <div>
               <div className="flex items-center space-x-2 text-cyan-400 text-xs font-mono font-semibold uppercase tracking-wider">
                 <PieChartIcon className="w-4 h-4" />
@@ -259,7 +254,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
               </p>
             </div>
 
-            {/* Cards com Métricas Gerais */}
+            {/* Métricas Globais */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-sm flex items-center justify-between">
                 <div>
@@ -304,11 +299,9 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
               </div>
             </div>
 
-            {/* GRID DOS 3 INFOGRÁFICOS PRINCIPAIS */}
+            {/* Grid Infográficos 1 & 2 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* --------------------------------------------------------------- */}
-              {/* INFOGRÁFICO 1: RANKING DE CENTRALIDADE E PARTIDOS                */}
-              {/* --------------------------------------------------------------- */}
+              {/* Infográfico 1 */}
               <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-6 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
@@ -355,9 +348,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                 </div>
               </div>
 
-              {/* --------------------------------------------------------------- */}
-              {/* INFOGRÁFICO 2: DIAGRAMA DE FLUXO OPERACIONAL                     */}
-              {/* --------------------------------------------------------------- */}
+              {/* Infográfico 2 */}
               <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-6 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
@@ -374,13 +365,11 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                   </p>
                 </div>
 
-                {/* Donut SVG Simulado + Categorias */}
                 <div className="flex flex-col sm:flex-row items-center gap-6 my-2">
                   <div className="relative w-36 h-36 flex-shrink-0 flex items-center justify-center">
                     <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
                       {operationalFlowMetrics.categories.map((cat, idx) => {
                         const strokeDasharray = `${cat.percentage} ${100 - cat.percentage}`;
-                        // Calcula o offset acumulado dos arcos
                         const offset = operationalFlowMetrics.categories
                           .slice(0, idx)
                           .reduce((acc, curr) => acc + curr.percentage, 0);
@@ -425,7 +414,6 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                   </div>
                 </div>
 
-                {/* Status Jurídico Mini Badge */}
                 <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                   <span className="text-slate-400">Status Jurídico:</span>
                   <div className="flex space-x-3">
@@ -437,9 +425,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
               </div>
             </div>
 
-            {/* ----------------------------------------------------------------- */}
-            {/* INFOGRÁFICO 3: MAPA DE CALOR FINANCEIRO POR ESQUEMA (TREEMAP)      */}
-            {/* ----------------------------------------------------------------- */}
+            {/* Infográfico 3 */}
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-6">
               <div>
                 <div className="flex items-center justify-between">
@@ -456,13 +442,11 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                 </p>
               </div>
 
-              {/* Grid Treemap Proporcional */}
               {financialTreemapData.items.length === 0 ? (
                 <p className="text-xs text-slate-500 italic">Nenhum esquema financeiro carregado.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {financialTreemapData.items.map((item, index) => {
-                    // Gradientes variados dependendo da posição no ranking de valores
                     const intensityColors = [
                       'from-emerald-950/90 to-emerald-900/60 border-emerald-500/50 text-emerald-300',
                       'from-cyan-950/90 to-cyan-900/60 border-cyan-500/50 text-cyan-300',
@@ -500,9 +484,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
           </div>
         )}
 
-        {/* =================================================================== */}
-        {/* SEÇÃO DO GLOSSÁRIO (MANTIDA E INTEGRADA)                            */}
-        {/* =================================================================== */}
+        {/* SEÇÃO DO GLOSSÁRIO */}
         {activePage === 'glossary' && (
           <div className="space-y-8 animate-in fade-in duration-300">
             <div>
@@ -532,7 +514,6 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                       key={scheme.id}
                       className="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden shadow-md"
                     >
-                      {/* Scheme Header Card */}
                       <div className="p-6 space-y-4">
                         <div className="flex justify-between items-start">
                           <div>
@@ -551,12 +532,10 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                           </button>
                         </div>
 
-                        {/* Executive Summary */}
                         <p className="text-sm text-slate-300 leading-relaxed font-sans">
                           {scheme.summary}
                         </p>
 
-                        {/* Quick Metrics Bar */}
                         <div className="flex flex-wrap gap-4 pt-3 border-t border-slate-800 text-xs font-mono text-slate-400">
                           <div className="flex items-center space-x-1.5">
                             <Coins className="w-4 h-4 text-emerald-400" />
@@ -573,10 +552,8 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                         </div>
                       </div>
 
-                      {/* Expanded Investigative Content */}
                       {isExpanded && (
                         <div className="px-6 pb-6 pt-3 border-t border-slate-800 bg-slate-950/80 space-y-6 animate-in fade-in duration-200">
-                          {/* Context & History */}
                           {details?.context && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -586,7 +563,6 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                             </div>
                           )}
 
-                          {/* Operational Mechanism */}
                           {details?.mechanism && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -598,7 +574,6 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                             </div>
                           )}
 
-                          {/* Connected Graph Entities */}
                           {connectedEntities.length > 0 && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-2">
@@ -623,7 +598,6 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                             </div>
                           )}
 
-                          {/* Legal Outcomes */}
                           {details?.legalStatus && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -633,7 +607,6 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                             </div>
                           )}
 
-                          {/* Documentary Sources */}
                           {details?.sources && details.sources.length > 0 && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-2">
