@@ -54,6 +54,14 @@ export default function Page() {
         if (data.nodes && data.links) {
           setGraphData(data);
         }
+
+        //TIMEOUT DELAY HERE:
+        // Gives D3 400ms to detangle nodes behind the loading screen
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 400);
+        return;
+
       } catch (e: any) {
         console.error('Failed to load data from Cloudflare D1:', e);
         setError(e.message || 'Error connecting to D1 Database');
