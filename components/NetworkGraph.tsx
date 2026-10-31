@@ -354,13 +354,63 @@ export default function NetworkGraph({
           ctx.arc(node.x, node.y, node.type === 'scheme' ? 35 : 22, 0, 2 * Math.PI);
           ctx.fill();
         }}
-        linkColor={(link: any) => STATUS_COLORS[link.status] || '#ff0055'}
-        linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.5 : 1.8)}
-        linkLineDash={(link: any) => (link.status === 'under_investigation' ? [4, 4] : undefined)}
+
+        linkCanvasObjectMode={() => 'replace'}
+        linkCanvasObject={(link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+          const start = link.source;
+          const end = link.target;
+
+          if (!start || !end || typeof start.x !== 'number' || typeof end.x !== 'number') return;
+
+          const color = STATUS_COLORS[link.status] || '#ff0055';
+          const isSelected = selectedLink?.id === link.id;
+          const width = isSelected ? 3.5 : 1.8;
+
+          ctx.save();
+
+          // Pass 1: Outer Translucent Aura (Glow)
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+          ctx.lineTo(end.x, end.y);
+          ctx.strokeStyle = `${color}44`; // ~27% opacity glow
+          ctx.lineWidth = width + 5 / globalScale;
+          ctx.stroke();
+
+          // Pass 2: Sharp Core Line
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+          ctx.lineTo(end.x, end.y);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = width;
+
+          if (link.status === 'under_investigation') {
+            ctx.setLineDash([4, 4]);
+          } else {
+            ctx.setLineDash([]);
+          }
+
+          ctx.stroke();
+          ctx.restore();
+        }}
+
+        /* Keep directional particles and event handlers intact */
         linkDirectionalParticles={(link: any) => (link.status === 'under_investigation' ? 3 : 0)}
         linkDirectionalParticleSpeed={0.005}
         linkDirectionalParticleWidth={2.5}
         linkDirectionalParticleColor={(link: any) => STATUS_COLORS[link.status] || '#f59e0b'}
+        onNodeClick={(node: any) => onSelectNode(node)}
+        onLinkClick={(link: any) => onSelectLink(link)}
+        onEngineStop={handleEngineStop}
+
+        linkColor={(link: any) => STATUS_COLORS[link.status] || '#ff0055'}
+        linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.5 : 1.8)}
+        linkLineDash={(link: any) => (link.status === 'under_investigation' ? [4, 4] : undefined)}
+
+        linkDirectionalParticles={(link: any) => (link.status === 'under_investigation' ? 3 : 0)}
+        linkDirectionalParticleSpeed={0.005}
+        linkDirectionalParticleWidth={2.5}
+        linkDirectionalParticleColor={(link: any) => STATUS_COLORS[link.status] || '#f59e0b'}
+
         onNodeClick={(node: any) => onSelectNode(node)}
         onLinkClick={(link: any) => onSelectLink(link)}
         onEngineStop={handleEngineStop}
