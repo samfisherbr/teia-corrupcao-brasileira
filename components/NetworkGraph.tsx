@@ -20,16 +20,16 @@ interface NetworkGraphProps {
 }
 
 const COLOR_MAP = {
-  scheme: '#d1e000',     // Magenta para Esquemas
-  politician: '#00bdca', // Ciano para Políticos
-  company: '#00cc74',    // Verde para Empresas
+  scheme: '#cc01a0',     // Magenta para Esquemas
+  politician: '#00c3d1', // Ciano para Políticos
+  company: '#666d6a',    // Verde para Empresas
   party: '#1713e4'       // Roxo para Partidos
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  confirmed: '#ff0000ad',
-  under_investigation: '#fffb00b2',
-  acquitted: '#00ffaaab'
+  confirmed: '#b1003b',
+  under_investigation: '#f59e0b',
+  acquitted: '#10b981'
 };
 
 export default function NetworkGraph({
