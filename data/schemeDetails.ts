@@ -172,6 +172,27 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
         url: "https://portal.tcu.gov.br/"
       }
     ]
+  },
+
+  esquema_operacao_venire_joias: {
+    context:
+      "Deflagradas pela Polícia Federal em 2023 e 2024 no âmbito dos inquéritos das milícias digitais e de desvio de patrimônio público, as investigações da Operação Venire e do Caso das Joias apuraram a atuação de uma estrutura paralela no gabinete presidencial para fraude em sistemas do Ministério da Saúde e a apropriação indevida de bens de alto valor recebidos de autoridades estrangeiras.",
+    mechanism:
+      "O esquema desdobrou-se em duas frentes operacionais: no fraude vacinal, servidores e assessores utilizaram credenciais privilegiadas para inserir dados falsos de imunização contra a COVID-19 nos sistemas SI-PNI e RNDS do Ministério da Saúde, emitindo certificados internacionais fraudulentos; na vertente dos bens públicos, kits de joias luxuosas ofertados pela Arábia Saudita e por outros países ao Estado brasileiro foram desviados do acervo público da Presidência, transportados para os Estados Unidos em aeronaves oficiais e vendidos por intermediários em leilões e lojas especializadas, com repasse do dinheiro em espécie aos envolvidos e operação de resgate das peças após determinações do Tribunal de Contas da União (TCU).",
+    impact:
+      "R$ 6.800.000 (Valor estimado do patrimônio público desviado e negociado ilegalmente em joias e relógios de luxo)",
+    legalStatus:
+      "A Polícia Federal indiciou o ex-presidente Jair Bolsonaro, o tenente-coronel Mauro Cid e diversos ex-assessores militares e civis pelos crimes de associação criminosa, inserção de dados falsos em sistema de informações, peculato e lavagem de dinheiro. O relatório conclusivo das investigações foi homologado e encaminhado pelo Supremo Tribunal Federal (STF) à Procuradoria-Geral da República (PGR) para análise e deliberação sobre o oferecimento de denúncia criminal.",
+    sources: [
+      {
+        title: "Relatórios de Inquéritos e Operações da Polícia Federal (PF)",
+        url: "https://www.gov.br/pf/"
+      },
+      {
+        title: "Decisões e Inquéritos do Supremo Tribunal Federal (STF)",
+        url: "https://portal.stf.jus.br/"
+      }
+    ]
   }
 
 };

@@ -311,14 +311,6 @@ export default function NetworkGraph({
         height={dimensions.height}
         graphData={graphData}
         nodeCanvasObject={drawNode}
-
-        // vvv Pre-computes 120 physics ticks BEFORE the canvas first paints: vvv
-        warmupTicks={120}
-        cooldownTicks={150}
-        d3AlphaDecay={0.02}
-        d3VelocityDecay={0.3}
-        // ^^^ Pre-computes 120 physics ticks BEFORE the canvas first paints ^^^
-
         nodePointerAreaPaint={(node: any, color, ctx) => {
           ctx.fillStyle = color;
           ctx.beginPath();
@@ -335,6 +327,14 @@ export default function NetworkGraph({
         onNodeClick={(node: any) => onSelectNode(node)}
         onLinkClick={(link: any) => onSelectLink(link)}
         onEngineStop={handleEngineStop}
+
+        // vvv Pre-computes 120 physics ticks BEFORE the canvas first paints: vvv
+        warmupTicks={120}
+        cooldownTicks={150}
+        d3AlphaDecay={0.02}
+        d3VelocityDecay={0.3}
+        // ^^^ Pre-computes 120 physics ticks BEFORE the canvas first paints ^^^
+
         backgroundColor="#080d16"
       />
 
