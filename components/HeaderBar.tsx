@@ -16,7 +16,7 @@ export default function HeaderBar({ activePage, setActivePage }: HeaderBarProps)
       {/* Brand Title & Navigation Buttons */}
       <div className="flex items-center space-x-2 sm:space-x-6 min-w-0">
         <div 
-          className="flex items-center space-x-2 sm:space-x-3 cursor-pointer shrink-0" style="margin-right: 35px;"
+          className="flex items-center space-x-2 sm:space-x-3 cursor-pointer shrink-0"
           onClick={() => setActivePage('graph')}
         >
           <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 glow-cyan shrink-0">
