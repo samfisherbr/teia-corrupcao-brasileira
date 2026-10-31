@@ -405,7 +405,7 @@ export default function NetworkGraph({
       {/* ----------------------------------------------------------------- */}
       {/* LEGENDA FIXA DE CORES DOS CIRCULOS (Canto Superior Direito)       */}
       {/* ----------------------------------------------------------------- */}
-      <div className="absolute top-10 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-20 font-mono shadow-2xl select-none">
+      <div className="absolute top-36 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-20 font-mono shadow-2xl select-none">
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
           Legenda dos Círculos
         </div>

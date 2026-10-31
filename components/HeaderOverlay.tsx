@@ -67,36 +67,36 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
           <div className="space-y-8 animate-in fade-in duration-300">
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-                Infographics & Visual Insights
+                Infográficos das corrupção
               </h1>
               <p className="mt-2 text-slate-600 text-sm">
-                Visual data breakdown of financial impacts and corruption network density across active database records.
+                Detalhamento visual dos impactos financeiros e da densidade da rede de corrupção em registros ativos no nosso banco de dados.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl shadow-sm">
                 <span className="text-xs font-mono text-slate-500 uppercase tracking-wider block">
-                  Total Mapped Schemes
+                  Total de esquemas de corrupção mapeados
                 </span>
                 <span className="text-2xl font-bold text-slate-900 mt-1 block">
-                  {schemeNodes.length} Schemes
+                  {schemeNodes.length} esquemas
                 </span>
               </div>
               <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl shadow-sm">
                 <span className="text-xs font-mono text-slate-500 uppercase tracking-wider block">
-                  Total Database Nodes
+                  Total de entidades rastreadas (políticos, empresas, etc.)
                 </span>
                 <span className="text-2xl font-bold text-slate-900 mt-1 block">
-                  {graphData.nodes.length} Entities
+                  {graphData.nodes.length} entidades
                 </span>
               </div>
               <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl shadow-sm">
                 <span className="text-xs font-mono text-slate-500 uppercase tracking-wider block">
-                  Total Tracked Links
+                  Total the de conexões entre entidades e esquemas
                 </span>
                 <span className="text-2xl font-bold text-slate-900 mt-1 block">
-                  {graphData.links.length} Connections
+                  {graphData.links.length} conexões
                 </span>
               </div>
             </div>
@@ -113,10 +113,10 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3">
                 <BookOpen className="w-8 h-8 text-cyan-600" />
-                Corruption Schemes Glossary
+                Glossário de Esquemas de Corrupção
               </h1>
               <p className="mt-2 text-slate-600 text-sm">
-                Comprehensive directory, operational mechanics, financial metrics, and legal documentation for all registered corruption schemes.
+                Explore os esquemas de corrupção registrados em nosso banco de dados, com detalhes sobre seu funcionamento, impacto financeiro e entidades envolvidas.
               </p>
             </div>
 
