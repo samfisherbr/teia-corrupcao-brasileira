@@ -108,7 +108,7 @@ export default function SidebarControls({
 
         {/* Tipos de Entidade */}
         <div>
-          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
+          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <Filter className="w-3.5 h-3.5 text-cyan-400" />
             Tipos de Entidade
           </label>
