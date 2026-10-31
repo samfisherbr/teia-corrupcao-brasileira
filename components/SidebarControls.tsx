@@ -6,9 +6,9 @@ import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 
 export const NODE_TYPES: Record<NodeType, { label: string; color: string; icon: React.ElementType }> = {
   politician: { label: 'Político', color: '#00c3d1', icon: UserCheck },
-  party: { label: 'Partido', color: '#a855f7', icon: Layers },
+  party: { label: 'Partido', color: '#1713e4', icon: Layers },
   scheme: { label: 'Esquema de Corrupção', color: '#cc01a0', icon: ShieldAlert },
-  company: { label: 'Empresa / Operador', color: '#00c771', icon: Building2 }
+  company: { label: 'Empresa / Operador', color: '#666d6a', icon: Building2 }
 };
 
 export const STATUS_COLORS: Record<LinkStatus, string> = {
@@ -189,7 +189,7 @@ export default function SidebarControls({
                     }`}
                   >
                     <div className="flex items-center space-x-2 truncate">
-                      <span className="w-2 h-2 rounded-full bg-[#d1e000] flex-shrink-0" />
+                      <span className="w-2 h-2 rounded-full bg-[#cc01a0] flex-shrink-0" />
                       <span className="font-medium truncate">{scheme.label}</span>
                     </div>
                   </button>
