@@ -7,7 +7,7 @@ import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 export const NODE_TYPES: Record<NodeType, { label: string; color: string; icon: React.ElementType }> = {
   politician: { label: 'Político', color: '#00c3d1', icon: UserCheck },
   party: { label: 'Partido', color: '#1713e4', icon: Layers },
-  scheme: { label: 'Esquema de Corrupção', color: '#cc01a0', icon: ShieldAlert },
+  scheme: { label: 'Esquema de Corrupção', color: '#ff00c8', icon: ShieldAlert },
   company: { label: 'Empresa / Operador', color: '#666d6a', icon: Building2 }
 };
 

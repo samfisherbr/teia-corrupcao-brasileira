@@ -20,7 +20,7 @@ interface NetworkGraphProps {
 }
 
 const COLOR_MAP = {
-  scheme: '#cc01a0',     // Magenta para Esquemas
+  scheme: '#ff00c8',     // Magenta para Esquemas
   politician: '#00c3d1', // Ciano para Políticos
   company: '#666d6a',    // Verde para Empresas
   party: '#1713e4'       // Roxo para Partidos
@@ -311,6 +311,14 @@ export default function NetworkGraph({
         height={dimensions.height}
         graphData={graphData}
         nodeCanvasObject={drawNode}
+
+        // vvv Pre-computes 120 physics ticks BEFORE the canvas first paints: vvv
+        warmupTicks={120}
+        cooldownTicks={150}
+        d3AlphaDecay={0.02}
+        d3VelocityDecay={0.3}
+        // ^^^ Pre-computes 120 physics ticks BEFORE the canvas first paints ^^^
+
         nodePointerAreaPaint={(node: any, color, ctx) => {
           ctx.fillStyle = color;
           ctx.beginPath();
@@ -361,7 +369,7 @@ export default function NetworkGraph({
       </div>
 
       {/* Botões de Controle de Câmera */}
-      <div className="absolute bottom-16 md:bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
+      <div className="absolute bottom-6 md:bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
         <button
           onClick={() => {
             if (graphRef.current && typeof graphRef.current.zoom === 'function') {
