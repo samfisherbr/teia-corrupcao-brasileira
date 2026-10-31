@@ -17,6 +17,7 @@ interface NetworkGraphProps {
   selectedLink: GraphLink | null;
   onSelectNode: (node: GraphNode) => void;
   onSelectLink: (link: GraphLink) => void;
+  onGraphReady?: () => void;
 }
 
 const COLOR_MAP = {
@@ -38,13 +39,49 @@ export default function NetworkGraph({
   selectedNode,
   selectedLink,
   onSelectNode,
-  onSelectLink
+  onSelectLink,
+  onGraphReady
 }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
 
   const imgCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const [, setImagesLoaded] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (graphRef.current && graphData.nodes.length > 0) {
+      const fg = graphRef.current;
+
+      // 1. Temporarily boost physics energy
+      if (typeof fg.d3AlphaTarget === 'function') {
+        fg.d3AlphaTarget(0.3);
+      }
+
+      // 2. Synchronously advance physics ticks (simulates time passing rapidly)
+      // This forces nodes to push apart before drawing to screen
+      for (let i = 0; i < 150; i++) {
+        if (typeof fg.tickFrame === 'function') {
+          fg.tickFrame();
+        }
+      }
+
+      // 3. Reset alpha energy back to equilibrium
+      if (typeof fg.d3AlphaTarget === 'function') {
+        fg.d3AlphaTarget(0);
+      }
+
+      // 4. Fit view to updated coordinates
+      if (typeof fg.zoomToFit === 'function') {
+        const isMobile = dimensions.width < 768;
+        fg.zoomToFit(0, isMobile ? 20 : 60); // 0ms duration for instant snap
+      }
+
+      // 5. Signal to page.tsx that background detangling is finished
+      if (onGraphReady) {
+        onGraphReady();
+      }
+    }
+  }, [graphData, dimensions.width]);
 
   // Controla se o enquadramento inicial (refocus) já foi executado
   const hasInitialFitRef = useRef<boolean>(false);

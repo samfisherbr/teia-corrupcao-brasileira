@@ -53,20 +53,21 @@ export default function Page() {
         const data = await res.json();
         if (data.nodes && data.links) {
           setGraphData(data);
+          
+          // If the database happens to be completely empty, close the loading screen immediately
+          if (data.nodes.length === 0) {
+            setIsLoading(false);
+          }
         }
-
-        //TIMEOUT DELAY HERE:
-        // Gives D3 400ms to detangle nodes behind the loading screen
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 400);
+        
+        // 🚀 NOTE: We DO NOT set `isLoading(false)` here anymore.
+        // It is now strictly handled by `onGraphReady` passed to the NetworkGraph component.
         return;
 
       } catch (e: any) {
         console.error('Failed to load data from Cloudflare D1:', e);
         setError(e.message || 'Error connecting to D1 Database');
-      } finally {
-        setIsLoading(false);
+        setIsLoading(false); // Only stop loading automatically if an error occurred
       }
     }
     loadDataFromD1();
@@ -117,31 +118,27 @@ export default function Page() {
   };
 
   const handleSelectSchemeFromIndex = (schemeNode: GraphNode) => {
-  setSelectedNode(schemeNode);
-  setSelectedLink(null);
+    setSelectedNode(schemeNode);
+    setSelectedLink(null);
 
-  if (graphRef.current) {
-    // Pega as coordenadas x e y do nó dentro da simulação D3
-    const x = (schemeNode as any).x || 0;
-    const y = (schemeNode as any).y || 0;
-    
-    // Centraliza a câmera e aplica o zoom no nó selecionado
-    if (typeof graphRef.current.centerAt === 'function') {
-      graphRef.current.centerAt(x, y, 600);
+    if (graphRef.current) {
+      const x = (schemeNode as any).x || 0;
+      const y = (schemeNode as any).y || 0;
+      
+      if (typeof graphRef.current.centerAt === 'function') {
+        graphRef.current.centerAt(x, y, 600);
+      }
+      if (typeof graphRef.current.zoom === 'function') {
+        graphRef.current.zoom(2.5, 600);
+      }
     }
-    if (typeof graphRef.current.zoom === 'function') {
-      graphRef.current.zoom(2.5, 600);
-    }
-  }
-};
+  };
 
   return (
     <div className="relative h-[100dvh] w-full bg-[#080d16] text-slate-100 font-sans overflow-hidden flex flex-col">
-      {/* Permanent Header Bar */}
       <HeaderBar activePage={activePage} setActivePage={setActivePage} />
 
       <div className="flex flex-1 w-full h-[calc(100vh-4rem)] relative overflow-hidden">
-        {/* Sliding White Page Overlay (Infographics & Glossary) covering network graph and sidebar */}
         <HeaderOverlay 
           activePage={activePage} 
           onClose={() => setActivePage('graph')} 
@@ -165,12 +162,16 @@ export default function Page() {
         />
 
         <main className="relative flex-1 w-full h-full overflow-hidden bg-[#080d16]">
-          {isLoading ? (
+          {/* 🚀 1. The loading overlay stays on top while NetworkGraph computes in the background */}
+          {isLoading && !error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30">
               <div className="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
-              <span className="text-xs font-mono text-cyan-400">Loading Cloudflare D1 Database...</span>
+              <span className="text-xs font-mono text-cyan-400">Detangling Network Graph...</span>
             </div>
-          ) : error ? (
+          )}
+
+          {/* 2. Error state */}
+          {error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30 p-6 text-center">
               <span className="text-red-400 font-mono text-sm mb-2">D1 Database Connection Failure</span>
               <p className="text-slate-400 text-xs max-w-md mb-4">{error}</p>
@@ -181,7 +182,10 @@ export default function Page() {
                 Retry Request
               </button>
             </div>
-          ) : (
+          )}
+
+          {/* 🚀 3. NetworkGraph is ALWAYS rendered unless there's an error, allowing D3 to mount & tick */}
+          {!error && (
             <NetworkGraph
               graphRef={graphRef}
               graphData={filteredData}
@@ -195,9 +199,14 @@ export default function Page() {
                 setSelectedLink(link);
                 setSelectedNode(null);
               }}
+              // 🚀 4. Triggered by NetworkGraph once the warmup simulation finishes
+              onGraphReady={() => {
+                setIsLoading(false);
+              }}
             />
           )}
-        {/*Commenting out TimelineWidget for now, as it may not be needed in the current design.
+
+        {/*
           <TimelineWidget
             startYear={startYearFilter}
             setStartYear={setStartYearFilter}
