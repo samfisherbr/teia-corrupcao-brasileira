@@ -373,7 +373,7 @@ export default function NetworkGraph({
           ctx.moveTo(start.x, start.y);
           ctx.lineTo(end.x, end.y);
           ctx.strokeStyle = `${color}44`; // ~27% opacity glow
-          ctx.lineWidth = width + 5 / globalScale;
+          ctx.lineWidth = width + 2 / globalScale;
           ctx.stroke();
 
           // Pass 2: Sharp Core Line
@@ -396,7 +396,7 @@ export default function NetworkGraph({
         /* Keep directional particles and event handlers intact */
         linkDirectionalParticles={(link: any) => (link.status === 'under_investigation' ? 3 : 0)}
         linkDirectionalParticleSpeed={0.005}
-        linkDirectionalParticleWidth={2.5}
+        linkDirectionalParticleWidth={1.5}
         linkDirectionalParticleColor={(link: any) => STATUS_COLORS[link.status] || '#f59e0b'}
         onNodeClick={(node: any) => onSelectNode(node)}
         onLinkClick={(link: any) => onSelectLink(link)}
