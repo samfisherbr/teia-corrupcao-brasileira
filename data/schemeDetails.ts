@@ -174,7 +174,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
     ]
   },
 
-  esquema_operacao_venire_joias: {
+  esquema_venire_joias: {
     context:
       "Deflagradas pela Polícia Federal em 2023 e 2024 no âmbito dos inquéritos das milícias digitais e de desvio de patrimônio público, as investigações da Operação Venire e do Caso das Joias apuraram a atuação de uma estrutura paralela no gabinete presidencial para fraude em sistemas do Ministério da Saúde e a apropriação indevida de bens de alto valor recebidos de autoridades estrangeiras.",
     mechanism:
