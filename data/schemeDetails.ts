@@ -151,6 +151,27 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
         url: "https://linhadotempo.mpf.mp.br/www/linha-do-tempo/2014"
       }
     ]
+  },
+
+  esquema_bolsolao_mec: {
+    context:
+      "O escândalo do 'Bolsolão do MEC' veio à tona no início de 2022, durante o governo Jair Bolsonaro, revelando a existência de um gabinete paralelo no Ministério da Educação gerido por religiosos e lobistas sem cargo formal. O caso ganhou repercussão nacional após o vazamento de um áudio no qual o então ministro Milton Ribeiro afirmava direcionar verbas públicas do Fundo Nacional de Desenvolvimento da Educação (FNDE) prioritariamente para municípios indicados por pastores, a pedido pessoal do presidente da República.",
+    mechanism:
+      "A estrutura paralela operava por meio da intermediação ilícita entre prefeitos municipais e a cúpula do MEC/FNDE para a liberação célere de recursos orçamentários e emendas parlamentares (orçamento secreto). Em troca da facilitação no repasse de fundos para obras de creches, escolas e aquisição de ônibus escolares, os intermediários cobravam propina dos gestores locais em dinheiro vivo, propina em ouro e a compra de Bíblias personalizadas para distribuição regional.",
+    impact:
+      "R$ 1.300.000.000 (Estimativa total de emendas e verbas do FNDE negociadas e em apuração quanto ao direcionamento e superfaturamento)",
+    legalStatus:
+      "A Polícia Federal deflagrou a Operação Acesso Pago em junho de 2022, resultando na prisão preventiva do ex-ministro Milton Ribeiro e dos pastores investigados por crimes como corrupção passiva, advocacia administrativa, prevaricação e tráfico de influência. Embora soltos em seguida por decisão do TRF-1, o processo foi remetido ao Supremo Tribunal Federal (STF) e à Justiça Federal após constatação de indícios de interferência no trabalho da PF, permanecendo em tramitação com apurações paralelas no TCU e na CGU.",
+    sources: [
+      {
+        title: "Inquéritos e Procedimentos sobre o MEC - Ministério Público Federal (MPF)",
+        url: "https://www.mpf.mp.br/"
+      },
+      {
+        title: "Relatórios de Auditoria do Fundo Nacional de Desenvolvimento da Educação - Tribunal de Contas da União (TCU)",
+        url: "https://portal.tcu.gov.br/"
+      }
+    ]
   }
 
 };

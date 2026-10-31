@@ -335,9 +335,6 @@ export default function NetworkGraph({
         onNodeClick={(node: any) => onSelectNode(node)}
         onLinkClick={(link: any) => onSelectLink(link)}
         onEngineStop={handleEngineStop}
-        cooldownTicks={150}
-        d3AlphaDecay={0.02}
-        d3VelocityDecay={0.3}
         backgroundColor="#080d16"
       />
 
