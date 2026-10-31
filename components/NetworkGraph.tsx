@@ -402,6 +402,39 @@ export default function NetworkGraph({
         </div>
       </div>
 
+      {/* ----------------------------------------------------------------- */}
+      {/* LEGENDA FIXA DE CORES DOS CIRCULOS (Canto Superior Direito)       */}
+      {/* ----------------------------------------------------------------- */}
+      <div className="absolute top-10 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-20 font-mono shadow-2xl select-none">
+        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+          Legenda dos Círculos
+        </div>
+
+        {/* Status: Esquema */}
+        <div className="flex items-center space-x-2.5">
+          <span className="w-5 h-0.5 bg-[#ff36d3] inline-block rounded-full shadow-[0_0_8px_#ff00c8]" />
+          <span className="text-slate-200">Esquema</span>
+        </div>
+
+        {/* Status: Partido */}
+        <div className="flex items-center space-x-2.5">
+          <span className="w-5 h-0.5 bg-[#322fff] inline-block rounded-full shadow-[0_0_8px_#1713e4]" />
+          <span className="text-slate-200">Partido</span>
+        </div>
+
+        {/* Status: Político */}
+        <div className="flex items-center space-x-2.5">
+          <span className="w-5 h-0.5 bg-[#2ef1ff] inline-block rounded-full shadow-[0_0_8px_#00c3d1]" />
+          <span className="text-slate-200">Político</span>
+        </div>
+
+        {/* Status: Empresa / Operador */}
+        <div className="flex items-center space-x-2.5">
+          <span className="w-5 h-0.5 bg-[#939c98] inline-block rounded-full shadow-[0_0_8px_#666d6a]" />
+          <span className="text-slate-200">Empresa / Operador</span>
+        </div>
+      </div>
+
       {/* Botões de Controle de Câmera */}
       <div className="absolute bottom-6 md:bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
         <button
