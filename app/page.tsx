@@ -128,7 +128,7 @@ export default function Page() {
 };
 
   return (
-    <div className="relative h-screen w-screen bg-[#080d16] bg-grid-pattern text-slate-100 font-sans overflow-hidden flex flex-col">
+    <div className="relative h-[100dvh] w-full bg-[#080d16] text-slate-100 font-sans overflow-hidden flex flex-col">
       {/* Permanent Header Bar */}
       <HeaderBar activePage={activePage} setActivePage={setActivePage} />
 

@@ -8,6 +8,8 @@ import { GraphData, GraphNode, GraphLink } from '@/types/graph';
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 
+
+
 interface NetworkGraphProps {
   graphRef: any;
   graphData: GraphData;
@@ -274,8 +276,8 @@ export default function NetworkGraph({
     const shouldShowLabel =
       isSelected ||
       isScheme ||
-      (isPartyOrCompany && globalScale >= 0.6) ||
-      (isPolitician && globalScale >= 1.1);
+      (isPartyOrCompany && globalScale >= 0.3) ||
+      (isPolitician && globalScale >= 0.5);
 
     if (shouldShowLabel) {
       ctx.font = `${fontWeight} ${fontSize}px Inter, sans-serif`;
@@ -330,6 +332,33 @@ export default function NetworkGraph({
         d3VelocityDecay={0.3}
         backgroundColor="#080d16"
       />
+
+      {/* ----------------------------------------------------------------- */}
+      {/* LEGENDA FIXA DE CORES DAS CONEXÕES (Canto Superior Direito)       */}
+      {/* ----------------------------------------------------------------- */}
+      <div className="absolute top-4 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-20 font-mono shadow-2xl select-none">
+        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+          Legenda das Conexões
+        </div>
+
+        {/* Status: Condenado / Confirmado */}
+        <div className="flex items-center space-x-2.5">
+          <span className="w-5 h-0.5 bg-[#ff0055] inline-block rounded-full shadow-[0_0_8px_#ff0055]" />
+          <span className="text-slate-200">Condenado / Confirmado</span>
+        </div>
+
+        {/* Status: Sob Investigação (Tracejado) */}
+        <div className="flex items-center space-x-2.5">
+          <span className="w-5 h-0 border-b-2 border-dashed border-[#f59e0b] inline-block" />
+          <span className="text-slate-200">Sob Investigação</span>
+        </div>
+
+        {/* Status: Absolvido / Arquivado */}
+        <div className="flex items-center space-x-2.5">
+          <span className="w-5 h-0.5 bg-[#10b981] inline-block rounded-full shadow-[0_0_8px_#10b981]" />
+          <span className="text-slate-200">Absolvido / Arquivado</span>
+        </div>
+      </div>
 
       {/* Botões de Controle de Câmera */}
       <div className="absolute bottom-16 md:bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
