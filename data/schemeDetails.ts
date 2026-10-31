@@ -193,6 +193,31 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
         url: "https://portal.stf.jus.br/"
       }
     ]
+  },
+
+  esquema_banco_master_inss: {
+    context:
+      "A fraude envolvendo o Banco Master e o Instituto Nacional do Seguro Social (INSS) foi revelada a partir de investigações do próprio INSS, da Polícia Federal e do Banco Central sobre concessões massivas de empréstimos consignados irregulares a aposentados e pensionistas, além da captação ilícita de recursos de regimes próprios de previdência social (RPPS). Sob a gestão do ex-banqueiro Daniel Vorcaro, a instituição financeira operou uma rede de emissão de créditos consignados sem consentimento de segurados e alocação de fundos previdenciários públicos em papéis de alto risco.",
+    mechanism:
+      "O esquema estruturou-se em duas frentes principais: na vertente dos consignados (operada via plataforma Credcesta), a instituição averbou mais de 254 mil contratos de empréstimo consignado no INSS com graves indícios de fraude, nos quais auditorias identificaram que mais de 90% das operações não possuíam assinatura idônea dos aposentados ou apresentavam inconsistências nos mecanismos e QR Codes de validação biométrica; na vertente de previdência, o banco atraía aportes de fundos de pensão municipais e estaduais para aplicação em Letras Financeiras e fundos de investimento sem garantias adequadas, maquiando balanços por meio de triangulações operacionais e cessões de crédito fraudulentas com instituições parceiras.",
+    impact:
+      "R$ 51.000.000.000 (Rombo e impacto financeiro total estimado gerado pelo Banco Master no sistema bancário, fundos de pensão, Fundo Garantidor de Créditos e centenas de milhares de contratos consignados do INSS)",
+    legalStatus:
+      "O Banco Central decretou a liquidação extrajudicial da instituição. A Polícia Federal deflagrou operações e indiciou controladores e ex-executivos do Banco Master e de instituições financeiras parceiras pelos crimes de gestão fraudulenta, organização criminosa e lavagem de dinheiro. No Supremo Tribunal Federal (STF) e no Tribunal de Contas da União (TCU), inquéritos e apurações sobre os descontos indevidos em benefícios do INSS e as aplicações de regimes de previdência seguem sob relatoria da Presidência do STF e de ministros relatores.",
+    sources: [
+      {
+        title: "Apuração sobre Consignados e Auditoria no Banco Master - Portal UOL Economia",
+        url: "https://economia.uol.com.br/noticias/redacao/2026/01/16/inss---banco-master.ghtm"
+      },
+      {
+        title: "Relatório e Inquéritos de Fraudes Financeiras - Polícia Federal (PF)",
+        url: "https://www.gov.br/pf/"
+      },
+      {
+        title: "Decisões e Inquéritos Processuais no Supremo Tribunal Federal (STF)",
+        url: "https://portal.stf.jus.br/"
+      }
+    ]
   }
 
 };
