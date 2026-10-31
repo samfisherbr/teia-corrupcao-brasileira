@@ -406,15 +406,6 @@ export default function NetworkGraph({
         linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.5 : 1.8)}
         linkLineDash={(link: any) => (link.status === 'under_investigation' ? [4, 4] : undefined)}
 
-        linkDirectionalParticles={(link: any) => (link.status === 'under_investigation' ? 3 : 0)}
-        linkDirectionalParticleSpeed={0.005}
-        linkDirectionalParticleWidth={2.5}
-        linkDirectionalParticleColor={(link: any) => STATUS_COLORS[link.status] || '#f59e0b'}
-
-        onNodeClick={(node: any) => onSelectNode(node)}
-        onLinkClick={(link: any) => onSelectLink(link)}
-        onEngineStop={handleEngineStop}
-
         // vvv Pre-computes 120 physics ticks BEFORE the canvas first paints: vvv
         warmupTicks={120}
         cooldownTicks={150}
