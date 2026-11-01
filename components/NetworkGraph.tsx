@@ -220,13 +220,13 @@ export default function NetworkGraph({
 
     let size = 20;
     if (node.type === 'scheme') {
-      size = 50;
+      size = 80;
     } else if (node.type === 'party') {
-      size = 30;
+      size = 80;
     } else if (node.type === 'politician') {
-      size = 15;
+      size = 80;
     } else if (node.type === 'company') {
-      size = 30;
+      size = 80
     }
 
     ctx.save();
