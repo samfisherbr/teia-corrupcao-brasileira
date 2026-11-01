@@ -24,12 +24,14 @@ export default function HeaderBar({ activePage, setActivePage }: HeaderBarProps)
           </div>
           <div className="flex items-baseline space-x-1 sm:space-x-2">
             <span className="font-mono font-bold text-slate-100 tracking-wider text-xs sm:text-sm">
-              CORRWEB:
+              Teia da Corrupção:
             </span>
+            
             {/* Subtitle hidden on mobile screens to save space */}
-            <span className="hidden sm:inline-block text-slate-300 text-xs font-medium truncate max-w-[140px] md:max-w-none">
-              Corruption Visualizer
-            </span>
+            {/* <span className="hidden sm:inline-block text-slate-300 text-xs font-medium truncate max-w-[140px] md:max-w-none">
+              Visualizador da corrupção
+            </span> */}
+            
           </div>
         </div>
 

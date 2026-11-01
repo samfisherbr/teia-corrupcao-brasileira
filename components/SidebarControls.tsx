@@ -61,7 +61,7 @@ export default function SidebarControls({
         </div>
         <div>
           <h1 className="text-sm font-bold text-slate-100 leading-tight">Painel de Controle</h1>
-          <p className="text-[11px] text-slate-400 font-mono">CORRWEB Visualizer</p>
+          {/* <p className="text-[11px] text-slate-400 font-mono">CORRWEB Visualizer</p> */}
         </div>
       </div>
 

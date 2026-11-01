@@ -174,9 +174,9 @@ export default function NetworkGraph({
         'collide',
         forceCollide().radius((node: any) => {
           if (node.type === 'scheme') return 200;
-          if (node.type === 'company') return 100;
-          if (node.type === 'party') return 100;
-          if (node.type === 'politician') return 50;
+          if (node.type === 'company') return 150;
+          if (node.type === 'party') return 150;
+          if (node.type === 'politician') return 100;
           return 30;
         }).strength(1)
       );
@@ -281,7 +281,7 @@ export default function NetworkGraph({
 
       case 'scheme':
         primaryLabel = primaryLabel.toUpperCase();
-        fontSize = Math.max(13, 14 / globalScale);
+        fontSize = Math.max(12, 13 / globalScale);
         fontWeight = '700';
         fontColor = isSelected ? '#ffffff' : '#fef08a';
         break;
@@ -396,14 +396,14 @@ export default function NetworkGraph({
         /* Keep directional particles and event handlers intact */
         linkDirectionalParticles={(link: any) => (link.status === 'under_investigation' ? 3 : 0)}
         linkDirectionalParticleSpeed={0.005}
-        linkDirectionalParticleWidth={1.5}
+        linkDirectionalParticleWidth={5.0}
         linkDirectionalParticleColor={(link: any) => STATUS_COLORS[link.status] || '#f59e0b'}
         onNodeClick={(node: any) => onSelectNode(node)}
         onLinkClick={(link: any) => onSelectLink(link)}
         onEngineStop={handleEngineStop}
 
         linkColor={(link: any) => STATUS_COLORS[link.status] || '#ff0055'}
-        linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.5 : 1.8)}
+        linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.0 : 1.5)}
         linkLineDash={(link: any) => (link.status === 'under_investigation' ? [4, 4] : undefined)}
 
         // vvv Pre-computes 120 physics ticks BEFORE the canvas first paints: vvv
