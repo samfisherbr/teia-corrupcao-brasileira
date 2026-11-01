@@ -48,6 +48,27 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
     ]
   },
 
+  esquema_mensalao_mineiro: {
+    context:
+      "O Mensalão Mineiro (também conhecido como Mensalão do PSDB) ocorreu durante a campanha de reeleição do então governador de Minas Gerais, Eduardo Azeredo, em 1998. Considerado por investigadores e procuradores como o 'laboratório' do esquema que viria a se repetir em âmbito nacional no Escândalo do Mensalão de 2005, o caso envolveu a estruturação de uma rede clandestina de arrecadação e desvio de verbas estaduais para financiamento não declarado de campanha política.",
+    mechanism:
+      "O esquema operava por meio do direcionamento de verbas de patrocínio e publicidade de empresas estatais mineiras (como Comig, Copasa e Bemge) para eventos esportivos e culturais (como o Enduro da Independência), intermediados pelas agências de publicidade SMP&B e DNA Propaganda, do empresário Marcos Valério. Os recursos desviados, somados a empréstimos bancários fictícios contratados junto ao Banco Rural e ao Banco BMG, alimentaram um caixa dois para repasses a candidatos e quitar despesas da campanha eleitoral.",
+    impact:
+      "R$ 3.500.000 (Estimativa de recursos públicos estaduais desviados e movimentados ilegalmente apurados no âmbito da Ação Penal 536)",
+    legalStatus:
+      "A denúncia principal tramitou originalmente no Supremo Tribunal Federal sob a Ação Penal 536 (AP 536). Com a renúncia de Eduardo Azeredo ao mandato de deputado federal em 2014, o processo foi remetido à Justiça Estadual de Minas Gerais. Em primeira e segunda instâncias (TJMG), Azeredo foi condenado a mais de 20 anos de prisão pelos crimes de peculato e lavagem de dinheiro, assim como os operadores Marcos Valério e Cláudio Mourão. Posteriormente, o ex-governador teve a execução da pena suspensa e a prescrição extintiva reconhecida pelos tribunais superiores.",
+    sources: [
+      {
+        title: "Acompanhamento e Histórico da Ação Penal 536 - Supremo Tribunal Federal (STF)",
+        url: "https://portal.stf.jus.br/"
+      },
+      {
+        title: "Atuação e Processos do Mensalão Mineiro - Ministério Público do Estado de Minas Gerais (MPMG)",
+        url: "https://www.mpmg.mp.br/"
+      }
+    ]
+  },
+
   esquema_santo_andre: {
     context:
       "O Escândalo de Santo André refere-se à rede de corrupção, extorsão e propinas estruturada na Prefeitura de Santo André (SP) durante a gestão do prefeito Celso Daniel, no final da década de 1990 e início dos anos 2000. O esquema ganhou enorme projeção nacional após o sequestro e assassinato do prefeito em janeiro de 2002, revelando investigações sobre a arrecadação sistemática de recursos ilícitos para financiamento de caixa 2 de campanhas políticas.",
@@ -216,6 +237,90 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       {
         title: "Decisões e Inquéritos Processuais no Supremo Tribunal Federal (STF)",
         url: "https://portal.stf.jus.br/"
+      }
+    ]
+  },
+
+  esquema_pc_farias: {
+    context:
+      "O Escândalo PC Farias eclodiu no início dos anos 1990 durante a presidência de Fernando Collor de Mello, articulado a partir das revelações do irmão do presidente, Pedro Collor. Tratou-se de um amplo esquema de corrupção e tráfico de influência comandado por Paulo César Farias (PC Farias), tesoureiro da campanha presidencial de 1989, que operava um governo paralelo dentro da administração federal.",
+    mechanism:
+      "O esquema operava por meio da cobrança sistemática de propinas de empresários em troca da facilitação de contratos governamentais, liberação de verbas públicas e concessão de favores administrativos em órgãos federais. Os recursos ilícitos eram lavados através de empresas de fachada (como a Trada Consultoria), contas bancárias fantasmas e a emissão de cheques falsos, sendo posteriormente destinados ao enriquecimento pessoal e ao custeio de despesas pessoais da família presidencial e de aliados políticos.",
+    impact:
+      "R$ 1.400.000.000 (Estimativa total de propinas e valores movimentados ilegalmente pelo esquema ao longo da gestão)",
+    legalStatus:
+      "As investigações culminaram na instalação da CPI do PC Farias e no processo de Impeachment de Fernando Collor em 1992, que renunciou antes da conclusão do julgamento no Senado. PC Farias foi condenado por sonegação fiscal e falsidade ideológica, cumprindo pena até ser encontrado morto em 1996. Na esfera penal junto ao STF, Fernando Collor foi absolvido das acusações criminais diretas por falta de provas materiais cabais na época, embora tenha tido seus direitos políticos suspensos.",
+    sources: [
+      {
+        title: "Relatórios da CPI do PC Farias - Congresso Nacional",
+        url: "https://www.congressonacional.leg.br/"
+      },
+      {
+        title: "Acórdãos e Processos Históricos - Supremo Tribunal Federal (STF)",
+        url: "https://portal.stf.jus.br/"
+      }
+    ]
+  },
+
+  esquema_anoes_orcamento: {
+    context:
+      "O Escândalo dos Anões do Orçamento eclodiu no final de 1993, durante o governo Itamar Franco, a partir das denúncias feitas pelo ex-assessor da Comissão Mista de Orçamento (CMO), José Carlos Alves dos Santos. O escândalo envolveu um grupo de parlamentares — apelidados de 'Anões do Orçamento' devido à baixa projeção política da maioria de seus integrantes — que manipulava a elaboração da Lei Orçamentária Anual para enriquecimento próprio e financiamento ilícito.",
+    mechanism:
+      "O esquema operava por meio do direcionamento de emendas parlamentares individuais e de bancada na Comissão Mista de Orçamento para municípios e entidades sociais fantasmas ou controladas por aliados. Empregava-se a inflação proposital dos valores repassados para a aquisição de bens e obras públicas, com posterior cobrança de propinas e propinas pagas por empreiteiras (como a Andrade Gutierrez e a Odebrecht) contratadas sem licitação idônea. Parte das quantias arrecadadas era lavada mediante a compra de bilhetes premiados da Loteria Federal pelo deputado João Alves.",
+    impact:
+      "R$ 100.000.000 (Estimativa total de recursos públicos desviados e propinas movimentadas pelo grupo de parlamentares)",
+    legalStatus:
+      "O Congresso Nacional instaurou a CPI dos Anões do Orçamento entre 1993 e 1994, cujo relatório final recomendou a cassação de 18 parlamentares. Como resultado político, 6 deputados foram cassados e 4 renunciaram aos mandatos para evitar a perda dos direitos políticos. Na esfera judicial, diversos envolvidos enfrentaram ações penais e de improbidade administrativa movidas pelo Ministério Público Federal, resultando no bloqueio de bens, restituição parcial de valores e condenações em instâncias federais.",
+    sources: [
+      {
+        title: "Relatório Final da CPI Mista do Orçamento - Congresso Nacional",
+        url: "https://www.congressonacional.leg.br/"
+      },
+      {
+        title: "Memória das Investigações da CPI dos Anões do Orçamento - Câmara dos Deputados",
+        url: "https://www.camara.leg.br/"
+      }
+    ]
+  },
+
+  esquema_trt_sp: {
+    context:
+      "O Escândalo do TRT-SP refere-se ao desvio sistemático de verbas públicas destinadas à construção da sede do Tribunal Regional do Trabalho da 2ª Região (TRT-SP) no bairro da Barra Funda, em São Paulo, durante a década de 1990. O esquema ganhou enorme repercussão nacional a partir das apurações do Ministério Público Federal e da CPI do Judiciário no Senado, revelando a atuação conjunta do então presidente da comissão de obras do tribunal, o juiz Nicolau dos Santos Neto ('Juiz Lalau'), do ex-senador Luiz Estevão e de executivos do Grupo Incal Monteiro de Barros.",
+    mechanism:
+      "O esquema operava por meio de fraudes no processo licitatório e superfaturamento das obras do Fórum Trabalhista de São Paulo, contratadas junto à construtora Incal Alimentos. A comissão de construção presidida por Nicolau dos Santos Neto liberava medições falsas e autorizava o repasse contínuo de verbas do orçamento federal por etapas da construção que jamais foram concluídas. As quantias desviadas eram pulverizadas e lavadas por meio de empresas de fachada, remessas clandestinas para contas mantidas na Suíça e repasses financeiros para o Grupo OK, conglomerado de empresas pertencente a Luiz Estevão.",
+    impact:
+      "R$ 169.500.000 (Valor nominal total desviado apurado pelo Ministério Público Federal à época, representando quase 80% do montante repassado para a obra e superando R$ 1 bilhão em valores corrigidos)",
+    legalStatus:
+      "A atuação do Ministério Público Federal e da Justiça Federal resultou na condenação dos réus Nicolau dos Santos Neto, Luiz Estevão e dos empresários Fábio Monteiro de Barros e José Eduardo Corrêa Ribeiro por crimes de peculato, estelionato, corrupção, lavagem de dinheiro e uso de documento falso. Luiz Estevão teve o mandato cassado pelo Senado Federal e cumpriu pena em regime fechado. A Justiça Federal promoveu a alienação judicial dos imóveis abandonados do Fórum e obteve a repatriação de dezenas de milhões de dólares mantidos em contas bancárias na Suíça para ressarcimento aos cofres públicos.",
+    sources: [
+      {
+        title: "Relatórios de Atuação e Processos do Caso TRT-SP - Ministério Público Federal (MPF)",
+        url: "https://www.mpf.mp.br/"
+      },
+      {
+        title: "Execuções e Repatriamento de Valores - Justiça Federal de São Paulo (JFSP)",
+        url: "https://www.jfsp.jus.br/"
+      }
+    ]
+  },
+
+  esquema_grampos_bndes: {
+    context:
+      "O Escândalo dos Grampos do BNDES ocorreu em 1998, durante o governo Fernando Henrique Cardoso (FHC), no contexto da privatização do Sistema Telebrás — o maior processo de desestatização da história do país. O caso ganhou repercussão nacional após a divulgação de mais de 40 fitas gravadas clandestinamente na sede do BNDES e em telefones de autoridades, revelando tratativas diretas de membros da cúpula do governo federal para favorecer consórcios específicos no leilão das concessionárias de telecomunicações.",
+    mechanism:
+      "Integrantes da alta cúpula governamental — como o Ministro das Comunicações Luiz Carlos Mendonça de Barros, o presidente do BNDES André Lara Resende e o diretor do Banco do Brasil Ricardo Sérgio de Oliveira — atuaram nos bastidores para influenciar a composição dos consórcios concorrentes. As interceptações telefônicas demonstraram articulações para pressionar fundos de pensão de estatais (como a Previ) a integrarem o consórcio liderado pelo Banco Opportunity e pela Telecom Italia no leilão da Tele Norte Leste (Telemar), visando inviabilizar grupos concorrentes considerados indesejados pelo governo.",
+    impact:
+      "R$ 22.000.000.000 (Montante total arrecadado no leilão de privatização do Sistema Telebrás sob investigações de favorecimento e direcionamento de consórcios)",
+    legalStatus:
+      "O escândalo resultou no pedido de demissão do Ministro das Comunicações Luiz Carlos Mendonça de Barros, do presidente do BNDES André Lara Resende, de diretores do banco e de executivos do Banco do Brasil. A Polícia Federal e o Ministério Público Federal abriram inquéritos para apurar a autoria dos grampos ilegais e improbidade administrativa na condução dos leilões. Em 2010, a Justiça Federal absolveu os ex-dirigentes e ex-ministros das acusações de improbidade, concluindo pela ausência de lesão comprovada ao patrimônio público na alienação das estatais.",
+    sources: [
+      {
+        title: "Inquéritos e Procedimentos sobre a Privatização do Sistema Telebrás - Ministério Público Federal (MPF)",
+        url: "https://www.mpf.mp.br/"
+      },
+      {
+        title: "Decisões Processuais e Ações de Improbidade - Tribunal Regional Federal da 1ª Região (TRF-1)",
+        url: "https://www.trf1.jus.br/"
       }
     ]
   }
