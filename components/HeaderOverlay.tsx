@@ -508,6 +508,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
 
                   const politicians = connectedEntities.filter((e) => e.type === 'politician');
                   const companies = connectedEntities.filter((e) => e.type === 'company');
+                  const operators = connectedEntities.filter((e) => e.type === 'operator');
 
                   return (
                     <article

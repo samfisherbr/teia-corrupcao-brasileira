@@ -23,8 +23,9 @@ interface NetworkGraphProps {
 const COLOR_MAP = {
   scheme: '#ff00c8',     // Magenta para Esquemas
   politician: '#00eeff', // Ciano para Políticos
-  company: '#bfcac5',    // Verde para Empresas
-  party: '#1713e4'       // Roxo para Partidos
+  company: '#8b938f',    // Cinza para Empresas
+  operator: '#ffffff',   // Cinza para Operadores
+  party: '#1713e4'       // Azul para Partidos
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -174,7 +175,7 @@ export default function NetworkGraph({
         'collide',
         forceCollide().radius((node: any) => {
           if (node.type === 'scheme') return 200;
-          if (node.type === 'company') return 150;
+          if (node.type === 'company' || node.type === 'operator') return 150;
           if (node.type === 'party') return 150;
           if (node.type === 'politician') return 100;
           return 30;
@@ -225,7 +226,7 @@ export default function NetworkGraph({
       size = 35;
     } else if (node.type === 'politician') {
       size = 35;
-    } else if (node.type === 'company') {
+    } else if (node.type === 'company' || node.type === 'operator') {
       size = 20
     }
 
@@ -290,6 +291,10 @@ export default function NetworkGraph({
         fontColor = isSelected ? '#ffffff' : '#6ee7b7';
         break;
 
+      case 'operator':
+        fontColor = isSelected ? '#ffffff' : '#6ee7b7';
+        break;
+
       case 'party':
         fontWeight = '600';
         fontColor = isSelected ? '#ffffff' : '#c7d2fe';
@@ -303,7 +308,7 @@ export default function NetworkGraph({
     // 3. RENDERIZAÇÃO PROGRESSIVA DE RÓTULOS (Level of Detail por Zoom)
     // -----------------------------------------------------------------
     const isScheme = node.type === 'scheme';
-    const isPartyOrCompany = node.type === 'party' || node.type === 'company';
+    const isPartyOrCompany = node.type === 'party' || node.type === 'company' || node.type === 'operator';
     const isPolitician = node.type === 'politician';
 
     // Regras de visibilidade por nível de zoom:
@@ -476,9 +481,15 @@ export default function NetworkGraph({
           <span className="text-slate-200">Político</span>
         </div>
 
-        {/* Status: Empresa / Operador */}
+        {/* Status: Empresa */}
         <div className="flex items-center space-x-2.5">
           <span className="w-5 h-0.5 bg-[#939c98] inline-block rounded-full shadow-[0_0_8px_#bfcac5]" />
+          <span className="text-slate-200">Empresa / Operador</span>
+        </div>
+
+        {/* Status: Operador */}
+        <div className="flex items-center space-x-2.5">
+          <span className="w-5 h-0.5 bg-[#939c98] inline-block rounded-full shadow-[0_0_8px_#ffffff]" />
           <span className="text-slate-200">Empresa / Operador</span>
         </div>
       </div>

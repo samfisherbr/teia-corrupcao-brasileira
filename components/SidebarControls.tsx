@@ -8,7 +8,8 @@ export const NODE_TYPES: Record<NodeType, { label: string; color: string; icon: 
   politician: { label: 'Político', color: '#00c3d1', icon: UserCheck },
   party: { label: 'Partido', color: '#1713e4', icon: Layers },
   scheme: { label: 'Esquema de Corrupção', color: '#ff00c8', icon: ShieldAlert },
-  company: { label: 'Empresa / Operador', color: '#666d6a', icon: Building2 }
+  company: { label: 'Empresa', color: '#666d6a', icon: Building2 },
+  operator: { label: 'Operador', color: '#ffff', icon: Building2 }
 };
 
 export const STATUS_COLORS: Record<LinkStatus, string> = {
