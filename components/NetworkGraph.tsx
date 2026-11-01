@@ -351,7 +351,16 @@ export default function NetworkGraph({
         nodePointerAreaPaint={(node: any, color, ctx) => {
           ctx.fillStyle = color;
           ctx.beginPath();
-          ctx.arc(node.x, node.y, node.type === 'scheme' ? 35 : 22, 0, 2 * Math.PI);
+
+          // Define custom click radius per entity type (or a larger default padding)
+          let clickRadius = 30; // Default for politicians/companies (was 22)
+          if (node.type === 'scheme') {
+            clickRadius = 60;   // Larger hit target for Schemes (was 35)
+          } else if (node.type === 'party' || node.type === 'company') {
+            clickRadius = 45;   // Mid-tier hit target
+          }
+
+          ctx.arc(node.x, node.y, clickRadius, 0, 2 * Math.PI);
           ctx.fill();
         }}
 
