@@ -6,14 +6,26 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import HeaderBar, { ActivePage } from '@/components/HeaderBar';
 import HeaderOverlay from '@/components/HeaderOverlay';
 import NetworkGraph from '@/components/NetworkGraph';
-//import TimelineWidget from '@/components/TimelineWidget';
+import TimelineWidget from '@/components/TimelineWidget';
 import SidebarControls from '@/components/SidebarControls';
 import InspectorDrawer from '@/components/InspectorDrawer';
-import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/graph';
 import AdBanner from '@/components/AdBanner';
+import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/graph';
+
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < breakpoint);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 export default function Page() {
   const graphRef = useRef<any>(null);
+  const isMobile = useIsMobile(768);
 
   // View state for sliding panels ('graph' | 'infographics' | 'glossary')
   const [activePage, setActivePage] = useState<ActivePage>('graph');
@@ -55,20 +67,15 @@ export default function Page() {
         if (data.nodes && data.links) {
           setGraphData(data);
 
-          // If the database happens to be completely empty, close the loading screen immediately
           if (data.nodes.length === 0) {
             setIsLoading(false);
           }
         }
-
-        // NOTE: We DO NOT set `isLoading(false)` here anymore.
-        // It is now strictly handled by `onGraphReady` passed to the NetworkGraph component.
         return;
-
       } catch (e: any) {
         console.error('Failed to load data from Cloudflare D1:', e);
         setError(e.message || 'Error connecting to D1 Database');
-        setIsLoading(false); // Only stop loading automatically if an error occurred
+        setIsLoading(false);
       }
     }
     loadDataFromD1();
@@ -163,7 +170,7 @@ export default function Page() {
         />
 
         <main className="relative flex-1 w-full h-full overflow-hidden bg-[#080d16]">
-          {/* 🚀 1. The loading overlay stays on top while NetworkGraph computes in the background */}
+          {/* Loading overlay */}
           {isLoading && !error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30">
               <div className="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
@@ -171,7 +178,7 @@ export default function Page() {
             </div>
           )}
 
-          {/* 2. Error state */}
+          {/* Error state */}
           {error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30 p-6 text-center">
               <span className="text-red-400 font-mono text-sm mb-2">D1 Database Connection Failure</span>
@@ -185,7 +192,7 @@ export default function Page() {
             </div>
           )}
 
-          {/* 3. NetworkGraph is ALWAYS rendered unless there's an error, allowing D3 to mount & tick */}
+          {/* Network Graph */}
           {!error && (
             <NetworkGraph
               graphRef={graphRef}
@@ -200,57 +207,40 @@ export default function Page() {
                 setSelectedLink(link);
                 setSelectedNode(null);
               }}
-              // 🚀 4. Triggered by NetworkGraph once the warmup simulation finishes
               onGraphReady={() => {
                 setIsLoading(false);
               }}
             />
           )}
 
-          {/*
-          <TimelineWidget
-            startYear={startYearFilter}
-            setStartYear={setStartYearFilter}
-          />
-        */}
-          <main className="relative flex-1 w-full h-full overflow-hidden bg-[#080d16]">
-            <NetworkGraph
-              graphRef={graphRef}
-              graphData={filteredData}
-              selectedNode={selectedNode}
-              selectedLink={selectedLink}
-              onSelectNode={setSelectedNode}
-              onSelectLink={setSelectedLink}
+          {!isMobile && (
+            <TimelineWidget
+              startYear={startYearFilter}
+              setStartYear={setStartYearFilter}
             />
+          )}
 
-            {!isMobile && (
-              <TimelineWidget
-                startYear={startYearFilter}
-                setStartYear={setStartYearFilter}
-              />
-            )}
-
-            {/* Desktop Bottom-Centered Ad Banner */}
-            <AdBanner
-              adClient="ca-pub-XXXXXXXXXXXXXXXX"
-              adSlot="XXXXXXXXXX"
-            />
-          </main>
-
-          <InspectorDrawer
-            selectedNode={selectedNode}
-            selectedLink={selectedLink}
-            onClose={() => {
-              setSelectedNode(null);
-              setSelectedLink(null);
-            }}
-            filteredData={filteredData}
-            fullNodes={graphData.nodes}
-            onSelectLink={(link) => {
-              setSelectedLink(link);
-              setSelectedNode(null);
-            }}
+          {/* Ad Banner */}
+          <AdBanner
+            adClient="ca-pub-XXXXXXXXXXXXXXXX"
+            adSlot="XXXXXXXXXX"
           />
+        </main>
+
+        <InspectorDrawer
+          selectedNode={selectedNode}
+          selectedLink={selectedLink}
+          onClose={() => {
+            setSelectedNode(null);
+            setSelectedLink(null);
+          }}
+          filteredData={filteredData}
+          fullNodes={graphData.nodes}
+          onSelectLink={(link) => {
+            setSelectedLink(link);
+            setSelectedNode(null);
+          }}
+        />
       </div>
     </div>
   );
