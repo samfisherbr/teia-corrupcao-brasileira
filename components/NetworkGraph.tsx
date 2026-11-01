@@ -23,9 +23,9 @@ interface NetworkGraphProps {
 const COLOR_MAP = {
   scheme: '#ff00c8',     // Magenta para Esquemas
   politician: '#00eeff', // Ciano para Políticos
-  company: '#8b938f',    // Cinza para Empresas
-  operator: '#ffffff',   // Cinza para Operadores
-  party: '#1713e4'       // Azul para Partidos
+  company: '#878787',    // Cinza para Empresas
+  operator: '#ffffff',   // White para Operadores
+  party: '#0400ff'       // Azul para Partidos
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -175,9 +175,8 @@ export default function NetworkGraph({
         'collide',
         forceCollide().radius((node: any) => {
           if (node.type === 'scheme') return 200;
-          if (node.type === 'company' || node.type === 'operator') return 150;
-          if (node.type === 'party') return 150;
-          if (node.type === 'politician') return 100;
+          if (node.type === 'company' || node.type === 'party') return 150;
+          if (node.type === 'politician' || node.type === 'operator') return 100;
           return 30;
         }).strength(1)
       );
@@ -221,13 +220,11 @@ export default function NetworkGraph({
 
     let size = 20;
     if (node.type === 'scheme') {
-      size = 60;
-    } else if (node.type === 'party') {
-      size = 35;
-    } else if (node.type === 'politician') {
-      size = 35;
-    } else if (node.type === 'company' || node.type === 'operator') {
-      size = 20
+      size = 100;
+    } else if (node.type === 'party' || node.type === 'company') {
+      size = 40;
+    } else if (node.type === 'politician' || node.type === 'operator') {
+      size = 20;
     }
 
     ctx.save();
@@ -283,21 +280,21 @@ export default function NetworkGraph({
       case 'scheme':
         primaryLabel = primaryLabel.toUpperCase();
         fontSize = Math.max(12, 13 / globalScale);
-        fontWeight = '700';
-        fontColor = isSelected ? '#ffffff' : '#fef08a';
+        fontWeight = '600';
+        fontColor = isSelected ? '#ffffff' : '#ff00c8';
         break;
 
       case 'company':
-        fontColor = isSelected ? '#ffffff' : '#6ee7b7';
+        fontColor = isSelected ? '#ffffff' : '#878787';
         break;
 
       case 'operator':
-        fontColor = isSelected ? '#ffffff' : '#6ee7b7';
+        fontColor = isSelected ? '#ffffff' : '#cdcdcd';
         break;
 
       case 'party':
         fontWeight = '600';
-        fontColor = isSelected ? '#ffffff' : '#c7d2fe';
+        fontColor = isSelected ? '#ffffff' : '#0400ff';
         break;
 
       default:
@@ -308,8 +305,8 @@ export default function NetworkGraph({
     // 3. RENDERIZAÇÃO PROGRESSIVA DE RÓTULOS (Level of Detail por Zoom)
     // -----------------------------------------------------------------
     const isScheme = node.type === 'scheme';
-    const isPartyOrCompany = node.type === 'party' || node.type === 'company' || node.type === 'operator';
-    const isPolitician = node.type === 'politician';
+    const isPartyOrCompany = node.type === 'party' || node.type === 'company';
+    const isPoliticianOrOperator = node.type === 'politician' || node.type === 'operator';
 
     // Regras de visibilidade por nível de zoom:
     // 1. Nós selecionados e Esquemas SEMPRE mostram seus rótulos
@@ -319,7 +316,7 @@ export default function NetworkGraph({
       isSelected ||
       isScheme ||
       (isPartyOrCompany && globalScale >= 0.3) ||
-      (isPolitician && globalScale >= 0.5);
+      (isPoliticianOrOperator && globalScale >= 0.5);
 
     if (shouldShowLabel) {
       ctx.font = `${fontWeight} ${fontSize}px Inter, sans-serif`;
