@@ -1,4 +1,4 @@
-export type NodeType = 'politician' | 'party' | 'scheme' | 'company';
+export type NodeType = 'politician' | 'party' | 'scheme' | 'company' | 'operator';
 export type LinkStatus = 'confirmed' | 'under_investigation' | 'acquitted';
 export type LinkType = 'direct_financing' | 'suspect_transactions';
 
