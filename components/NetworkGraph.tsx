@@ -22,8 +22,8 @@ interface NetworkGraphProps {
 
 const COLOR_MAP = {
   scheme: '#ff00c8',     // Magenta para Esquemas
-  politician: '#00c3d1', // Ciano para Políticos
-  company: '#666d6a',    // Verde para Empresas
+  politician: '#00eeff', // Ciano para Políticos
+  company: '#bfcac5',    // Verde para Empresas
   party: '#1713e4'       // Roxo para Partidos
 };
 
@@ -352,15 +352,13 @@ export default function NetworkGraph({
           ctx.fillStyle = color;
           ctx.beginPath();
 
-          // Define custom click radius per entity type (or a larger default padding)
-          let clickRadius = 30; // Default for politicians/companies (was 22)
-          if (node.type === 'scheme') {
-            clickRadius = 60;   // Larger hit target for Schemes (was 35)
-          } else if (node.type === 'party' || node.type === 'company') {
-            clickRadius = 45;   // Mid-tier hit target
-          }
+          let size = 15;
+          if (node.type === 'scheme') size = 50;
+          else if (node.type === 'party' || node.type === 'company') size = 30;
 
-          ctx.arc(node.x, node.y, clickRadius, 0, 2 * Math.PI);
+          // Adds a 15px invisible clickable padding ring around any bubble
+          const clickPadding = 15;
+          ctx.arc(node.x, node.y, size + clickPadding, 0, 2 * Math.PI);
           ctx.fill();
         }}
 
@@ -474,13 +472,13 @@ export default function NetworkGraph({
 
         {/* Status: Político */}
         <div className="flex items-center space-x-2.5">
-          <span className="w-5 h-0.5 bg-[#2ef1ff] inline-block rounded-full shadow-[0_0_8px_#00c3d1]" />
+          <span className="w-5 h-0.5 bg-[#2ef1ff] inline-block rounded-full shadow-[0_0_8px_#00eeff]" />
           <span className="text-slate-200">Político</span>
         </div>
 
         {/* Status: Empresa / Operador */}
         <div className="flex items-center space-x-2.5">
-          <span className="w-5 h-0.5 bg-[#939c98] inline-block rounded-full shadow-[0_0_8px_#666d6a]" />
+          <span className="w-5 h-0.5 bg-[#939c98] inline-block rounded-full shadow-[0_0_8px_#bfcac5]" />
           <span className="text-slate-200">Empresa / Operador</span>
         </div>
       </div>
