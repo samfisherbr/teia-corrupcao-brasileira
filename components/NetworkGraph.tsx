@@ -246,7 +246,7 @@ export default function NetworkGraph({
 
     // Círculo Interno e Imagem
     ctx.beginPath();
-    ctx.arc(node.x, node.y, size -10, 0, 2 * Math.PI);
+    ctx.arc(node.x, node.y, size + 6, 0, 2 * Math.PI);
     ctx.fillStyle = '#080d16';
     ctx.fill();
 
