@@ -364,7 +364,7 @@ export default function NetworkGraph({
 
           const color = STATUS_COLORS[link.status] || '#ff0055';
           const isSelected = selectedLink?.id === link.id;
-          const width = isSelected ? 3.5 : 6;
+          const width = isSelected ? 9 : 6;
 
           ctx.save();
 
