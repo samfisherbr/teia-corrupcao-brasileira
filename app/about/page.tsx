@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from '/link';
+import Link from 'next/link';
 import { ArrowLeft, Network, Info, Database, CheckCircle2 } from 'lucide-react';
 
 export const metadata = {
