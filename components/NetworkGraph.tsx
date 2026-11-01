@@ -220,13 +220,13 @@ export default function NetworkGraph({
 
     let size = 20;
     if (node.type === 'scheme') {
-      size = 80;
+      size = 60;
     } else if (node.type === 'party') {
-      size = 80;
+      size = 35;
     } else if (node.type === 'politician') {
-      size = 80;
+      size = 35;
     } else if (node.type === 'company') {
-      size = 80
+      size = 20
     }
 
     ctx.save();
@@ -239,7 +239,7 @@ export default function NetworkGraph({
 
     // Borda Externa
     ctx.beginPath();
-    ctx.arc(node.x, node.y, size + 3, 0, 2 * Math.PI);
+    ctx.arc(node.x, node.y, size + 10, 0, 2 * Math.PI);
     ctx.strokeStyle = color;
     ctx.lineWidth = isSelected ? 3 / globalScale : 1.8 / globalScale;
     ctx.stroke();
