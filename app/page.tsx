@@ -45,7 +45,8 @@ export default function Page() {
     politician: true,
     party: true,
     scheme: true,
-    company: true
+    company: true,
+    operator: true
   });
   const [statusFilters, setStatusFilters] = useState<Record<LinkStatus, boolean>>({
     confirmed: true,
