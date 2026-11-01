@@ -239,7 +239,7 @@ export default function NetworkGraph({
 
     // Borda Externa
     ctx.beginPath();
-    ctx.arc(node.x, node.y, size + 10, 0, 2 * Math.PI);
+    ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
     ctx.strokeStyle = color;
     ctx.lineWidth = isSelected ? 3 / globalScale : 1.8 / globalScale;
     ctx.stroke();
@@ -364,7 +364,7 @@ export default function NetworkGraph({
 
           const color = STATUS_COLORS[link.status] || '#ff0055';
           const isSelected = selectedLink?.id === link.id;
-          const width = isSelected ? 3.5 : 1.8;
+          const width = isSelected ? 3.5 : 6;
 
           ctx.save();
 
