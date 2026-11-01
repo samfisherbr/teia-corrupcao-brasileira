@@ -9,9 +9,9 @@ export const metadata = {
 
 export default function AboutUsPage() {
   return (
-    <div className="min-h-screen w-full bg-[#080d16] text-slate-200 font-sans px-4 py-12 sm:px-8 md:px-16 lg:px-24">
+    <div className="h-[100dvh] w-full bg-[#080d16] text-slate-200 font-sans px-4 py-12 sm:px-8 md:px-16 lg:px-24 overflow-y-auto select-text">
       <div className="max-w-4xl mx-auto space-y-8">
-        
+
         {/* Navigation Back */}
         <Link
           href="/"
@@ -36,7 +36,7 @@ export default function AboutUsPage() {
 
         {/* Content */}
         <div className="space-y-8 text-sm leading-relaxed text-slate-300">
-          
+
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
               <Info className="w-4 h-4 text-cyan-400" />
@@ -58,7 +58,7 @@ export default function AboutUsPage() {
             <p>
               Impartiality and factual accuracy are the foundation of our data collection pipeline. Every node and connection mapped within the network strictly adheres to public-record sourcing rules:
             </p>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
                 <div className="flex items-center space-x-2 text-cyan-400 font-semibold text-xs font-mono">

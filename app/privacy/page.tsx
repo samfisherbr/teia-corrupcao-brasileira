@@ -13,9 +13,9 @@ export default function PrivacyPolicyPage() {
   const domainName = 'teiadacorrupcao.io'; // Replace with your domai
 
   return (
-    <div className="min-h-screen w-full bg-[#080d16] text-slate-200 font-sans px-4 py-12 sm:px-8 md:px-16 lg:px-24">
+    <div className="h-[100dvh] w-full bg-[#080d16] text-slate-200 font-sans px-4 py-12 sm:px-8 md:px-16 lg:px-24 overflow-y-auto select-text">
       <div className="max-w-4xl mx-auto space-y-8">
-        
+
         {/* Navigation Back */}
         <Link
           href="/"
@@ -38,7 +38,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Content Sections */}
         <div className="space-y-8 text-sm leading-relaxed text-slate-300">
-          
+
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
               <Eye className="w-4 h-4 text-cyan-400" />
