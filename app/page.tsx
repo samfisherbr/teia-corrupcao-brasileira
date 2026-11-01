@@ -10,6 +10,7 @@ import NetworkGraph from '@/components/NetworkGraph';
 import SidebarControls from '@/components/SidebarControls';
 import InspectorDrawer from '@/components/InspectorDrawer';
 import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/graph';
+import AdBanner from '@/components/AdBanner';
 
 export default function Page() {
   const graphRef = useRef<any>(null);
@@ -53,14 +54,14 @@ export default function Page() {
         const data = await res.json();
         if (data.nodes && data.links) {
           setGraphData(data);
-          
+
           // If the database happens to be completely empty, close the loading screen immediately
           if (data.nodes.length === 0) {
             setIsLoading(false);
           }
         }
-        
-        // 🚀 NOTE: We DO NOT set `isLoading(false)` here anymore.
+
+        // NOTE: We DO NOT set `isLoading(false)` here anymore.
         // It is now strictly handled by `onGraphReady` passed to the NetworkGraph component.
         return;
 
@@ -77,9 +78,9 @@ export default function Page() {
     const validLinks = graphData.links.filter(link => {
       const matchYear = link.year >= startYearFilter;
       const matchStatus = statusFilters[link.status];
-      
+
       const linkTypeStr = (link.type as string) || '';
-      const matchCategory = activeCategory === 'all' || 
+      const matchCategory = activeCategory === 'all' ||
         (activeCategory === 'transactions' && (linkTypeStr === 'suspect_transactions' || linkTypeStr === 'transaction')) ||
         (activeCategory === 'contracts' && (linkTypeStr === 'direct_financing' || linkTypeStr === 'contract')) ||
         (activeCategory === 'processes' && linkTypeStr === 'process');
@@ -89,7 +90,7 @@ export default function Page() {
 
     const validNodes = graphData.nodes.filter(node => {
       const matchType = typeFilters[node.type];
-      const matchSearch = searchQuery === '' || 
+      const matchSearch = searchQuery === '' ||
         node.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (node.party && node.party.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchType && matchSearch;
@@ -124,7 +125,7 @@ export default function Page() {
     if (graphRef.current) {
       const x = (schemeNode as any).x || 0;
       const y = (schemeNode as any).y || 0;
-      
+
       if (typeof graphRef.current.centerAt === 'function') {
         graphRef.current.centerAt(x, y, 600);
       }
@@ -139,10 +140,10 @@ export default function Page() {
       <HeaderBar activePage={activePage} setActivePage={setActivePage} />
 
       <div className="flex flex-1 w-full h-[calc(100vh-4rem)] relative overflow-hidden">
-        <HeaderOverlay 
-          activePage={activePage} 
-          onClose={() => setActivePage('graph')} 
-          graphData={graphData} 
+        <HeaderOverlay
+          activePage={activePage}
+          onClose={() => setActivePage('graph')}
+          graphData={graphData}
         />
 
         <SidebarControls
@@ -206,28 +207,50 @@ export default function Page() {
             />
           )}
 
-        {/*
+          {/*
           <TimelineWidget
             startYear={startYearFilter}
             setStartYear={setStartYearFilter}
           />
         */}
-        </main>
+          <main className="relative flex-1 w-full h-full overflow-hidden bg-[#080d16]">
+            <NetworkGraph
+              graphRef={graphRef}
+              graphData={filteredData}
+              selectedNode={selectedNode}
+              selectedLink={selectedLink}
+              onSelectNode={setSelectedNode}
+              onSelectLink={setSelectedLink}
+            />
 
-        <InspectorDrawer
-          selectedNode={selectedNode}
-          selectedLink={selectedLink}
-          onClose={() => {
-            setSelectedNode(null);
-            setSelectedLink(null);
-          }}
-          filteredData={filteredData}
-          fullNodes={graphData.nodes}
-          onSelectLink={(link) => {
-            setSelectedLink(link);
-            setSelectedNode(null);
-          }}
-        />
+            {!isMobile && (
+              <TimelineWidget
+                startYear={startYearFilter}
+                setStartYear={setStartYearFilter}
+              />
+            )}
+
+            {/* Desktop Bottom-Centered Ad Banner */}
+            <AdBanner
+              adClient="ca-pub-XXXXXXXXXXXXXXXX"
+              adSlot="XXXXXXXXXX"
+            />
+          </main>
+
+          <InspectorDrawer
+            selectedNode={selectedNode}
+            selectedLink={selectedLink}
+            onClose={() => {
+              setSelectedNode(null);
+              setSelectedLink(null);
+            }}
+            filteredData={filteredData}
+            fullNodes={graphData.nodes}
+            onSelectLink={(link) => {
+              setSelectedLink(link);
+              setSelectedNode(null);
+            }}
+          />
       </div>
     </div>
   );

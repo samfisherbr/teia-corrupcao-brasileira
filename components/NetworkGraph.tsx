@@ -157,16 +157,16 @@ export default function NetworkGraph({
 
       // Adjust force constants for mobile screens vs desktop
       const chargeStrength = isMobile ? -1200 : -600;
-      const schemeCharge = isMobile ? -600 : -1000;
-      const linkDistance = isMobile ? 100 : 200;
+      const schemeCharge = isMobile ? -900 : -1200;
+      const linkDistance = isMobile ? 200 : 300;
 
       if (chargeForce) {
-        chargeForce.strength((node: any) => (node.type === 'scheme' ? -1000 : -500));
+        chargeForce.strength((node: any) => (node.type === 'scheme' ? -1000 : -700));
       }
 
       const linkForce = graphRef.current.d3Force('link');
       if (linkForce) {
-        linkForce.distance(200);
+        linkForce.distance(300);
         linkForce.strength(0.15);
       }
 
