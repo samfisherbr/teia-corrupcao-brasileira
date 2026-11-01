@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { Plus, Minus, Maximize } from 'lucide-react';
 import { forceCollide } from 'd3-force';
 import { GraphData, GraphNode, GraphLink } from '@/types/graph';
-import Link from 'next/link';
+import Link from '/link';
 import { Scale, ShieldCheck, Info, FileText, ChevronUp } from 'lucide-react';
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
