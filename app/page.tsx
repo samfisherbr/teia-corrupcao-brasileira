@@ -184,7 +184,7 @@ export default function Page() {
             </div>
           )}
 
-          {/* 🚀 3. NetworkGraph is ALWAYS rendered unless there's an error, allowing D3 to mount & tick */}
+          {/* 3. NetworkGraph is ALWAYS rendered unless there's an error, allowing D3 to mount & tick */}
           {!error && (
             <NetworkGraph
               graphRef={graphRef}
