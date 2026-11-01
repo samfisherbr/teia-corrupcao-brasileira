@@ -255,7 +255,7 @@ export default function NetworkGraph({
       if (img && img.complete && img.naturalWidth > 0) {
         ctx.save();
         ctx.beginPath();
-        ctx.arc(node.x, node.y, size -10, 0, 2 * Math.PI);
+        ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
         ctx.clip();
         ctx.drawImage(img, node.x - size, node.y - size, size * 2, size * 2);
         ctx.restore();
