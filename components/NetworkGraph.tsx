@@ -222,9 +222,9 @@ export default function NetworkGraph({
     if (node.type === 'scheme') {
       size = 100;
     } else if (node.type === 'party' || node.type === 'company') {
-      size = 40;
+      size = 70;
     } else if (node.type === 'politician' || node.type === 'operator') {
-      size = 20;
+      size = 40;
     }
 
     ctx.save();
@@ -486,8 +486,8 @@ export default function NetworkGraph({
 
         {/* Status: Operador */}
         <div className="flex items-center space-x-2.5">
-          <span className="w-5 h-0.5 bg-[#939c98] inline-block rounded-full shadow-[0_0_8px_#ffffff]" />
-          <span className="text-slate-200">Empresa / Operador</span>
+          <span className="w-5 h-0.5 bg-[#e3e3e3] inline-block rounded-full shadow-[0_0_8px_#ffffff]" />
+          <span className="text-slate-200">Operador</span>
         </div>
       </div>
 
@@ -551,7 +551,7 @@ export default function NetworkGraph({
             className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
           >
             <Info className="w-3.5 h-3.5 text-cyan-400" />
-            <span>About Us</span>
+            <span>Sobre nós</span>
           </Link>
 
           <Link
@@ -559,7 +559,7 @@ export default function NetworkGraph({
             className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Privacy Policy</span>
+            <span>Política de privacidade</span>
           </Link>
 
           <Link
@@ -567,7 +567,7 @@ export default function NetworkGraph({
             className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
           >
             <Scale className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Terms of Service</span>
+            <span>Termos de serviço</span>
           </Link>
         </div>
 
@@ -577,7 +577,7 @@ export default function NetworkGraph({
           aria-label="Legal pages menu"
         >
           <FileText className="w-4 h-4 text-cyan-400" />
-          <span className="font-mono text-xs hidden sm:inline">Legal & Policy</span>
+          <span className="font-mono text-xs hidden sm:inline">Termos & Política</span>
           <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 transition-transform duration-200" />
         </button>
       </div>

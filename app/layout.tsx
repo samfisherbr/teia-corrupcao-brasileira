@@ -4,6 +4,11 @@ import './globals.css';
 export const metadata = {
   title: 'Teia da Corrupção',
   description: 'Mapeamento de Redes Relacionais e Investigação de Corrupção no Brasil',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
