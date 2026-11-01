@@ -17,16 +17,21 @@ import {
   Layers,
   Activity,
   TrendingUp,
-  ShieldAlert
+  ShieldAlert,
+  UserCheck
 } from 'lucide-react';
 
 interface HeaderOverlayProps {
   activePage: ActivePage;
   onClose: () => void;
   graphData: GraphData;
+  selectedNode?: GraphNode | null;
+  onSelectScheme?: (schemeId: string) => void;
 }
 
-// Helper para extrair e converter strings monetárias em números
+/**
+ * Helper function to extract and convert monetary strings (e.g., "R$ 110.000.000") into numbers.
+ */
 function parseMonetaryValue(amountStr?: string | null): number {
   if (!amountStr || amountStr === 'NULL' || amountStr === 'N/A') return 0;
   const numericOnly = amountStr.replace(/[^0-9]/g, '');
@@ -34,7 +39,9 @@ function parseMonetaryValue(amountStr?: string | null): number {
   return isNaN(parsed) ? 0 : parsed;
 }
 
-// Helper para formatar números em moeda BRL legível
+/**
+ * Helper function to format numerical values into readable BRL currency notation.
+ */
 function formatBRL(value: number): string {
   if (value >= 1_000_000_000) {
     return `R$ ${(value / 1_000_000_000).toFixed(1)} Bi`;
@@ -49,20 +56,24 @@ function formatBRL(value: number): string {
 }
 
 export default function HeaderOverlay({ activePage, onClose, graphData }: HeaderOverlayProps) {
+  // Controls overlay visibility based on active header navigation view
   const isOpen = activePage === 'infographics' || activePage === 'glossary';
+  
+  // State for expanding/collapsing individual scheme dossiers in the Glossary
   const [expandedSchemeId, setExpandedSchemeId] = useState<string | null>(null);
 
-  // Filtrar nós do tipo "scheme"
+  // Filter only nodes categorized as "scheme"
   const schemeNodes = useMemo(() => {
     return graphData.nodes.filter((node) => node.type === 'scheme');
   }, [graphData.nodes]);
 
-  // ---------------------------------------------------------------------------
-  // INFOGRÁFICO 1: RANKING DE CENTRALIDADE POR PARTIDO
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // INFOGRAPHIC 1: PARTY CENTRALITY RANKING (Degree of connections)
+  // ===========================================================================
   const partyCentralityRanking = useMemo(() => {
     const partyMap: Record<string, { party: string; count: number; politicians: Set<string> }> = {};
 
+    // Group political entities by party name
     graphData.nodes.forEach((node) => {
       if (node.party && node.party !== 'NULL' && node.party !== 'N/A' && node.party !== 'scheme') {
         const p = node.party.toUpperCase();
@@ -75,7 +86,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
       }
     });
 
-    // Calcular grau de centralidade (total de conexões envolvendo cada partido/político do partido)
+    // Calculate degree centrality (total graph connections per party)
     graphData.links.forEach((link) => {
       const sId = typeof link.source === 'object' ? (link.source as any).id : link.source;
       const tId = typeof link.target === 'object' ? (link.target as any).id : link.target;
@@ -100,9 +111,9 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
     }));
   }, [graphData]);
 
-  // ---------------------------------------------------------------------------
-  // INFOGRÁFICO 2: DIAGRAMA DE FLUXO OPERACIONAL (TIPOS DE CONEXÃO & STATUS)
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // INFOGRAPHIC 2: OPERATIONAL FLOW DIAGRAM (Connection types & legal status)
+  // ===========================================================================
   const operationalFlowMetrics = useMemo(() => {
     const totalLinks = graphData.links.length || 1;
 
@@ -117,7 +128,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
     graphData.links.forEach((link) => {
       const linkType = (link.type as string) || '';
 
-      // Tipos de conexão (compatível com tipos legados e novos)
+      // Categorize link operational type
       if (linkType === 'transaction' || linkType === 'suspect_transactions' || linkType === 'suspect_transaction') {
         transactions++;
       } else if (linkType === 'contract' || linkType === 'direct_financing') {
@@ -126,7 +137,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
         processes++;
       }
 
-      // Status jurídico
+      // Legal status metric aggregation
       if (link.status === 'confirmed') confirmed++;
       else if (link.status === 'under_investigation') underInvestigation++;
       else if (link.status === 'acquitted') acquitted++;
@@ -170,16 +181,16 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
     };
   }, [graphData.links]);
 
-  // ---------------------------------------------------------------------------
-  // INFOGRÁFICO 3: MAPA DE CALOR FINANCEIRO POR ESQUEMA (TREEMAP)
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // INFOGRAPHIC 3: FINANCIAL HEATMAP BY CORRUPTION SCHEME (Treemap Data)
+  // ===========================================================================
   const financialTreemapData = useMemo(() => {
     const schemeAmounts: Array<{ id: string; label: string; amount: number; formatted: string }> = [];
 
     schemeNodes.forEach((scheme) => {
       let totalSchemeVal = 0;
 
-      // Soma os valores atribuídos às conexões diretas do esquema
+      // Sum values assigned to direct links connected to the scheme
       graphData.links.forEach((link) => {
         const sId = typeof link.source === 'object' ? (link.source as any).id : link.source;
         const tId = typeof link.target === 'object' ? (link.target as any).id : link.target;
@@ -189,7 +200,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
         }
       });
 
-      // Se o valor acumulado dos links for 0, busca o valor estimado no cadastro ou dossiê
+      // Fallback to estimated impact if connection link amounts are unassigned
       if (totalSchemeVal === 0) {
         const fallbackText = scheme.estimatedImpact || SCHEME_DETAILS[scheme.id]?.impact;
         totalSchemeVal = parseMonetaryValue(fallbackText);
@@ -213,10 +224,12 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
     };
   }, [schemeNodes, graphData.links]);
 
+  // Toggle scheme expansion state
   const toggleExpand = (id: string) => {
     setExpandedSchemeId((prev) => (prev === id ? null : id));
   };
 
+  // Helper function to fetch all graph entities connected to a given scheme
   const getConnectedEntities = (schemeId: string) => {
     const connectedNodeIds = new Set<string>();
 
@@ -238,9 +251,13 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-10">
-        {/* PAINEL DE INFOGRÁFICOS */}
+        
+        {/* =================================================================== */}
+        {/* INFOGRAPHICS DASHBOARD PAGE                                        */}
+        {/* =================================================================== */}
         {activePage === 'infographics' && (
           <div className="space-y-10 animate-in fade-in duration-300">
+            {/* Title Section */}
             <div>
               <div className="flex items-center space-x-2 text-cyan-400 text-xs font-mono font-semibold uppercase tracking-wider">
                 <PieChartIcon className="w-4 h-4" />
@@ -254,7 +271,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
               </p>
             </div>
 
-            {/* Métricas Globais */}
+            {/* Global Aggregated Metrics Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-sm flex items-center justify-between">
                 <div>
@@ -299,9 +316,9 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
               </div>
             </div>
 
-            {/* Grid Infográficos 1 & 2 */}
+            {/* Main Infographics Grid (Cards 1 & 2) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Infográfico 1 */}
+              {/* Infographic 1: Party Centrality Ranking */}
               <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-6 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
@@ -348,7 +365,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                 </div>
               </div>
 
-              {/* Infográfico 2 */}
+              {/* Infographic 2: Operational Flow Diagram */}
               <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-6 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
@@ -425,7 +442,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
               </div>
             </div>
 
-            {/* Infográfico 3 */}
+            {/* Infographic 3: Scheme Financial Heatmap */}
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-6">
               <div>
                 <div className="flex items-center justify-between">
@@ -484,7 +501,9 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
           </div>
         )}
 
-        {/* SEÇÃO DO GLOSSÁRIO */}
+        {/* =================================================================== */}
+        {/* SCHEME GLOSSARY & DOSSIERS PAGE                                     */}
+        {/* =================================================================== */}
         {activePage === 'glossary' && (
           <div className="space-y-8 animate-in fade-in duration-300">
             <div>
@@ -506,9 +525,10 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                   const connectedEntities = getConnectedEntities(scheme.id);
                   const isExpanded = expandedSchemeId === scheme.id;
 
-                  const politicians = connectedEntities.filter((e) => e.type === 'politician');
-                  const companies = connectedEntities.filter((e) => e.type === 'company');
-                  const operators = connectedEntities.filter((e) => e.type === 'operator');
+                  // Safely filter connected entity types, casting type to string for 'operator' support
+                  const politicians = connectedEntities.filter((e) => (e.type as string) === 'politician');
+                  const companies = connectedEntities.filter((e) => (e.type as string) === 'company');
+                  const operators = connectedEntities.filter((e) => (e.type as string) === 'operator');
 
                   return (
                     <article
@@ -537,6 +557,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                           {scheme.summary}
                         </p>
 
+                        {/* Quick entity & impact metric metrics bar */}
                         <div className="flex flex-wrap gap-4 pt-3 border-t border-slate-800 text-xs font-mono text-slate-400">
                           <div className="flex items-center space-x-1.5">
                             <Coins className="w-4 h-4 text-emerald-400" />
@@ -550,9 +571,16 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                             <Building className="w-4 h-4 text-amber-400" />
                             <span>Empresas Envolvidas: <strong className="text-slate-100">{companies.length}</strong></span>
                           </div>
+                          {operators.length > 0 && (
+                            <div className="flex items-center space-x-1.5">
+                              <UserCheck className="w-4 h-4 text-purple-400" />
+                              <span>Operadores Financeiros: <strong className="text-slate-100">{operators.length}</strong></span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
+                      {/* Detailed investigative dossier when expanded */}
                       {isExpanded && (
                         <div className="px-6 pb-6 pt-3 border-t border-slate-800 bg-slate-950/80 space-y-6 animate-in fade-in duration-200">
                           {details?.context && (
@@ -575,26 +603,32 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                             </div>
                           )}
 
+                          {/* Connected Graph Entities Breakdown */}
                           {connectedEntities.length > 0 && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-2">
                                 Entidades Mapeadas no Banco de Dados
                               </h3>
                               <div className="flex flex-wrap gap-2">
-                                {connectedEntities.map((ent) => (
-                                  <span
-                                    key={ent.id}
-                                    className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
-                                      ent.type === 'politician'
-                                        ? 'bg-blue-950/60 text-blue-300 border-blue-800/60'
-                                        : ent.type === 'company'
-                                        ? 'bg-amber-950/60 text-amber-300 border-amber-800/60'
-                                        : 'bg-slate-800 text-slate-300 border-slate-700'
-                                    }`}
-                                  >
-                                    {ent.label} {ent.party ? `(${ent.party})` : ''}
-                                  </span>
-                                ))}
+                                {connectedEntities.map((ent) => {
+                                  const eType = ent.type as string;
+                                  return (
+                                    <span
+                                      key={ent.id}
+                                      className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
+                                        eType === 'politician'
+                                          ? 'bg-blue-950/60 text-blue-300 border-blue-800/60'
+                                          : eType === 'company'
+                                          ? 'bg-amber-950/60 text-amber-300 border-amber-800/60'
+                                          : eType === 'operator'
+                                          ? 'bg-purple-950/60 text-purple-300 border-purple-800/60'
+                                          : 'bg-slate-800 text-slate-300 border-slate-700'
+                                      }`}
+                                    >
+                                      {ent.label} {ent.party ? `(${ent.party})` : ''}
+                                    </span>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
