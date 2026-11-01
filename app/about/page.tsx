@@ -93,8 +93,8 @@ export default function AboutUsPage() {
             <h2 className="text-lg font-semibold text-slate-100">Contact & Corrections</h2>
             <p>
               If you identify a factual discrepancy, updated court ruling, or broken source URL, please contact our editorial team at{' '}
-              <a href="mailto:contact@yourdomain.com" className="text-cyan-400 underline">
-                contact@yourdomain.com
+              <a href="mailto:samfisherbr@gmail.com" className="text-cyan-400 underline">
+                samfisherbr@gmail.com
               </a>
               .
             </p>
