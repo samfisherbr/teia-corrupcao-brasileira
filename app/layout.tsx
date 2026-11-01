@@ -2,7 +2,7 @@ import React from 'react';
 import './globals.css';
 
 export const metadata = {
-  title: 'CORRWEB',
+  title: 'Teia da Corrupção',
   description: 'Mapeamento de Redes Relacionais e Investigação de Corrupção no Brasil',
 };
 
