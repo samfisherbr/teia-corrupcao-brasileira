@@ -218,7 +218,7 @@ export default function NetworkGraph({
     const isSelected = selectedNode?.id === node.id;
     const color = COLOR_MAP[node.type as keyof typeof COLOR_MAP] || '#00f0ff';
 
-    let size = 12;
+    let size = 20;
     if (node.type === 'scheme') {
       size = 50;
     } else if (node.type === 'party') {
@@ -246,7 +246,7 @@ export default function NetworkGraph({
 
     // Círculo Interno e Imagem
     ctx.beginPath();
-    ctx.arc(node.x, node.y, size + 6, 0, 2 * Math.PI);
+    ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
     ctx.fillStyle = '#080d16';
     ctx.fill();
 
