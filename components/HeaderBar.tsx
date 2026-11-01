@@ -23,8 +23,8 @@ export default function HeaderBar({ activePage, setActivePage }: HeaderBarProps)
             <Share2 className="w-4 h-4" />
           </div>
           <div className="flex items-baseline space-x-1 sm:space-x-2">
-            <span className="font-mono font-bold text-slate-100 tracking-wider text-xs sm:text-sm">
-              Teia da Corrupção:
+            <span className="font-sm font-bold text-slate-100 tracking-wider text-xs sm:text-sm">
+              Teia da Corrupção
             </span>
             
             {/* Subtitle hidden on mobile screens to save space */}
