@@ -3,14 +3,14 @@ import Link from 'next/link';
 import { ArrowLeft, ShieldCheck, Lock, Eye, Cookie, FileText } from 'lucide-react';
 
 export const metadata = {
-  title: 'Privacy Policy | CORRWEB',
-  description: 'Privacy Policy and Cookie Usage Guidelines for CORRWEB Corruption Visualizer.',
+  title: 'Privacy Policy | Teia da Corrupção',
+  description: 'Privacy Policy and Cookie Usage Guidelines for Teia da Corrupção Corruption Visualizer.',
 };
 
 export default function PrivacyPolicyPage() {
   const lastUpdated = 'November 1, 2026';
-  const contactEmail = 'contact@yourdomain.com'; // Replace with your actual email
-  const domainName = 'yourdomain.com'; // Replace with your domain
+  const contactEmail = 'samfisherbr@gmail.com'; // Replace with your actual email
+  const domainName = 'teiadacorrupcao.io'; // Replace with your domai
 
   return (
     <div className="min-h-screen w-full bg-[#080d16] text-slate-200 font-sans px-4 py-12 sm:px-8 md:px-16 lg:px-24">
@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage() {
               1. Overview & Commitment
             </h2>
             <p>
-              At <strong>CORRWEB</strong> ({domainName}), accessible from https://{domainName}, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by CORRWEB and how we use it.
+              At <strong>Teia da Corrupção</strong> ({domainName}), accessible from https://{domainName}, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by Teia da Corrupção and how we use it.
             </p>
             <p>
               If you have additional questions or require more information about our Privacy Policy, do not hesitate to contact us.
@@ -58,7 +58,7 @@ export default function PrivacyPolicyPage() {
               2. Cookies & Third-Party Advertising (Google AdSense)
             </h2>
             <p>
-              CORRWEB uses cookies to store information about visitors&apos; preferences, the pages on the website that the visitor accessed or visited, and to optimize the user experience by customizing our web page content based on visitors&apos; browser type or other information.
+              Teia da Corrupção uses cookies to store information about visitors&apos; preferences, the pages on the website that the visitor accessed or visited, and to optimize the user experience by customizing our web page content based on visitors&apos; browser type or other information.
             </p>
             <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-3 text-xs text-slate-300">
               <p className="font-semibold text-slate-100 uppercase tracking-wider font-mono text-[11px]">
@@ -105,7 +105,7 @@ export default function PrivacyPolicyPage() {
               3. Log Files & Analytics
             </h2>
             <p>
-              CORRWEB follows a standard procedure of using log files. These files log visitors when they visit websites. All hosting companies do this as part of hosting services&apos; analytics. The information collected by log files includes internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any information that is personally identifiable. The purpose of the information is for analyzing trends, administering the site, tracking users&apos; movement on the website, and gathering demographic information.
+              Teia da Corrupção follows a standard procedure of using log files. These files log visitors when they visit websites. All hosting companies do this as part of hosting services&apos; analytics. The information collected by log files includes internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any information that is personally identifiable. The purpose of the information is for analyzing trends, administering the site, tracking users&apos; movement on the website, and gathering demographic information.
             </p>
           </section>
 
@@ -115,7 +115,7 @@ export default function PrivacyPolicyPage() {
               4. Third-Party Privacy Policies
             </h2>
             <p>
-              CORRWEB&apos;s Privacy Policy does not apply to other advertisers or websites. Thus, we are advising you to consult the respective Privacy Policies of these third-party ad servers for more detailed information. It may include their practices and instructions about how to opt-out of certain options.
+              Teia da Corrupção&apos;s Privacy Policy does not apply to other advertisers or websites. Thus, we are advising you to consult the respective Privacy Policies of these third-party ad servers for more detailed information. It may include their practices and instructions about how to opt-out of certain options.
             </p>
             <p>
               You can choose to disable cookies through your individual browser options. Detailed information about cookie management with specific web browsers can be found at the browsers&apos; respective websites.

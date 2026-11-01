@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { ArrowLeft, Network, Info, Database, CheckCircle2 } from 'lucide-react';
 
 export const metadata = {
-  title: 'About Us | CORRWEB',
-  description: 'Learn about CORRWEB - Political corruption relational network visualizer.',
+  title: 'About Us | Teia da Corrupção',
+  description: 'Learn about Teia da Corrupção - Political corruption relational network visualizer.',
 };
 
 export default function AboutUsPage() {
@@ -28,7 +28,7 @@ export default function AboutUsPage() {
               <Network className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-100">About CORRWEB</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-100">About Teia da Corrupção</h1>
               <p className="text-xs font-mono text-cyan-400 mt-0.5">Corruption Visualizer & Relational Network Intelligence</p>
             </div>
           </div>
@@ -43,7 +43,7 @@ export default function AboutUsPage() {
               Mission & Purpose
             </h2>
             <p>
-              <strong>CORRWEB</strong> is an interactive web platform engineered to map and visualize complex relational networks surrounding political corruption investigations, public contract fraud, and financial flows in Brazil.
+              <strong>Teia da Corrupção</strong> is an interactive web platform engineered to map and visualize complex relational networks surrounding political corruption investigations, public contract fraud, and financial flows in Brazil.
             </p>
             <p>
               Our goal is to make dense, multi-page legal dossiers, parliamentary commission reports (CPIs), and investigative journalism accessible through intuitive graph-based visual intelligence. By mapping entities—politicians, corporations, shell companies, and schemes—users can explore how public funds move across systemic operations over time.
@@ -85,7 +85,7 @@ export default function AboutUsPage() {
           <section className="space-y-3 border-t border-slate-800/80 pt-6">
             <h2 className="text-lg font-semibold text-slate-100">Neutrality & Balanced Defense Disclosures</h2>
             <p>
-              CORRWEB tracks the official status of each link (whether confirmed by final sentence, under active investigation, or acquitted/annulled). Defense statements and legal outcomes are presented with equal weight and a neutral, non-sensational tone.
+              Teia da Corrupção tracks the official status of each link (whether confirmed by final sentence, under active investigation, or acquitted/annulled). Defense statements and legal outcomes are presented with equal weight and a neutral, non-sensational tone.
             </p>
           </section>
 

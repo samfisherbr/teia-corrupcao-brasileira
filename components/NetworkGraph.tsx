@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic';
 import { Plus, Minus, Maximize } from 'lucide-react';
 import { forceCollide } from 'd3-force';
 import { GraphData, GraphNode, GraphLink } from '@/types/graph';
+import Link from 'next/link';
+import { Scale, ShieldCheck, Info, FileText, ChevronUp } from 'lucide-react';
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 
@@ -527,6 +529,50 @@ export default function NetworkGraph({
           aria-label="Toggle fullscreen"
         >
           <Maximize className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Floating Legal & Policy Menu (Bottom-Right - Aligned with Camera Controls) */}
+      <div className="absolute bottom-16 md:bottom-6 right-4 md:right-6 z-20 group">
+        {/* Expanded Links Container (Reveals on hover or focus) */}
+        <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200 flex flex-col space-y-1 text-xs">
+          <div className="px-2 py-1 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-slate-800/80 mb-1">
+            Informações Legais
+          </div>
+
+          <Link
+            href="/about"
+            className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
+          >
+            <Info className="w-3.5 h-3.5 text-cyan-400" />
+            <span>About Us</span>
+          </Link>
+
+          <Link
+            href="/privacy"
+            className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Privacy Policy</span>
+          </Link>
+
+          <Link
+            href="/terms"
+            className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
+          >
+            <Scale className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Terms of Service</span>
+          </Link>
+        </div>
+
+        {/* Trigger Button */}
+        <button
+          className="flex items-center space-x-2 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-2 md:py-1.5 text-xs text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
+          aria-label="Legal pages menu"
+        >
+          <FileText className="w-4 h-4 text-cyan-400" />
+          <span className="font-mono text-xs hidden sm:inline">Legal & Policy</span>
+          <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 transition-transform duration-200" />
         </button>
       </div>
     </div>

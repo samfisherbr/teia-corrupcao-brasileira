@@ -3,13 +3,13 @@ import Link from 'next/link';
 import { ArrowLeft, Scale, ShieldAlert, FileCode, ExternalLink } from 'lucide-react';
 
 export const metadata = {
-  title: 'Terms of Service | CORRWEB',
-  description: 'Terms of Service and Conditions of Use for CORRWEB Corruption Visualizer.',
+  title: 'Terms of Service | Teia da Corrupção',
+  description: 'Terms of Service and Conditions of Use for Teia da Corrupção Corruption Visualizer.',
 };
 
 export default function TermsOfServicePage() {
   const lastUpdated = 'November 1, 2026';
-  const domainName = 'yourdomain.com';
+  const domainName = 'teiadacorrupcao.io';
 
   return (
     <div className="min-h-screen w-full bg-[#080d16] text-slate-200 font-sans px-4 py-12 sm:px-8 md:px-16 lg:px-24">
@@ -41,7 +41,7 @@ export default function TermsOfServicePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-100">1. Acceptance of Terms</h2>
             <p>
-              By accessing and using <strong>CORRWEB</strong> ({domainName}), you accept and agree to be bound by the terms and provisions of this agreement. If you do not agree to abide by these terms, please do not use this website.
+              By accessing and using <strong>Teia da Corrupção</strong> ({domainName}), you accept and agree to be bound by the terms and provisions of this agreement. If you do not agree to abide by these terms, please do not use this website.
             </p>
           </section>
 
@@ -51,10 +51,10 @@ export default function TermsOfServicePage() {
               2. Nature of Platform & Public Data
             </h2>
             <p>
-              CORRWEB is an open-source, investigative network visualization tool designed for informational, educational, and analytical purposes. All relational network data, entity summaries, court references, and public contract links presented within the visualizer are compiled from publicly available official documents, government portals (such as MPF, STF, CGU, TCU, CPI reports), and reputable media outlets.
+              Teia da Corrupção is an open-source, investigative network visualization tool designed for informational, educational, and analytical purposes. All relational network data, entity summaries, court references, and public contract links presented within the visualizer are compiled from publicly available official documents, government portals (such as MPF, STF, CGU, TCU, CPI reports), and reputable media outlets.
             </p>
             <p>
-              While we strive for factual accuracy and neutrality, CORRWEB does not generate legal accusations independently. Information is provided on an &quot;as-is&quot; basis without warranties of completeness or real-time legal status changes.
+              While we strive for factual accuracy and neutrality, Teia da Corrupção does not generate legal accusations independently. Information is provided on an &quot;as-is&quot; basis without warranties of completeness or real-time legal status changes.
             </p>
           </section>
 
@@ -64,10 +64,10 @@ export default function TermsOfServicePage() {
               3. Third-Party Links & Advertisements
             </h2>
             <p>
-              This website may contain links to third-party websites or services (including news sources, official PDF court rulings, and third-party advertising services like Google AdSense) that are not owned or controlled by CORRWEB.
+              This website may contain links to third-party websites or services (including news sources, official PDF court rulings, and third-party advertising services like Google AdSense) that are not owned or controlled by Teia da Corrupção.
             </p>
             <p>
-              CORRWEB has no control over, and assumes no responsibility for, the content, privacy policies, or practices of any third-party websites or ad providers. You acknowledge and agree that CORRWEB shall not be responsible or liable, directly or indirectly, for any damage or loss caused by or in connection with the use of any such content or services.
+              Teia da Corrupção has no control over, and assumes no responsibility for, the content, privacy policies, or practices of any third-party websites or ad providers. You acknowledge and agree that Teia da Corrupção shall not be responsible or liable, directly or indirectly, for any damage or loss caused by or in connection with the use of any such content or services.
             </p>
           </section>
 
@@ -77,7 +77,7 @@ export default function TermsOfServicePage() {
               4. Disclaimer & Limitation of Liability
             </h2>
             <p>
-              In no event shall CORRWEB, its maintainers, or contributors be liable for any direct, indirect, incidental, special, or consequential damages arising out of or in connection with your access to, or use of, this platform or any information provided herein.
+              In no event shall Teia da Corrupção, its maintainers, or contributors be liable for any direct, indirect, incidental, special, or consequential damages arising out of or in connection with your access to, or use of, this platform or any information provided herein.
             </p>
           </section>
 
