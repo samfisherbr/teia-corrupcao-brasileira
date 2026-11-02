@@ -366,31 +366,38 @@ export default function NetworkGraph({
 
         linkCanvasObjectMode={() => 'replace'}
         linkCanvasObject={(link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-          const start = link.source;
-          const end = link.target;
+          // 1. Garante suporte tanto para IDs em string quanto para objetos D3 já resolvidos
+          const start = typeof link.source === 'object' ? link.source : null;
+          const end = typeof link.target === 'object' ? link.target : null;
 
-          if (!start || !end || typeof start.x !== 'number' || typeof end.x !== 'number') return;
+          // Se o D3 ainda não vinculou as coordenadas dos nós neste frame, aguarda o próximo ciclo
+          if (!start || typeof start.x !== 'number' || !end || typeof end.x !== 'number') return;
 
           const color = STATUS_COLORS[link.status] || '#ff0055';
           const isSelected = selectedLink?.id === link.id;
-          const width = isSelected ? 9 : 6;
+          const baseWidth = isSelected ? 8 : 4;
+
+          // 2. Proteção contra divisão por zero / escala inválida no Canvas 2D
+          const safeScale = globalScale && globalScale > 0 ? globalScale : 1;
+          const calculatedGlowWidth = baseWidth + 2 / safeScale;
+          const glowWidth = Number.isFinite(calculatedGlowWidth) ? calculatedGlowWidth : baseWidth + 2;
 
           ctx.save();
 
-          // Pass 1: Outer Translucent Aura (Glow)
+          // Pass 1: Aura translúcida (Glow)
           ctx.beginPath();
           ctx.moveTo(start.x, start.y);
           ctx.lineTo(end.x, end.y);
-          ctx.strokeStyle = `${color}44`; // ~27% opacity glow
-          ctx.lineWidth = width + 2 / globalScale;
+          ctx.strokeStyle = `${color}44`;
+          ctx.lineWidth = glowWidth;
           ctx.stroke();
 
-          // Pass 2: Sharp Core Line
+          // Pass 2: Linha principal
           ctx.beginPath();
           ctx.moveTo(start.x, start.y);
           ctx.lineTo(end.x, end.y);
           ctx.strokeStyle = color;
-          ctx.lineWidth = width;
+          ctx.lineWidth = baseWidth;
 
           if (link.status === 'under_investigation') {
             ctx.setLineDash([4, 4]);
