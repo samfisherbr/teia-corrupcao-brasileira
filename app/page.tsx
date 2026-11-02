@@ -68,6 +68,17 @@ export default function Page() {
         if (data.nodes && data.links) {
           setGraphData(data);
 
+          // 1. Extrai todos os anos válidos dos links retornados pelo banco
+          const years = data.links
+            .map((link: GraphLink) => Number(link.year))
+            .filter((year: number) => !isNaN(year) && year > 0);
+
+          // 2. Se houver anos válidos, define o filtro para o menor ano encontrado
+          if (years.length > 0) {
+            const minYear = Math.min(...years);
+            setStartYearFilter(minYear);
+          }
+
           if (data.nodes.length === 0) {
             setIsLoading(false);
           }
