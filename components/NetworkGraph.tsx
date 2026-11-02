@@ -196,10 +196,10 @@ export default function NetworkGraph({
 
       //FIX THE CRUMBLED INITIAL LOAD
       const sim = graphRef.current.d3Simulation(); // Access the raw D3 simulation object
-      if (sim) {
-        sim.alpha(1);          // Reset simulation "temperature" to maximum energy (0 to 1)
-        sim.alphaMin(0.001);   // The threshold at which the simulation decides to stop ticking
-        sim.alphaDecay(0.02);  // Lower value (default ~0.0228) makes it cool down slower, giving nodes more time to unpack
+      if (typeof graphRef.current.d3VelocityDecay === 'function') {
+        // Default is 0.4. Lowering this (e.g., 0.15 to 0.25) makes nodes friction-free,
+        // giving them much higher kinetic speed to push out of clumping instantly.
+        graphRef.current.d3VelocityDecay(0.3);
       }
 
       graphRef.current.d3ReheatSimulation();
