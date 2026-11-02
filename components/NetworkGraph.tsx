@@ -159,7 +159,7 @@ export default function NetworkGraph({
       // Adjust force constants for mobile screens vs desktop
       const chargeStrength = isMobile ? -1200 : -600;
       const schemeCharge = isMobile ? -900 : -1200;
-      const linkDistance = isMobile ? 200 : 300;
+      const linkDistance = isMobile ? 400 : 500;
 
       if (chargeForce) {
         chargeForce.strength((node: any) => (node.type === 'scheme' ? -1000 : -700));
@@ -167,7 +167,7 @@ export default function NetworkGraph({
 
       const linkForce = graphRef.current.d3Force('link');
       if (linkForce) {
-        linkForce.distance(200);
+        linkForce.distance(500);
         linkForce.strength(0.3);
       }
 
@@ -286,7 +286,7 @@ export default function NetworkGraph({
       primaryLabel = primaryLabel.toUpperCase();
       fontSize = Math.max(12, 13 / globalScale);
       fontWeight = '600';
-      fontColor = isSelected ? '#000000' : '#ff00c8';
+      fontColor = isSelected ? '#ffffff' : '#ff00c8';
       break;
 
     case 'company':
@@ -294,7 +294,7 @@ export default function NetworkGraph({
       break;
 
     case 'operator':
-      fontColor = isSelected ? '#000000' : '#cdcdcd';
+      fontColor = isSelected ? '#ffffff' : '#cdcdcd';
       break;
 
     case 'party':
