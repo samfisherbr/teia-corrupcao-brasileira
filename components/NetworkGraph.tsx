@@ -279,14 +279,14 @@ export default function NetworkGraph({
       if (node.party && node.party !== 'N/A' && node.party !== 'NULL') {
         subLabel = `(${node.party})`;
       }
-      fontColor = isSelected ? '#ffffff' : '#a5f3fc';
+      fontColor = isSelected ? '#000000' : '#a5f3fc';
       break;
 
     case 'scheme':
       primaryLabel = primaryLabel.toUpperCase();
       fontSize = Math.max(12, 13 / globalScale);
       fontWeight = '600';
-      fontColor = isSelected ? '#ffffff' : '#ff00c8';
+      fontColor = isSelected ? '#000000' : '#ff00c8';
       break;
 
     case 'company':
@@ -294,7 +294,7 @@ export default function NetworkGraph({
       break;
 
     case 'operator':
-      fontColor = isSelected ? '#ffffff' : '#cdcdcd';
+      fontColor = isSelected ? '#000000' : '#cdcdcd';
       break;
 
     case 'party':
