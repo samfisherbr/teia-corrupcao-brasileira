@@ -1,3 +1,9 @@
+/**
+ * Utilitários de valores monetários em texto livre (padrão brasileiro).
+ * Usado pelos infográficos quando o link NÃO tem `amount_brl` numérico.
+ * Para aceitar outra moeda (ex.: euro), inclua o símbolo na regex de
+ * `parseAmount` e no tipo `Currency`, e trate-o em `formatAmount`.
+ */
 export type Currency = 'BRL' | 'USD';
 
 export interface ParsedAmount {
@@ -5,6 +11,7 @@ export interface ParsedAmount {
   currency: Currency;
 }
 
+/** Palavras que multiplicam o número: "6,2 bilhões", "300 mil", "42 mi"… */
 const MULTIPLIERS: Array<[RegExp, number]> = [
   [/^(bi|bilh(ão|ao|ões|oes)|bn)\b/i, 1_000_000_000],
   [/^(mi|milh(ão|ao|ões|oes)|mm)\b/i, 1_000_000],
@@ -38,6 +45,7 @@ export function parseAmount(text?: string | null): ParsedAmount | null {
   return value > 0 ? { value, currency } : null;
 }
 
+/** Formata de forma curta: 6200000000 → "R$ 6,2 bi"; 300000 → "R$ 300 mil". */
 export function formatAmount(value: number, currency: Currency = 'BRL'): string {
   const symbol = currency === 'USD' ? 'US$' : 'R$';
   const fmt = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });

@@ -1,5 +1,18 @@
 'use client';
 
+/**
+ * ============================================================================
+ * SIDEBARCONTROLS — painel de controle à esquerda (só desktop, ≥ 768px)
+ * ============================================================================
+ * Busca, controle de ano, filtros por tipo e por status, índice de esquemas
+ * e contadores. Não guarda estado próprio: tudo vem de app/page.tsx por props.
+ *
+ * Largura: `w-80` no <aside>. Para mostrar no celular, troque `hidden md:flex`
+ * por `flex` (e trate o espaço, ex. como gaveta).
+ * Altura máxima do índice de esquemas: `max-h-40` (≈160px) mais abaixo.
+ * ============================================================================
+ */
+
 import React from 'react';
 import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen, Component, Scale, Briefcase } from 'lucide-react';
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
@@ -8,6 +21,7 @@ import { NODE_STYLE, STATUS_STYLE } from '@/lib/graphConfig';
 // Icons stay here (UI-only); colors/labels come from the shared config.
 // Operators previously reused the company icon and had color '#ffff' (4-digit hex),
 // which became '#ffff44' (yellow) once an alpha suffix was appended.
+// Ícones lucide-react por tipo (lista em https://lucide.dev/icons).
 const NODE_ICONS: Record<NodeType, React.ElementType> = {
   politician: UserCheck,
   party: Layers,
@@ -52,6 +66,7 @@ export default function SidebarControls({
   onSelectScheme
 }: SidebarControlsProps) {
   // Filtra apenas as entidades do tipo "Esquema de Corrupção"
+  // Só os nós de esquema VISÍVEIS (já filtrados) entram no índice.
   const schemeNodes = React.useMemo(() => nodes.filter((node) => node.type === 'scheme'), [nodes]);
 
   return (

@@ -1,9 +1,30 @@
 'use client';
 
+/**
+ * ============================================================================
+ * HEADEROVERLAY — painéis de tela cheia "Infográficos" e "Glossário"
+ * ============================================================================
+ * Desce por cima do grafo quando o usuário clica nos botões do cabeçalho.
+ * Sempre usa os dados COMPLETOS (não os filtrados), para os números não
+ * mudarem conforme os filtros da barra lateral.
+ *
+ *   Infográficos:
+ *     1. Ranking de partidos por número de vínculos (centralidade de grau)
+ *     2. Rosca com a proporção de tipos de vínculo + contagem por status
+ *     3. Cartões com o valor financeiro de cada esquema
+ *   Glossário:
+ *     Um cartão por esquema, com o texto de data/schemeDetails.ts
+ *
+ * Ajustes comuns: quantos partidos mostrar → PARTY_RANKING_SIZE;
+ * cores da rosca → `categories` em operationalFlowMetrics.
+ * ============================================================================
+ */
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ActivePage } from './HeaderBar';
 import { GraphData, GraphNode } from '@/types/graph';
-import { getLinkEnds } from '@/lib/graphConfig';
+import { getLinkEnds, STATUS_STYLE } from '@/lib/graphConfig';
+import type { LinkStatus } from '@/types/graph';
 import { parseAmount, formatAmount } from '@/lib/money';
 import { SCHEME_DETAILS } from '@/data/schemeDetails';
 import { 
@@ -22,6 +43,9 @@ import {
   ShieldAlert,
   UserCheck
 } from 'lucide-react';
+
+/** Quantos partidos aparecem no ranking do infográfico 1. */
+const PARTY_RANKING_SIZE = 6;
 
 interface HeaderOverlayProps {
   activePage: ActivePage;
@@ -63,7 +87,9 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
   }, [graphData.links]);
 
   // ===========================================================================
-  // INFOGRAPHIC 1: PARTY CENTRALITY RANKING (Degree of connections)
+  // INFOGRÁFICO 1 — RANKING DE CENTRALIDADE POR PARTIDO
+  // Conta, para cada sigla, quantas pontas de link pertencem a nós daquela
+  // sigla (o próprio partido + seus políticos). A barra é relativa ao 1º lugar.
   // ===========================================================================
   const partyCentralityRanking = useMemo(() => {
     const partyMap: Record<string, { party: string; count: number; politicians: Set<string> }> = {};
@@ -95,7 +121,9 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
   }, [graphData, nodeById]);
 
   // ===========================================================================
-  // INFOGRAPHIC 2: OPERATIONAL FLOW DIAGRAM (Connection types & legal status)
+  // INFOGRÁFICO 2 — FLUXO OPERACIONAL
+  // Proporção de links por tipo (transação / contrato / processo) e contagem
+  // por status jurídico (os 6 status de STATUS_STYLE).
   // ===========================================================================
   const operationalFlowMetrics = useMemo(() => {
     const totalLinks = graphData.links.length;
@@ -105,9 +133,8 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
     let contracts = 0;
     let processes = 0;
 
-    let confirmed = 0;
-    let underInvestigation = 0;
-    let acquitted = 0;
+    // Contagem por status, já com as 6 chaves zeradas.
+    const statusCounts = Object.fromEntries(Object.keys(STATUS_STYLE).map((k) => [k, 0])) as Record<LinkStatus, number>;
 
     graphData.links.forEach((link) => {
       const linkType = (link.type as string) || '';
@@ -118,9 +145,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
       else if (linkType === 'process') processes++;
 
       // Legal status metric aggregation
-      if (link.status === 'confirmed') confirmed++;
-      else if (link.status === 'under_investigation') underInvestigation++;
-      else if (link.status === 'acquitted') acquitted++;
+      if (link.status in statusCounts) statusCounts[link.status] += 1;
     });
 
     const categories = [
@@ -153,16 +178,17 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
     return {
       totalLinks,
       categories,
-      statusBreakdown: {
-        confirmed,
-        underInvestigation,
-        acquitted
-      }
+      statusCounts
     };
   }, [graphData.links]);
 
   // ===========================================================================
-  // INFOGRAPHIC 3: FINANCIAL HEATMAP BY CORRUPTION SCHEME (Treemap Data)
+  // INFOGRÁFICO 3 — VALOR FINANCEIRO POR ESQUEMA
+  // Prioridade do número de cada esquema:
+  //   1. soma de `amount_brl` (inteiro em reais, schema v2) dos links do esquema;
+  //   2. se não houver, soma do texto `amount` interpretado por lib/money.ts;
+  //   3. se ainda for zero, a 1ª cifra do campo `impact` em schemeDetails.ts.
+  // Reais e dólares nunca são somados entre si.
   // ===========================================================================
   const financialTreemapData = useMemo(() => {
     // NOTE: summing every link touching a scheme can double-count the same money
@@ -173,6 +199,10 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
       graphData.links.forEach((link) => {
         const { sourceId, targetId } = getLinkEnds(link);
         if (sourceId !== scheme.id && targetId !== scheme.id) return;
+        if (typeof link.amount_brl === 'number' && link.amount_brl > 0) {
+          brl += link.amount_brl;
+          return;
+        }
         const parsed = parseAmount(link.amount);
         if (parsed?.currency === 'BRL') brl += parsed.value;
       });
@@ -214,6 +244,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
     setExpandedSchemeId((prev) => (prev === id ? null : id));
   };
 
+  // Entidades ligadas diretamente a um esquema (usado nos cartões do Glossário).
   const getConnectedEntities = (schemeId: string): GraphNode[] =>
     Array.from(neighbours.get(schemeId) ?? [])
       .map((id) => nodeById.get(id))
@@ -318,7 +349,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                   {partyCentralityRanking.length === 0 ? (
                     <p className="text-xs text-slate-500 italic">Nenhum partido com vínculos registrado.</p>
                   ) : (
-                    partyCentralityRanking.slice(0, 6).map((item) => (
+                    partyCentralityRanking.slice(0, PARTY_RANKING_SIZE).map((item) => (
                       <div key={item.party} className="space-y-1.5">
                         <div className="flex justify-between items-center text-xs">
                           <span className="font-bold font-mono text-slate-200">
@@ -412,10 +443,14 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
 
                 <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                   <span className="text-slate-400">Status Jurídico:</span>
-                  <div className="flex space-x-3">
-                    <span className="text-pink-400">🔴 {operationalFlowMetrics.statusBreakdown.confirmed} Condenados</span>
-                    <span className="text-amber-400">🟡 {operationalFlowMetrics.statusBreakdown.underInvestigation} Sob Investigação</span>
-                    <span className="text-emerald-400">🟢 {operationalFlowMetrics.statusBreakdown.acquitted} Absolvidos</span>
+                  {/* Uma etiqueta por status, com a cor de STATUS_STYLE */}
+                  <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
+                    {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => (
+                      <span key={key} className="flex items-center gap-1" style={{ color: STATUS_STYLE[key].color }}>
+                        <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: STATUS_STYLE[key].color }} />
+                        {operationalFlowMetrics.statusCounts[key]} {STATUS_STYLE[key].label}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>

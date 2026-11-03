@@ -1,3 +1,10 @@
+/*
+ * Estilos globais. A maior parte do visual vem das classes Tailwind nos
+ * componentes; aqui ficam só variáveis e classes reutilizadas.
+ *   --bg-color      fundo geral (igual a BG_COLOR em NetworkGraph.tsx)
+ *   --panel-bg      fundo translúcido dos painéis "vidro" (.glass-panel)
+ *   --border-color  borda sutil dos painéis
+ */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

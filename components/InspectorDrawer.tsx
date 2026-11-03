@@ -1,5 +1,21 @@
 'use client';
 
+/**
+ * ============================================================================
+ * INSPECTORDRAWER — painel lateral direito de detalhes
+ * ============================================================================
+ * Abre ao clicar num círculo ("Dossiê da Entidade") ou numa linha ("Detalhes
+ * do Vínculo"). Em celular ocupa a tela toda; no desktop, 384px (w-96).
+ *
+ *  - Entidade: foto, tipo, partido, resumo e lista de conexões visíveis
+ *    (clicar numa conexão abre o vínculo).
+ *  - Vínculo: origem → destino (clicáveis), tipo, status, ano, valor,
+ *    ressalva do valor (amount_note), descrição e fonte.
+ *
+ * Largura: troque `md:w-96` no <aside>. Cores/rótulos: lib/graphConfig.ts.
+ * ============================================================================
+ */
+
 import React from 'react';
 import { FileText, X, ExternalLink, ArrowRight } from 'lucide-react';
 import { GraphNode, GraphLink, GraphData, NodeType, LinkStatus, LinkType } from '@/types/graph';
@@ -25,7 +41,8 @@ export default function InspectorDrawer({
   onSelectLink,
   onSelectNode
 }: InspectorDrawerProps) {
-  // Hooks must run before any early return.
+  // Hooks precisam rodar antes de qualquer `return` antecipado (regra do React).
+  // nodeById: busca O(1) de nós; brokenImage: lembra a foto que falhou ao carregar.
   const nodeById = React.useMemo(() => new Map(fullNodes.map((n) => [n.id, n])), [fullNodes]);
   const [brokenImage, setBrokenImage] = React.useState<string | null>(null);
 
@@ -215,11 +232,16 @@ export default function InspectorDrawer({
               <span className="text-sm font-mono font-bold text-slate-200">{selectedLink.year || 'N/A'}</span>
             </div>
 
-            {/* Montante Envolvido */}
+            {/* Montante Envolvido + ressalva (amount_note), quando houver */}
             {selectedLink.amount && (
-              <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
-                <span>Montante Envolvido:</span>
-                <span className="text-sm font-mono font-bold text-emerald-400">{selectedLink.amount}</span>
+              <div className="text-xs text-slate-400 border-t border-slate-900 pt-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span>Montante Envolvido:</span>
+                  <span className="text-sm font-mono font-bold text-emerald-400">{selectedLink.amount}</span>
+                </div>
+                {selectedLink.amount_note && (
+                  <p className="text-[11px] text-slate-500 italic text-right">{selectedLink.amount_note}</p>
+                )}
               </div>
             )}
           </div>

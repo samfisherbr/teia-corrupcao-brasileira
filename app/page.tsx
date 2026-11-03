@@ -1,8 +1,20 @@
 'use client';
 
-// NOTE: `export const runtime = 'edge'` was removed. This page is a client
-// component with no server data, so it can be statically prerendered; only
-// /api/graph needs the edge runtime for next-on-pages.
+/**
+ * ============================================================================
+ * PÁGINA PRINCIPAL (/)
+ * ============================================================================
+ * Orquestra a aplicação:
+ *   - busca os dados em /api/graph (uma vez; botão "Tentar novamente" refaz);
+ *   - guarda o estado dos filtros (busca, ano, tipos, status);
+ *   - calcula `filteredData` (o que o grafo mostra) a partir dos filtros;
+ *   - guarda qual nó/link está selecionado e repassa aos painéis.
+ *
+ * Sem `export const runtime = 'edge'` aqui de propósito: a página é estática
+ * (componente cliente sem dados de servidor). Só a rota /api/graph precisa
+ * do runtime edge para o Cloudflare (next-on-pages).
+ * ============================================================================
+ */
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import HeaderBar, { ActivePage } from '@/components/HeaderBar';
@@ -12,37 +24,46 @@ import SidebarControls from '@/components/SidebarControls';
 import InspectorDrawer from '@/components/InspectorDrawer';
 import AdBanner from '@/components/AdBanner';
 import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/graph';
-import { getLinkEnds, normalizeText } from '@/lib/graphConfig';
+import { getLinkEnds, normalizeText, STATUS_STYLE } from '@/lib/graphConfig';
 
+/** Intervalo do controle de ano enquanto os dados não chegam (ou se nenhum link tiver ano). */
 const FALLBACK_YEAR_RANGE = { min: 1989, max: new Date().getFullYear() };
 
+/** Todos os tipos de entidade começam visíveis. Troque `true` por `false` para esconder um tipo por padrão. */
+const INITIAL_TYPE_FILTERS: Record<NodeType, boolean> = {
+  politician: true,
+  party: true,
+  scheme: true,
+  company: true,
+  operator: true,
+};
+
+/** Todos os status começam visíveis (as chaves vêm de STATUS_STYLE em lib/graphConfig.ts). */
+const INITIAL_STATUS_FILTERS = Object.fromEntries(
+  Object.keys(STATUS_STYLE).map((k) => [k, true])
+) as Record<LinkStatus, boolean>;
+
 export default function Page() {
+  // Instância do grafo (zoom, centerAt…). Preenchida pelo NetworkGraph.
   const graphRef = useRef<any>(null);
 
+  // --- Estado de navegação e dados ---------------------------------------
   const [activePage, setActivePage] = useState<ActivePage>('graph');
 
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0); // incrementar = buscar os dados de novo
+
+  // --- Seleção e filtros ---------------------------------------------------
 
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [selectedLink, setSelectedLink] = useState<GraphLink | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [startYearFilter, setStartYearFilter] = useState(FALLBACK_YEAR_RANGE.min);
-  const [typeFilters, setTypeFilters] = useState<Record<NodeType, boolean>>({
-    politician: true,
-    party: true,
-    scheme: true,
-    company: true,
-    operator: true,
-  });
-  const [statusFilters, setStatusFilters] = useState<Record<LinkStatus, boolean>>({
-    confirmed: true,
-    under_investigation: true,
-    acquitted: true,
-  });
+  const [typeFilters, setTypeFilters] = useState<Record<NodeType, boolean>>(INITIAL_TYPE_FILTERS);
+  const [statusFilters, setStatusFilters] = useState<Record<LinkStatus, boolean>>(INITIAL_STATUS_FILTERS);
 
   // Slider bounds come from the data. The old slider was hard-coded to
   // 2000–2026, so 1990s cases (PC Farias, Anões, SIVAM…) vanished as soon as
@@ -55,6 +76,8 @@ export default function Page() {
     return { min: Math.min(...years), max: Math.max(...years) };
   }, [graphData.links]);
 
+  // --- Carregamento dos dados ----------------------------------------------
+  // AbortController cancela a requisição se o componente desmontar no meio.
   useEffect(() => {
     const controller = new AbortController();
 
@@ -87,6 +110,10 @@ export default function Page() {
     return () => controller.abort();
   }, [reloadKey]);
 
+  // --- Filtragem -------------------------------------------------------------
+  // 1) links: ano >= filtro (links sem ano sempre passam) e status marcado;
+  // 2) nós: tipo marcado; com busca, os encontrados + vizinhos diretos;
+  // 3) só ficam links cujas DUAS pontas estão visíveis.
   const filteredData = useMemo<GraphData>(() => {
     const query = normalizeText(searchQuery.trim());
 
@@ -130,6 +157,7 @@ export default function Page() {
     };
   }, [graphData, startYearFilter, typeFilters, statusFilters, searchQuery]);
 
+  // --- Ações ------------------------------------------------------------------
   const toggleTypeFilter = useCallback((type: NodeType) => {
     setTypeFilters((prev) => ({ ...prev, [type]: !prev[type] }));
   }, []);
@@ -148,6 +176,8 @@ export default function Page() {
     setSelectedNode(null);
   }, []);
 
+  // Clique no "Índice de Esquemas" da barra lateral: seleciona e voa até o nó.
+  // 2.5 = nível de zoom; 600 = duração da animação em ms.
   const handleSelectSchemeFromIndex = useCallback((schemeNode: GraphNode) => {
     selectNode(schemeNode);
     const fg = graphRef.current;
@@ -157,6 +187,7 @@ export default function Page() {
     }
   }, [selectNode]);
 
+  // Anúncio só aparece se as duas variáveis de ambiente existirem (ver README).
   const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
   const adSlot = process.env.NEXT_PUBLIC_ADSENSE_SLOT;
 

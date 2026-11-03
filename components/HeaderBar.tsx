@@ -1,8 +1,17 @@
 'use client';
 
+/**
+ * HEADERBAR — barra superior fixa (64px, `h-16`).
+ * Marca à esquerda (clique volta ao grafo), botões "Infográficos" e
+ * "Glossário" (abrem o HeaderOverlay) e botão "Fechar" quando um painel está aberto.
+ * Para adicionar uma nova página-painel: inclua o nome em `ActivePage`, crie o
+ * botão aqui e o conteúdo em HeaderOverlay.tsx.
+ */
+
 import React from 'react';
 import { Share2, PieChart, BookOpen, X } from 'lucide-react';
 
+/** Qual "página" está visível: o grafo ou um dos painéis de tela cheia. */
 export type ActivePage = 'graph' | 'infographics' | 'glossary';
 
 interface HeaderBarProps {

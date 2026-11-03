@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * ADBANNER — bloco de anúncio do Google AdSense (728×90, só em telas ≥ 1024px).
+ * Configuração via variáveis de ambiente (ver README):
+ *   NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-…   NEXT_PUBLIC_ADSENSE_SLOT=…
+ * Posição: classes `bottom-3 left-1/2` do contêiner. Para outro formato,
+ * troque largura/altura em `w-[728px] h-[90px]` e no `style` do <ins>.
+ */
+
 import React, { useEffect, useRef } from 'react';
 import Script from 'next/script';
 
