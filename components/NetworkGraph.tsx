@@ -2,37 +2,28 @@
 
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Plus, Minus, Maximize } from 'lucide-react';
-import { forceCollide } from 'd3-force';
-import { GraphData, GraphNode, GraphLink } from '@/types/graph';
 import Link from 'next/link';
-import { Scale, ShieldCheck, Info, FileText, ChevronUp } from 'lucide-react';
+import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp } from 'lucide-react';
+import { forceCollide } from 'd3-force';
+import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
+import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey } from '@/lib/graphConfig';
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 
 interface NetworkGraphProps {
-  graphRef: any;
+  graphRef: React.MutableRefObject<any>;
   graphData: GraphData;
   selectedNode: GraphNode | null;
   selectedLink: GraphLink | null;
   onSelectNode: (node: GraphNode) => void;
   onSelectLink: (link: GraphLink) => void;
-  onGraphReady?: () => void;
 }
 
-const COLOR_MAP = {
-  scheme: '#ff00c8',     // Magenta para Esquemas
-  politician: '#00eeff', // Ciano para Políticos
-  company: '#878787',    // Cinza para Empresas
-  operator: '#ffffff',   // White para Operadores
-  party: '#0400ff'       // Azul para Partidos
-};
+const MOBILE_BREAKPOINT = 768;
+// Extra invisible ring around each bubble that still counts as a click.
+const CLICK_PADDING = 15;
 
-const STATUS_COLORS: Record<string, string> = {
-  confirmed: '#b1003b',
-  under_investigation: '#f59e0b',
-  acquitted: '#10b981'
-};
+const statusColor = (status: string) => STATUS_STYLE[status as LinkStatus]?.color ?? FALLBACK_COLOR;
 
 export default function NetworkGraph({
   graphRef,
@@ -41,212 +32,115 @@ export default function NetworkGraph({
   selectedLink,
   onSelectNode,
   onSelectLink,
-  onGraphReady
 }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const isMobile = dimensions.width < MOBILE_BREAKPOINT;
 
+  // Image cache + in-flight set, so filtering doesn't re-request images that
+  // are still downloading (the old code only cached on load).
   const imgCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
-  const [, setImagesLoaded] = useState<boolean>(false);
+  const pendingRef = useRef<Set<string>>(new Set());
+  const hasInitialFitRef = useRef(false);
 
+  // ForceGraph2D is loaded lazily, so graphRef.current can still be null when
+  // effects first run. A callback ref + state lets the physics effect re-run
+  // as soon as the instance actually exists.
+  const [graphReady, setGraphReady] = useState(false);
+  const setGraphInstance = useCallback((instance: any) => {
+    graphRef.current = instance;
+    setGraphReady(!!instance);
+  }, [graphRef]);
+
+  // REMOVED: the "detangling" effect that called fg.tickFrame() 150× and
+  // fg.d3AlphaTarget(). Neither method is exposed by react-force-graph-2d's
+  // ref (its methodNames list doesn't include them), so the loop was a no-op;
+  // the only thing it actually did was zoomToFit(0) on *every* filter change /
+  // keystroke. `warmupTicks` already pre-computes the layout before first paint.
+
+  // 1. Responsive canvas size
   useEffect(() => {
-    if (graphRef.current && graphData.nodes.length > 0) {
-      const fg = graphRef.current;
-
-      // 1. Temporarily boost physics energy
-      if (typeof fg.d3AlphaTarget === 'function') {
-        fg.d3AlphaTarget(0.3);
-      }
-
-      // 2. Synchronously advance physics ticks (simulates time passing rapidly)
-      // This forces nodes to push apart before drawing to screen
-      for (let i = 0; i < 150; i++) {
-        if (typeof fg.tickFrame === 'function') {
-          fg.tickFrame();
-        }
-      }
-
-      // 3. Reset alpha energy back to equilibrium
-      if (typeof fg.d3AlphaTarget === 'function') {
-        fg.d3AlphaTarget(0);
-      }
-
-      // 4. Fit view to updated coordinates
-      if (typeof fg.zoomToFit === 'function') {
-        const isMobile = dimensions.width < 768;
-        fg.zoomToFit(0, isMobile ? 20 : 60); // 0ms duration for instant snap
-      }
-
-      // 5. Signal to page.tsx that background detangling is finished
-      if (onGraphReady) {
-        onGraphReady();
-      }
-    }
-  }, [graphData, dimensions.width]);
-
-  // Controla se o enquadramento inicial (refocus) já foi executado
-  const hasInitialFitRef = useRef<boolean>(false);
-
-  // 1. Observer Responsivo de Tamanho do Canvas
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const updateSize = () => {
-      if (containerRef.current) {
-        setDimensions({
-          width: containerRef.current.clientWidth,
-          height: containerRef.current.clientHeight
-        });
-      }
-    };
+    const el = containerRef.current;
+    if (!el) return;
+    const updateSize = () => setDimensions({ width: el.clientWidth, height: el.clientHeight });
     updateSize();
     const observer = new ResizeObserver(updateSize);
-    observer.observe(containerRef.current);
+    observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  // Resetar a flag de enquadramento se os dados do grafo mudarem radicalmente
+  // Refit the camera once when the visible set changes size.
   useEffect(() => {
     hasInitialFitRef.current = false;
   }, [graphData.nodes.length]);
 
-  // 2. Pré-carregamento das Imagens dos Nós
+  // 2. Image preloading
   useEffect(() => {
-    if (!graphData.nodes || graphData.nodes.length === 0) return;
-
-    let loadedCount = 0;
-    const nodesWithImages = graphData.nodes.filter((node) => node.image_url);
-
-    if (nodesWithImages.length === 0) {
-      setImagesLoaded(true);
-      return;
-    }
-
-    nodesWithImages.forEach((node) => {
-      if (!node.image_url) return;
-
-      if (imgCacheRef.current.has(node.image_url)) {
-        loadedCount++;
-        if (loadedCount === nodesWithImages.length) setImagesLoaded(true);
-        return;
-      }
-
+    const urls = Array.from(new Set(graphData.nodes.map((n) => n.image_url).filter((u): u is string => !!u)));
+    urls.forEach((url) => {
+      if (imgCacheRef.current.has(url) || pendingRef.current.has(url)) return;
+      pendingRef.current.add(url);
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.src = node.image_url;
       img.onload = () => {
-        imgCacheRef.current.set(node.image_url!, img);
-        loadedCount++;
-        if (loadedCount === nodesWithImages.length) {
-          setImagesLoaded(true);
-          if (graphRef.current) {
-            graphRef.current.d3ReheatSimulation();
-          }
-        }
+        pendingRef.current.delete(url);
+        imgCacheRef.current.set(url, img);
+        // Nudge a repaint; the canvas may be idle after the engine stopped.
+        graphRef.current?.d3ReheatSimulation?.();
       };
-      img.onerror = () => {
-        loadedCount++;
-        if (loadedCount === nodesWithImages.length) setImagesLoaded(true);
-      };
+      img.onerror = () => pendingRef.current.delete(url);
+      img.src = url;
     });
   }, [graphData.nodes, graphRef]);
 
-  // 3. Configuração da Física D3 (Repulsão e Distância)
+  // 3. d3 physics. Collision radius is derived from the SAME radius used for
+  //    drawing, instead of separate hard-coded tables (300/150/100 vs 100/70/40).
   useEffect(() => {
-    if (graphRef.current) {
-      const chargeForce = graphRef.current.d3Force('charge');
-      const isMobile = dimensions.width < 768;
+    const fg = graphRef.current;
+    if (!fg) return;
 
-      // Adjust force constants for mobile screens vs desktop
-      const chargeStrength = isMobile ? -1200 : -600;
-      const schemeCharge = isMobile ? -900 : -1200;
-      const linkDistance = isMobile ? 400 : 500;
+    fg.d3Force('charge')?.strength((node: any) =>
+      node.type === 'scheme' ? (isMobile ? -900 : -1200) : (isMobile ? -1200 : -600)
+    );
+    fg.d3Force('link')?.distance(isMobile ? 400 : 500).strength(0.3);
+    fg.d3Force(
+      'collide',
+      forceCollide().radius((node: any) => getNodeRadius(node.type) * 1.6).strength(1)
+    );
+    // The library centres the graph at (0,0); the old code moved the centre
+    // force to (width/2, height/2), pushing the layout off-origin.
+    fg.d3ReheatSimulation();
+  }, [graphReady, isMobile, graphData, graphRef]);
 
-      if (chargeForce) {
-        chargeForce.strength((node: any) => (node.type === 'scheme' ? -1000 : -700));
-      }
-
-      const linkForce = graphRef.current.d3Force('link');
-      if (linkForce) {
-        linkForce.distance(500);
-        linkForce.strength(0.3);
-      }
-
-      graphRef.current.d3Force(
-        'collide',
-        forceCollide().radius((node: any) => {
-          if (node.type === 'scheme') return 300;
-          if (node.type === 'company' || node.type === 'party') return 150;
-          if (node.type === 'politician' || node.type === 'operator') return 100;
-          return 30;
-        }).strength(1)
-      );
-
-      const centerForce = graphRef.current.d3Force('center');
-      if (centerForce) {
-        centerForce.x(dimensions.width / 2);
-        centerForce.y(dimensions.height / 2);
-      }
-
-      graphRef.current.d3ReheatSimulation();
-    }
-  }, [dimensions, graphData, graphRef]);
-
-  // 4. Callback acionado apenas ao parar a simulação inicial para enquadrar a teia UMA VEZ
+  // 4. Fit the camera once per data set, when the simulation settles.
   const handleEngineStop = useCallback(() => {
-    if (graphRef.current && !hasInitialFitRef.current) {
-      if (typeof graphRef.current.zoomToFit === 'function') {
-        const isMobile = dimensions.width < 768;
-        const padding = isMobile ? 20 : 60;
-
-        graphRef.current.zoomToFit(400, padding);
-
-        if (isMobile && typeof graphRef.current.zoom === 'function') {
-          setTimeout(() => {
-            if (graphRef.current && graphRef.current.zoom() < 0.65) {
-              graphRef.current.zoom(0.75, 300);
-            }
-          }, 100);
-        }
-
-        hasInitialFitRef.current = true;
-      }
+    const fg = graphRef.current;
+    if (!fg || hasInitialFitRef.current) return;
+    hasInitialFitRef.current = true;
+    fg.zoomToFit(400, isMobile ? 20 : 60);
+    if (isMobile) {
+      setTimeout(() => {
+        if (graphRef.current && graphRef.current.zoom() < 0.65) graphRef.current.zoom(0.75, 300);
+      }, 450);
     }
-  }, [graphRef, dimensions.width]);
+  }, [graphRef, isMobile]);
 
-  // 5. Custom 2D Canvas Node Renderer
+  // 5. Node renderer
   const drawNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const isSelected = selectedNode?.id === node.id;
-    const color = COLOR_MAP[node.type as keyof typeof COLOR_MAP] || '#00f0ff';
-
-    let size = 20;
-    if (node.type === 'scheme') {
-      size = 100;
-    } else if (node.type === 'party' || node.type === 'company') {
-      size = 70;
-    } else if (node.type === 'politician' || node.type === 'operator') {
-      size = 40;
-    }
+    const style = NODE_STYLE[node.type as NodeType];
+    const color = style?.color ?? '#00f0ff';
+    const size = getNodeRadius(node.type);
 
     ctx.save();
 
-    // -----------------------------------------------------------------
-    // PASS 1: DRAW NODE GEOMETRY (Glow, Borders, Inner Disc, Profile Image)
-    // -----------------------------------------------------------------
-    
-    // Brilho Externo
+    // Outer glow
     ctx.beginPath();
     ctx.arc(node.x, node.y, size + 8, 0, 2 * Math.PI);
-    ctx.fillStyle = isSelected ? `${color}44` : `${color}18`;
+    ctx.fillStyle = `${color}${isSelected ? '44' : '18'}`;
     ctx.fill();
 
-    // Borda Externa
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = isSelected ? 3 / globalScale : 1.8 / globalScale;
-    ctx.stroke();
-
-    // Círculo Interno e Imagem
+    // Inner disc (fill first, then stroke on top so the border isn't painted over)
     ctx.beginPath();
     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
     ctx.fillStyle = '#080d16';
@@ -254,345 +148,222 @@ export default function NetworkGraph({
 
     if (node.image_url) {
       const img = imgCacheRef.current.get(node.image_url);
-      if (img && img.complete && img.naturalWidth > 0) {
+      if (img && img.naturalWidth > 0) {
         ctx.save();
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
         ctx.clip();
         ctx.drawImage(img, node.x - size, node.y - size, size * 2, size * 2);
         ctx.restore();
       }
     }
 
+    ctx.strokeStyle = color;
+    ctx.lineWidth = (isSelected ? 3 : 1.8) / globalScale;
+    ctx.stroke();
 
-  // -----------------------------------------------------------------
-  // 2. CONFIGURAÇÃO CUSTOMIZADA DE RÓTULOS POR TIPO DE NÓ
-  // -----------------------------------------------------------------
-  let primaryLabel = node.label || '';
-  let subLabel = '';
-  let fontSize = Math.max(10, 11 / globalScale);
-  let fontWeight = isSelected ? '700' : '500';
-  let fontColor = isSelected ? '#ffffff' : '#cbd5e1';
+    // Labels with zoom-dependent level of detail
+    const showLabel =
+      isSelected ||
+      node.type === 'scheme' ||
+      ((node.type === 'party' || node.type === 'company') && globalScale >= 0.3) ||
+      ((node.type === 'politician' || node.type === 'operator') && globalScale >= 0.5);
 
-  switch (node.type) {
-    case 'politician':
-      if (node.party && node.party !== 'N/A' && node.party !== 'NULL') {
-        subLabel = `(${node.party})`;
+    if (showLabel) {
+      const isScheme = node.type === 'scheme';
+      const fontSize = isScheme ? Math.max(12, 13 / globalScale) : Math.max(10, 11 / globalScale);
+      const fontWeight = isSelected ? '700' : isScheme || node.type === 'party' ? '600' : '500';
+      const label = isScheme ? String(node.label ?? '').toUpperCase() : String(node.label ?? '');
+
+      ctx.font = `${fontWeight} ${fontSize}px Inter, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      // Fix: selected politicians used to get #000000 text on a #080d16 background.
+      ctx.fillStyle = isSelected ? '#ffffff' : style?.labelColor ?? '#cbd5e1';
+
+      const labelY = node.y + size + 8 / globalScale;
+      ctx.fillText(label, node.x, labelY);
+
+      if (node.type === 'politician' && node.party && globalScale >= 1.3) {
+        ctx.font = `400 ${Math.max(9, 10 / globalScale)}px Inter, sans-serif`;
+        ctx.fillStyle = isSelected ? '#e0f2fe' : '#94a3b8';
+        ctx.fillText(`(${node.party})`, node.x, labelY + fontSize + 2 / globalScale);
       }
-      fontColor = isSelected ? '#000000' : '#a5f3fc';
-      break;
-
-    case 'scheme':
-      primaryLabel = primaryLabel.toUpperCase();
-      fontSize = Math.max(12, 13 / globalScale);
-      fontWeight = '600';
-      fontColor = isSelected ? '#ffffff' : '#ff00c8';
-      break;
-
-    case 'company':
-      fontColor = isSelected ? '#ffffff' : '#878787';
-      break;
-
-    case 'operator':
-      fontColor = isSelected ? '#ffffff' : '#cdcdcd';
-      break;
-
-    case 'party':
-      fontWeight = '600';
-      fontColor = isSelected ? '#ffffff' : '#0400ff';
-      break;
-
-    default:
-      break;
-  }
-
-  // -----------------------------------------------------------------
-  // 3. RENDERIZAÇÃO PROGRESSIVA DE RÓTULOS (Level of Detail por Zoom)
-  // -----------------------------------------------------------------
-  const isScheme = node.type === 'scheme';
-  const isPartyOrCompany = node.type === 'party' || node.type === 'company';
-  const isPoliticianOrOperator = node.type === 'politician' || node.type === 'operator';
-
-  // Regras de visibilidade por nível de zoom:
-  // 1. Nós selecionados e Esquemas SEMPRE mostram seus rótulos
-  // 2. Partidos e Empresas aparecem no zoom intermediário (globalScale >= 0.6)
-  // 3. Políticos aparecem apenas quando houver zoom próximo (globalScale >= 1.1)
-  const shouldShowLabel =
-    isSelected ||
-    isScheme ||
-    (isPartyOrCompany && globalScale >= 0.3) ||
-    (isPoliticianOrOperator && globalScale >= 0.5);
-
-  if (shouldShowLabel) {
-    ctx.font = `${fontWeight} ${fontSize}px Inter, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = fontColor;
-
-    // Posiciona o texto com folga proporcional ao tamanho da bolha
-    const labelYPosition = node.y + size + 8 / globalScale;
-
-    // Linha Principal
-    ctx.fillText(primaryLabel, node.x, labelYPosition);
-
-    // Segunda Linha (Ex: Sigla do Partido) — só aparece com zoom mais próximo
-    if (subLabel && globalScale >= 1.3) {
-      const subFontSize = Math.max(9, 10 / globalScale);
-      ctx.font = `400 ${subFontSize}px Inter, sans-serif`;
-      ctx.fillStyle = isSelected ? '#e0f2fe' : '#94a3b8';
-      ctx.fillText(subLabel, node.x, labelYPosition + fontSize + 2 / globalScale);
     }
-  }
 
-  ctx.restore();
-}, [selectedNode]);
+    ctx.restore();
+  }, [selectedNode]);
 
-return (
-  <div ref={containerRef} className="relative w-full h-full flex-1 bg-[#080d16] overflow-hidden">
-    <ForceGraph2D
-      ref={graphRef}
-      width={dimensions.width}
-      height={dimensions.height}
-      graphData={graphData}
-      nodeCanvasObject={drawNode}
-      nodePointerAreaPaint={(node: any, color, ctx) => {
-        ctx.fillStyle = color;
-        ctx.beginPath();
+  // Hit area now matches the drawn radius (it used to be 50/30/15 + 15,
+  // so the outer ring of every bubble ignored clicks).
+  const paintPointerArea = useCallback((node: any, color: string, ctx: CanvasRenderingContext2D) => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, getNodeRadius(node.type) + CLICK_PADDING, 0, 2 * Math.PI);
+    ctx.fill();
+  }, []);
 
-        let size = 15;
-        if (node.type === 'scheme') size = 50;
-        else if (node.type === 'party' || node.type === 'company') size = 30;
+  const selectedLinkKey = selectedLink ? getLinkKey(selectedLink) : null;
 
-        // Adds a 15px invisible clickable padding ring around any bubble
-        const clickPadding = 15;
-        ctx.arc(node.x, node.y, size + clickPadding, 0, 2 * Math.PI);
-        ctx.fill();
-      }}
+  const drawLink = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const start = link.source;
+    const end = link.target;
+    if (typeof start !== 'object' || typeof end !== 'object' || typeof start.x !== 'number' || typeof end.x !== 'number') return;
 
-      linkCanvasObjectMode={() => 'replace'}
-      linkCanvasObject={(link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-        // 1. Garante suporte tanto para IDs em string quanto para objetos D3 já resolvidos
-        const start = typeof link.source === 'object' ? link.source : null;
-        const end = typeof link.target === 'object' ? link.target : null;
+    const color = statusColor(link.status);
+    // Compare by a derived key: if the table has no id column, `undefined === undefined`
+    // used to mark every link as selected.
+    const isSelected = selectedLinkKey !== null && getLinkKey(link) === selectedLinkKey;
+    const baseWidth = isSelected ? 8 : 4;
+    const safeScale = globalScale > 0 ? globalScale : 1;
 
-        // Se o D3 ainda não vinculou as coordenadas dos nós neste frame, aguarda o próximo ciclo
-        if (!start || typeof start.x !== 'number' || !end || typeof end.x !== 'number') return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
 
-        const color = STATUS_COLORS[link.status] || '#ff0055';
-        const isSelected = selectedLink?.id === link.id;
-        const baseWidth = isSelected ? 8 : 4;
+    ctx.strokeStyle = `${color}44`;
+    ctx.lineWidth = baseWidth + 2 / safeScale;
+    ctx.stroke();
 
-        // 2. Proteção contra divisão por zero / escala inválida no Canvas 2D
-        const safeScale = globalScale && globalScale > 0 ? globalScale : 1;
-        const calculatedGlowWidth = baseWidth + 2 / safeScale;
-        const glowWidth = Number.isFinite(calculatedGlowWidth) ? calculatedGlowWidth : baseWidth + 2;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = baseWidth;
+    ctx.setLineDash(link.status === 'under_investigation' ? [4, 4] : []);
+    ctx.stroke();
+    ctx.restore();
+  }, [selectedLinkKey]);
 
-        ctx.save();
+  const toggleFullscreen = () => {
+    // requestFullscreen is missing on iOS Safari and returns a rejecting promise elsewhere.
+    const doc = document as Document & { webkitFullscreenElement?: Element };
+    if (!document.fullscreenElement && !doc.webkitFullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
 
-        // Pass 1: Aura translúcida (Glow)
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.strokeStyle = `${color}44`;
-        ctx.lineWidth = glowWidth;
-        ctx.stroke();
+  return (
+    <div ref={containerRef} className="relative w-full h-full flex-1 bg-[#080d16] overflow-hidden">
+      <ForceGraph2D
+        // The lib types `ref` as a MutableRefObject, but callback refs work at runtime.
+        ref={setGraphInstance as any}
+        width={dimensions.width}
+        height={dimensions.height}
+        graphData={graphData as any}
+        nodeCanvasObject={drawNode}
+        nodePointerAreaPaint={paintPointerArea}
+        linkCanvasObjectMode={() => 'replace'}
+        linkCanvasObject={drawLink}
+        // In 'replace' mode linkColor/linkLineDash are ignored (removed as dead props);
+        // linkWidth still defines the click hit-area, so match the drawn width.
+        linkWidth={(link: any) => (selectedLinkKey !== null && getLinkKey(link) === selectedLinkKey ? 8 : 4)}
+        linkDirectionalParticles={(link: any) => (link.status === 'under_investigation' ? 3 : 0)}
+        linkDirectionalParticleSpeed={0.005}
+        linkDirectionalParticleWidth={5}
+        linkDirectionalParticleColor={(link: any) => statusColor(link.status)}
+        onNodeClick={(node: any) => onSelectNode(node)}
+        onLinkClick={(link: any) => onSelectLink(link)}
+        onEngineStop={handleEngineStop}
+        warmupTicks={120}
+        cooldownTicks={150}
+        d3AlphaDecay={0.02}
+        d3VelocityDecay={0.3}
+        backgroundColor="#080d16"
+      />
 
-        // Pass 2: Linha principal
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = baseWidth;
-
-        if (link.status === 'under_investigation') {
-          ctx.setLineDash([4, 4]);
-        } else {
-          ctx.setLineDash([]);
-        }
-
-        ctx.stroke();
-        ctx.restore();
-      }}
-
-      /* Keep directional particles and event handlers intact */
-      linkDirectionalParticles={(link: any) => (link.status === 'under_investigation' ? 3 : 0)}
-      linkDirectionalParticleSpeed={0.005}
-      linkDirectionalParticleWidth={5.0}
-      linkDirectionalParticleColor={(link: any) => STATUS_COLORS[link.status] || '#f59e0b'}
-      onNodeClick={(node: any) => onSelectNode(node)}
-      onLinkClick={(link: any) => onSelectLink(link)}
-      onEngineStop={handleEngineStop}
-
-      linkColor={(link: any) => STATUS_COLORS[link.status] || '#ff0055'}
-      linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.0 : 1.5)}
-      linkLineDash={(link: any) => (link.status === 'under_investigation' ? [4, 4] : undefined)}
-
-      // vvv Pre-computes 120 physics ticks BEFORE the canvas first paints: vvv
-      warmupTicks={120}
-      cooldownTicks={150}
-      d3AlphaDecay={0.02}
-      d3VelocityDecay={0.3}
-      // ^^^ Pre-computes 120 physics ticks BEFORE the canvas first paints ^^^
-
-      backgroundColor="#080d16"
-    />
-
-    {/* ----------------------------------------------------------------- */}
-    {/* LEGENDA FIXA DE CORES DAS CONEXÕES (Canto Superior Direito)       */}
-    {/* ----------------------------------------------------------------- */}
-    <div className="absolute top-4 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-20 font-mono shadow-2xl select-none">
-      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-        Legenda das Conexões
-      </div>
-
-      {/* Status: Condenado / Confirmado */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#ff0055] inline-block rounded-full shadow-[0_0_8px_#ff0055]" />
-        <span className="text-slate-200">Condenado / Confirmado</span>
-      </div>
-
-      {/* Status: Sob Investigação (Tracejado) */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0 border-b-2 border-dashed border-[#f59e0b] inline-block" />
-        <span className="text-slate-200">Sob Investigação</span>
-      </div>
-
-      {/* Status: Absolvido / Arquivado */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#10b981] inline-block rounded-full shadow-[0_0_8px_#10b981]" />
-        <span className="text-slate-200">Absolvido / Arquivado</span>
-      </div>
-    </div>
-
-    {/* ----------------------------------------------------------------- */}
-    {/* LEGENDA FIXA DE CORES DOS CIRCULOS (Canto Superior Direito)       */}
-    {/* ----------------------------------------------------------------- */}
-    <div className="absolute top-36 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-20 font-mono shadow-2xl select-none">
-      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-        Legenda dos Círculos
-      </div>
-
-      {/* Status: Esquema */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#ff36d3] inline-block rounded-full shadow-[0_0_8px_#ff00c8]" />
-        <span className="text-slate-200">Esquema</span>
-      </div>
-
-      {/* Status: Partido */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#322fff] inline-block rounded-full shadow-[0_0_8px_#1713e4]" />
-        <span className="text-slate-200">Partido</span>
-      </div>
-
-      {/* Status: Político */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#2ef1ff] inline-block rounded-full shadow-[0_0_8px_#00eeff]" />
-        <span className="text-slate-200">Político</span>
-      </div>
-
-      {/* Status: Empresa */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#939c98] inline-block rounded-full shadow-[0_0_8px_#bfcac5]" />
-        <span className="text-slate-200">Empresa / Operador</span>
-      </div>
-
-      {/* Status: Operador */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#e3e3e3] inline-block rounded-full shadow-[0_0_8px_#ffffff]" />
-        <span className="text-slate-200">Operador</span>
-      </div>
-    </div>
-
-    {/* Botões de Controle de Câmera */}
-    <div className="absolute bottom-6 md:bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
-      <button
-        onClick={() => {
-          if (graphRef.current && typeof graphRef.current.zoom === 'function') {
-            graphRef.current.zoom(graphRef.current.zoom() * 1.2, 400);
-          }
-        }}
-        className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
-        aria-label="Zoom in"
-      >
-        <Plus className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => {
-          if (graphRef.current && typeof graphRef.current.zoom === 'function') {
-            graphRef.current.zoom(graphRef.current.zoom() / 1.2, 400);
-          }
-        }}
-        className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
-        aria-label="Zoom out"
-      >
-        <Minus className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => {
-          if (graphRef.current && typeof graphRef.current.zoomToFit === 'function') {
-            const isMobile = dimensions.width < 768;
-            graphRef.current.zoomToFit(400, isMobile ? 20 : 50);
-          }
-        }}
-        className="px-2.5 py-1.5 md:py-1 hover:bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-mono rounded transition-colors"
-      >
-        refocus
-      </button>
-      <button
-        onClick={() => {
-          if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-          else document.exitFullscreen();
-        }}
-        className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
-        aria-label="Toggle fullscreen"
-      >
-        <Maximize className="w-4 h-4" />
-      </button>
-    </div>
-
-    {/* Floating Legal & Policy Menu (Bottom-Right - Aligned with Camera Controls) */}
-    <div className="absolute bottom-16 md:bottom-6 right-4 md:right-6 z-20 group">
-      {/* Expanded Links Container (Reveals on hover or focus) */}
-      <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200 flex flex-col space-y-1 text-xs">
-        <div className="px-2 py-1 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-slate-800/80 mb-1">
-          Informações Legais
+      {/* Legends generated from the shared config, so they can't drift from the canvas colors */}
+      <div className="absolute top-4 right-6 hidden sm:block space-y-3 z-20 select-none">
+        <div className="bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Legenda das Conexões</div>
+          {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => (
+            <div key={key} className="flex items-center space-x-2.5">
+              {key === 'under_investigation' ? (
+                <span className="w-5 h-0 border-b-2 border-dashed inline-block" style={{ borderColor: STATUS_STYLE[key].color }} />
+              ) : (
+                <span
+                  className="w-5 h-0.5 inline-block rounded-full"
+                  style={{ backgroundColor: STATUS_STYLE[key].color, boxShadow: `0 0 8px ${STATUS_STYLE[key].color}` }}
+                />
+              )}
+              <span className="text-slate-200">{STATUS_STYLE[key].label}</span>
+            </div>
+          ))}
         </div>
 
-        <Link
-          href="/about"
-          className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
-        >
-          <Info className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Sobre nós</span>
-        </Link>
-
-        <Link
-          href="/privacy"
-          className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
-        >
-          <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Política de privacidade</span>
-        </Link>
-
-        <Link
-          href="/terms"
-          className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
-        >
-          <Scale className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Termos de serviço</span>
-        </Link>
+        <div className="bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Legenda dos Círculos</div>
+          {(Object.keys(NODE_STYLE) as NodeType[]).map((key) => (
+            <div key={key} className="flex items-center space-x-2.5">
+              <span
+                className="w-2.5 h-2.5 inline-block rounded-full border"
+                style={{ borderColor: NODE_STYLE[key].color, boxShadow: `0 0 8px ${NODE_STYLE[key].color}` }}
+              />
+              <span className="text-slate-200">{NODE_STYLE[key].label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Trigger Button */}
-      <button
-        className="flex items-center space-x-2 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-2 md:py-1.5 text-xs text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
-        aria-label="Legal pages menu"
-      >
-        <FileText className="w-4 h-4 text-cyan-400" />
-        <span className="font-mono text-xs hidden sm:inline">Termos & Política</span>
-        <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 transition-transform duration-200" />
-      </button>
+      {/* Camera controls */}
+      <div className="absolute bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
+        <button
+          onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          aria-label="Aproximar"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => graphRef.current?.zoom(graphRef.current.zoom() / 1.2, 400)}
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          aria-label="Afastar"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => graphRef.current?.zoomToFit(400, isMobile ? 20 : 50)}
+          className="px-2.5 py-1.5 md:py-1 hover:bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-mono rounded transition-colors"
+        >
+          recentralizar
+        </button>
+        <button
+          onClick={toggleFullscreen}
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          aria-label="Tela cheia"
+        >
+          <Maximize className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Legal menu — opens on hover AND keyboard/touch focus (focus-within) */}
+      <div className="absolute bottom-16 md:bottom-6 right-4 md:right-6 z-20 group">
+        <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 flex flex-col space-y-1 text-xs">
+          <div className="px-2 py-1 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-slate-800/80 mb-1">
+            Informações Legais
+          </div>
+          <Link href="/about" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+            <Info className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Sobre nós</span>
+          </Link>
+          <Link href="/privacy" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Política de privacidade</span>
+          </Link>
+          <Link href="/terms" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+            <Scale className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Termos de serviço</span>
+          </Link>
+        </div>
+
+        <button
+          className="flex items-center space-x-2 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-2 md:py-1.5 text-xs text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
+          aria-label="Menu de páginas legais"
+          aria-haspopup="true"
+        >
+          <FileText className="w-4 h-4 text-cyan-400" />
+          <span className="font-mono text-xs hidden sm:inline">Termos & Política</span>
+          <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 group-focus-within:rotate-180 transition-transform duration-200" />
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
 }

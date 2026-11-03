@@ -15,25 +15,21 @@ export default function HeaderBar({ activePage, setActivePage }: HeaderBarProps)
     <header className="z-50 h-16 w-full glass-panel border-b border-slate-800/80 px-3 sm:px-6 flex items-center justify-between relative bg-[#080d16]/90 backdrop-blur-md">
       {/* Brand Title & Navigation Buttons */}
       <div className="flex items-center space-x-2 sm:space-x-6 min-w-0">
-        <div 
+        <button
+          type="button"
           className="flex items-center space-x-2 sm:space-x-3 cursor-pointer shrink-0"
           onClick={() => setActivePage('graph')}
+          aria-label="Voltar ao grafo"
         >
           <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 glow-cyan shrink-0">
             <Share2 className="w-4 h-4" />
           </div>
           <div className="flex items-baseline space-x-1 sm:space-x-2">
-            <span className="font-sm font-bold text-slate-100 tracking-wider text-xs sm:text-sm">
+            <span className="font-bold text-slate-100 tracking-wider text-xs sm:text-sm">
               Teia da Corrupção
             </span>
-            
-            {/* Subtitle hidden on mobile screens to save space */}
-            {/* <span className="hidden sm:inline-block text-slate-300 text-xs font-medium truncate max-w-[140px] md:max-w-none">
-              Visualizador da corrupção
-            </span> */}
-            
           </div>
-        </div>
+        </button>
 
         {/* Dynamic Page Navigation Buttons */}
         <nav className="flex items-center space-x-1 sm:space-x-2 border-l border-slate-800/80 pl-2 sm:pl-6 shrink-0">

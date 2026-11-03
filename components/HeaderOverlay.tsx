@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ActivePage } from './HeaderBar';
-import { GraphData, GraphNode, GraphLink } from '@/types/graph';
+import { GraphData, GraphNode } from '@/types/graph';
+import { getLinkEnds } from '@/lib/graphConfig';
+import { parseAmount, formatAmount } from '@/lib/money';
 import { SCHEME_DETAILS } from '@/data/schemeDetails';
 import { 
   ExternalLink, 
@@ -23,49 +25,42 @@ import {
 
 interface HeaderOverlayProps {
   activePage: ActivePage;
-  onClose: () => void;
   graphData: GraphData;
-  selectedNode?: GraphNode | null;
-  onSelectScheme?: (schemeId: string) => void;
 }
 
-/**
- * Helper function to extract and convert monetary strings (e.g., "R$ 110.000.000") into numbers.
- */
-function parseMonetaryValue(amountStr?: string | null): number {
-  if (!amountStr || amountStr === 'NULL' || amountStr === 'N/A') return 0;
-  const numericOnly = amountStr.replace(/[^0-9]/g, '');
-  const parsed = parseInt(numericOnly, 10);
-  return isNaN(parsed) ? 0 : parsed;
-}
 
-/**
- * Helper function to format numerical values into readable BRL currency notation.
- */
-function formatBRL(value: number): string {
-  if (value >= 1_000_000_000) {
-    return `R$ ${(value / 1_000_000_000).toFixed(1)} Bi`;
-  }
-  if (value >= 1_000_000) {
-    return `R$ ${(value / 1_000_000).toFixed(1)} Mi`;
-  }
-  if (value >= 1_000) {
-    return `R$ ${(value / 1_000).toFixed(0)} mil`;
-  }
-  return `R$ ${value.toLocaleString('pt-BR')}`;
-}
-
-export default function HeaderOverlay({ activePage, onClose, graphData }: HeaderOverlayProps) {
+export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayProps) {
   // Controls overlay visibility based on active header navigation view
   const isOpen = activePage === 'infographics' || activePage === 'glossary';
+
+  // `inert` isn't in React 18's DOM typings, so set it directly.
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    panelRef.current?.toggleAttribute('inert', !isOpen);
+  }, [isOpen]);
   
   // State for expanding/collapsing individual scheme dossiers in the Glossary
   const [expandedSchemeId, setExpandedSchemeId] = useState<string | null>(null);
 
-  // Filter only nodes categorized as "scheme"
-  const schemeNodes = useMemo(() => {
-    return graphData.nodes.filter((node) => node.type === 'scheme');
-  }, [graphData.nodes]);
+  const schemeNodes = useMemo(() => graphData.nodes.filter((node) => node.type === 'scheme'), [graphData.nodes]);
+
+  // O(1) lookups instead of graphData.nodes.find() inside every link loop (was O(N·L)).
+  const nodeById = useMemo(() => new Map(graphData.nodes.map((n) => [n.id, n])), [graphData.nodes]);
+
+  // Adjacency list built once; the glossary used to rescan every link for every scheme on each render.
+  const neighbours = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    const add = (a: string, b: string) => {
+      if (!map.has(a)) map.set(a, new Set());
+      map.get(a)!.add(b);
+    };
+    graphData.links.forEach((l) => {
+      const { sourceId, targetId } = getLinkEnds(l);
+      add(sourceId, targetId);
+      add(targetId, sourceId);
+    });
+    return map;
+  }, [graphData.links]);
 
   // ===========================================================================
   // INFOGRAPHIC 1: PARTY CENTRALITY RANKING (Degree of connections)
@@ -73,31 +68,19 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
   const partyCentralityRanking = useMemo(() => {
     const partyMap: Record<string, { party: string; count: number; politicians: Set<string> }> = {};
 
-    // Group political entities by party name
     graphData.nodes.forEach((node) => {
-      if (node.party && node.party !== 'NULL' && node.party !== 'N/A' && node.party !== 'scheme') {
-        const p = node.party.toUpperCase();
-        if (!partyMap[p]) {
-          partyMap[p] = { party: p, count: 0, politicians: new Set() };
-        }
-        if (node.type === 'politician') {
-          partyMap[p].politicians.add(node.id);
-        }
-      }
+      if (!node.party) return;
+      const p = node.party.toUpperCase();
+      if (!partyMap[p]) partyMap[p] = { party: p, count: 0, politicians: new Set() };
+      if (node.type === 'politician') partyMap[p].politicians.add(node.id);
     });
 
-    // Calculate degree centrality (total graph connections per party)
+    // Degree centrality: each link endpoint belonging to a party counts once.
     graphData.links.forEach((link) => {
-      const sId = typeof link.source === 'object' ? (link.source as any).id : link.source;
-      const tId = typeof link.target === 'object' ? (link.target as any).id : link.target;
-
-      const sourceNode = graphData.nodes.find((n) => n.id === sId);
-      const targetNode = graphData.nodes.find((n) => n.id === tId);
-
-      [sourceNode, targetNode].forEach((node) => {
-        if (node?.party && partyMap[node.party.toUpperCase()]) {
-          partyMap[node.party.toUpperCase()].count += 1;
-        }
+      const { sourceId, targetId } = getLinkEnds(link);
+      [nodeById.get(sourceId), nodeById.get(targetId)].forEach((node) => {
+        const key = node?.party?.toUpperCase();
+        if (key && partyMap[key]) partyMap[key].count += 1;
       });
     });
 
@@ -109,13 +92,14 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
       percentage: Math.round((item.count / maxCount) * 100),
       politicianCount: item.politicians.size
     }));
-  }, [graphData]);
+  }, [graphData, nodeById]);
 
   // ===========================================================================
   // INFOGRAPHIC 2: OPERATIONAL FLOW DIAGRAM (Connection types & legal status)
   // ===========================================================================
   const operationalFlowMetrics = useMemo(() => {
-    const totalLinks = graphData.links.length || 1;
+    const totalLinks = graphData.links.length;
+    const pct = (n: number) => (totalLinks ? Math.round((n / totalLinks) * 100) : 0);
 
     let transactions = 0;
     let contracts = 0;
@@ -128,14 +112,10 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
     graphData.links.forEach((link) => {
       const linkType = (link.type as string) || '';
 
-      // Categorize link operational type
-      if (linkType === 'transaction' || linkType === 'suspect_transactions' || linkType === 'suspect_transaction') {
-        transactions++;
-      } else if (linkType === 'contract' || linkType === 'direct_financing') {
-        contracts++;
-      } else {
-        processes++;
-      }
+      // Unknown/NULL types are no longer silently counted as "processes".
+      if (linkType === 'transaction') transactions++;
+      else if (linkType === 'contract') contracts++;
+      else if (linkType === 'process') processes++;
 
       // Legal status metric aggregation
       if (link.status === 'confirmed') confirmed++;
@@ -148,7 +128,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
         name: 'Transações & Propinas',
         typeKey: 'transaction',
         count: transactions,
-        percentage: Math.round((transactions / totalLinks) * 100),
+        percentage: pct(transactions),
         color: '#f59e0b',
         bgClass: 'bg-amber-500'
       },
@@ -156,7 +136,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
         name: 'Contratos & Licitações',
         typeKey: 'contract',
         count: contracts,
-        percentage: Math.round((contracts / totalLinks) * 100),
+        percentage: pct(contracts),
         color: '#10b981',
         bgClass: 'bg-emerald-500'
       },
@@ -164,7 +144,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
         name: 'Processos & Investigações',
         typeKey: 'process',
         count: processes,
-        percentage: Math.round((processes / totalLinks) * 100),
+        percentage: pct(processes),
         color: '#3b82f6',
         bgClass: 'bg-blue-500'
       }
@@ -185,43 +165,48 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
   // INFOGRAPHIC 3: FINANCIAL HEATMAP BY CORRUPTION SCHEME (Treemap Data)
   // ===========================================================================
   const financialTreemapData = useMemo(() => {
-    const schemeAmounts: Array<{ id: string; label: string; amount: number; formatted: string }> = [];
-
-    schemeNodes.forEach((scheme) => {
-      let totalSchemeVal = 0;
-
-      // Sum values assigned to direct links connected to the scheme
+    // NOTE: summing every link touching a scheme can double-count the same money
+    // (scheme→party and party→politician often describe one flow). A numeric
+    // `amount_value` column in D1 would let you sum only "primary" links.
+    const items = schemeNodes.map((scheme) => {
+      let brl = 0;
       graphData.links.forEach((link) => {
-        const sId = typeof link.source === 'object' ? (link.source as any).id : link.source;
-        const tId = typeof link.target === 'object' ? (link.target as any).id : link.target;
-
-        if (sId === scheme.id || tId === scheme.id) {
-          totalSchemeVal += parseMonetaryValue(link.amount);
-        }
+        const { sourceId, targetId } = getLinkEnds(link);
+        if (sourceId !== scheme.id && targetId !== scheme.id) return;
+        const parsed = parseAmount(link.amount);
+        if (parsed?.currency === 'BRL') brl += parsed.value;
       });
 
-      // Fallback to estimated impact if connection link amounts are unassigned
-      if (totalSchemeVal === 0) {
-        const fallbackText = scheme.estimatedImpact || SCHEME_DETAILS[scheme.id]?.impact;
-        totalSchemeVal = parseMonetaryValue(fallbackText);
+      let amount = brl;
+      let currency: 'BRL' | 'USD' = 'BRL';
+      if (amount === 0) {
+        const fallback = parseAmount(SCHEME_DETAILS[scheme.id]?.impact);
+        if (fallback) {
+          amount = fallback.value;
+          currency = fallback.currency;
+        }
       }
 
-      schemeAmounts.push({
+      return {
         id: scheme.id,
         label: scheme.label,
-        amount: totalSchemeVal,
-        formatted: totalSchemeVal > 0 ? formatBRL(totalSchemeVal) : 'Em apuração'
-      });
+        amount,
+        currency,
+        formatted: amount > 0 ? formatAmount(amount, currency) : 'Em apuração',
+      };
     });
 
-    const grandTotal = schemeAmounts.reduce((acc, curr) => acc + curr.amount, 0);
-    schemeAmounts.sort((a, b) => b.amount - a.amount);
+    // Never add BRL and USD together (the old parser did, after concatenating digits).
+    const totalBRL = items.filter((i) => i.currency === 'BRL').reduce((acc, i) => acc + i.amount, 0);
+    const totalUSD = items.filter((i) => i.currency === 'USD').reduce((acc, i) => acc + i.amount, 0);
+    items.sort((a, b) => (b.currency === a.currency ? b.amount - a.amount : a.currency === 'BRL' ? -1 : 1));
 
-    return {
-      items: schemeAmounts,
-      grandTotal,
-      formattedGrandTotal: grandTotal > 0 ? formatBRL(grandTotal) : 'Em levantamento'
-    };
+    const parts = [
+      totalBRL > 0 ? formatAmount(totalBRL, 'BRL') : null,
+      totalUSD > 0 ? formatAmount(totalUSD, 'USD') : null,
+    ].filter(Boolean);
+
+    return { items, formattedGrandTotal: parts.length ? parts.join(' + ') : 'Em levantamento' };
   }, [schemeNodes, graphData.links]);
 
   // Toggle scheme expansion state
@@ -229,26 +214,20 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
     setExpandedSchemeId((prev) => (prev === id ? null : id));
   };
 
-  // Helper function to fetch all graph entities connected to a given scheme
-  const getConnectedEntities = (schemeId: string) => {
-    const connectedNodeIds = new Set<string>();
-
-    graphData.links.forEach((link) => {
-      const sId = typeof link.source === 'object' ? (link.source as any).id : link.source;
-      const tId = typeof link.target === 'object' ? (link.target as any).id : link.target;
-
-      if (sId === schemeId) connectedNodeIds.add(tId);
-      if (tId === schemeId) connectedNodeIds.add(sId);
-    });
-
-    return graphData.nodes.filter((node) => connectedNodeIds.has(node.id));
-  };
+  const getConnectedEntities = (schemeId: string): GraphNode[] =>
+    Array.from(neighbours.get(schemeId) ?? [])
+      .map((id) => nodeById.get(id))
+      .filter((n): n is GraphNode => !!n);
 
   return (
     <div
       className={`absolute inset-0 z-40 bg-slate-950 text-slate-100 transition-transform duration-500 ease-in-out shadow-2xl overflow-y-auto ${
         isOpen ? 'translate-y-0 pointer-events-auto' : '-translate-y-full pointer-events-none'
       }`}
+      // When closed the panel is only translated off-screen; without this its
+      // links stay reachable with Tab and screen readers.
+      ref={panelRef}
+      aria-hidden={!isOpen}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-10">
         
@@ -525,10 +504,9 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                   const connectedEntities = getConnectedEntities(scheme.id);
                   const isExpanded = expandedSchemeId === scheme.id;
 
-                  // Safely filter connected entity types, casting type to string for 'operator' support
-                  const politicians = connectedEntities.filter((e) => (e.type as string) === 'politician');
-                  const companies = connectedEntities.filter((e) => (e.type as string) === 'company');
-                  const operators = connectedEntities.filter((e) => (e.type as string) === 'operator');
+                  const politicians = connectedEntities.filter((e) => e.type === 'politician');
+                  const companies = connectedEntities.filter((e) => e.type === 'company');
+                  const operators = connectedEntities.filter((e) => e.type === 'operator');
 
                   return (
                     <article
@@ -546,6 +524,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
 
                           <button
                             onClick={() => toggleExpand(scheme.id)}
+                            aria-expanded={isExpanded}
                             className="flex items-center space-x-1 text-xs font-semibold text-cyan-400 hover:text-cyan-200 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800/50 px-3 py-1.5 rounded-lg transition-colors"
                           >
                             <span>{isExpanded ? 'Recolher Dossiê' : 'Ver Dossiê Completo'}</span>
@@ -561,7 +540,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                         <div className="flex flex-wrap gap-4 pt-3 border-t border-slate-800 text-xs font-mono text-slate-400">
                           <div className="flex items-center space-x-1.5">
                             <Coins className="w-4 h-4 text-emerald-400" />
-                            <span>Impacto: <strong className="text-slate-100">{scheme.estimatedImpact || details?.impact || 'Em Apuração'}</strong></span>
+                            <span>Impacto: <strong className="text-slate-100">{details?.impact || 'Em Apuração'}</strong></span>
                           </div>
                           <div className="flex items-center space-x-1.5">
                             <Users className="w-4 h-4 text-blue-400" />
@@ -611,7 +590,7 @@ export default function HeaderOverlay({ activePage, onClose, graphData }: Header
                               </h3>
                               <div className="flex flex-wrap gap-2">
                                 {connectedEntities.map((ent) => {
-                                  const eType = ent.type as string;
+                                  const eType = ent.type;
                                   return (
                                     <span
                                       key={ent.id}

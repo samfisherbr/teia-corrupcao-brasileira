@@ -1,31 +1,66 @@
-1. TABELA DE ENTIDADES (NÓS / NODES):
-Apresente uma tabela com as seguintes colunas exatas:
-| id | label | type | party | summary | image_url |
+-- Cloudflare D1 schema for Teia da Corrupção.
+-- (The previous schema.sql contained the dossier prompt text, not SQL; it now
+--  lives in docs/prompt-dossie.md.)
+--
+-- Apply to a NEW database:
+--   npx wrangler d1 execute <DB_NAME> --remote --file=./schema.sql
+--
+-- For an EXISTING database, SQLite can't add CHECK/UNIQUE constraints in place.
+-- Run the dedup query at the bottom first, then create the unique index; that
+-- index alone is what makes `INSERT OR IGNORE INTO links` idempotent.
 
-Regras para os campos da Tabela de Entidades:
-- id: Identificador único em minúsculas e sem espaços (ex: pol_fulano, partido_pt, empresa_planam, esquema_sanguessugas).
-- label: Nome completo ou oficial da pessoa/instituição.
-- type: Selecione EXATAMENTE um dos valores: politician | party | scheme | company
-- party: Sigla oficial do partido (se for político) ou NULL.
-- summary: Descrição curta e objetiva sobre a entidade e sua história.
-- image_url: Link direto para imagem pública válida (Wikipedia/Commons ou portal governamental terminando em .jpg, .png, .svg) ou a palavra NULL (não invente links nem use svgs genéricos).
+PRAGMA foreign_keys = ON;
 
-2. TABELA DE CONEXÕES E VÍNCULOS (LINKS):
-Apresente uma tabela com as seguintes colunas exatas:
-| source | target | relation | type | status | amount | year | source_url |
+CREATE TABLE IF NOT EXISTS nodes (
+  id         TEXT PRIMARY KEY CHECK (id = lower(id) AND id NOT LIKE '% %'),
+  label      TEXT NOT NULL,
+  type       TEXT NOT NULL CHECK (type IN ('politician', 'party', 'scheme', 'company', 'operator')),
+  party      TEXT,
+  summary    TEXT,
+  image_url  TEXT CHECK (image_url IS NULL OR image_url LIKE 'https://%')
+);
 
-Regras para os campos da Tabela de Conexões:
-- source: ID do nó de origem (ex: pol_fulano ou empresa_planam).
-- target: ID do nó de destino (ex: esquema_sanguessugas ou pol_sicrano).
-- relation: Resumo factual neutro de 1 a 2 frases sobre a atuação no caso.
-- type: Categoria operacional obrigatória — selecione EXATAMENTE um:
-  - transaction (fluxos financeiros, propinas, transferências)
-  - contract (licitações, compras públicas, acordos comerciais)
-  - process (investigações judiciais, CPIs, indiciamentos, denúncias)
-- status: Status jurídico — selecione EXATAMENTE um:
-  - confirmed (condenado, réu confesso ou delação homologada)
-  - under_investigation (suspeito, investigado, indiciado ou citado)
-  - acquitted (absolvido, processo arquivado ou anulado)
-- amount: Cifra financeira citada (ex: "R$ 5.000.000") ou NULL.
-- year: Ano principal do fato (ex: 2004) ou NULL.
-- source_url: Link/URL direta e exata da reportagem ou documento oficial que comprova o vínculo.
+CREATE TABLE IF NOT EXISTS links (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  source      TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+  target      TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+  relation    TEXT NOT NULL,
+  type        TEXT CHECK (type IS NULL OR type IN ('transaction', 'contract', 'process')),
+  status      TEXT NOT NULL CHECK (status IN ('confirmed', 'under_investigation', 'acquitted')),
+  amount      TEXT,
+  year        INTEGER CHECK (year IS NULL OR year BETWEEN 1500 AND 2100),
+  source_url  TEXT,
+  CHECK (source <> target)
+);
+
+-- Without a unique key, `INSERT OR IGNORE` never ignores anything and re-running
+-- an approved dossier duplicates every link. COALESCE because SQLite treats
+-- NULLs as distinct inside UNIQUE.
+CREATE UNIQUE INDEX IF NOT EXISTS ux_links_edge
+  ON links (source, target, COALESCE(type, ''), COALESCE(year, 0));
+
+CREATE INDEX IF NOT EXISTS ix_links_source ON links (source);
+CREATE INDEX IF NOT EXISTS ix_links_target ON links (target);
+CREATE INDEX IF NOT EXISTS ix_nodes_type   ON nodes (type);
+
+-- ---------------------------------------------------------------------------
+-- Maintenance queries (run manually)
+-- ---------------------------------------------------------------------------
+
+-- 1) Remove duplicate links before creating ux_links_edge on an existing DB:
+-- DELETE FROM links WHERE rowid NOT IN (
+--   SELECT MIN(rowid) FROM links
+--   GROUP BY source, target, COALESCE(type, ''), COALESCE(year, 0)
+-- );
+
+-- 2) Convert literal 'NULL' strings (from generated INSERTs) into real NULLs:
+-- UPDATE nodes SET party = NULL     WHERE party IN ('NULL', 'N/A', '');
+-- UPDATE nodes SET image_url = NULL WHERE image_url IN ('NULL', '');
+-- UPDATE links SET amount = NULL    WHERE amount IN ('NULL', 'N/A', '');
+-- UPDATE links SET source_url = NULL WHERE source_url IN ('NULL', '');
+
+-- 3) "Golden rule" check — nodes that are not connected to anything:
+-- SELECT id FROM nodes WHERE id NOT IN (SELECT source FROM links UNION SELECT target FROM links);
+
+-- 4) Links pointing to ids that don't exist in nodes (typos in source/target):
+-- SELECT * FROM links WHERE source NOT IN (SELECT id FROM nodes) OR target NOT IN (SELECT id FROM nodes);
