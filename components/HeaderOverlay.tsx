@@ -334,7 +334,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">
                       <BarChart3 className="w-5 h-5 text-purple-400" />
-                      1. Ranking de Centralidade por Partido
+                      1. Ranking de centralidade por partido
                     </h2>
                     <span className="text-[11px] font-mono bg-purple-950/80 text-purple-300 border border-purple-800/50 px-2 py-0.5 rounded">
                       Grau de Conexões
@@ -381,7 +381,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">
                       <Layers className="w-5 h-5 text-amber-400" />
-                      2. Diagrama de Fluxo Operacional
+                      2. Diagrama de fluxo operacional
                     </h2>
                     <span className="text-[11px] font-mono bg-amber-950/80 text-amber-300 border border-amber-800/50 px-2 py-0.5 rounded">
                       Proporção de Vínculos
@@ -442,7 +442,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 </div>
 
                 <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
-                  <span className="text-slate-400">Status Jurídico:</span>
+                  <span className="text-slate-400">Status jurídico:</span>
                   {/* Uma etiqueta por status, com a cor de STATUS_STYLE */}
                   <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
                     {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => (
@@ -462,7 +462,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-400" />
-                    3. Mapa de Calor Financeiro por Esquema (Treemap Proporcional)
+                    3. Mapa de calor financeiro por esquema
                   </h2>
                   <span className="text-[11px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800/50 px-2.5 py-0.5 rounded">
                     Total: {financialTreemapData.formattedGrandTotal}
