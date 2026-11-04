@@ -23,4 +23,35 @@ export interface SchemeDetail {
 }
 
 export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
+  "esquema_anoes_orcamento": {
+    context: "A Constituição de 1988 permitiu que deputados e senadores incluíssem verbas no Orçamento da União por meio de emendas, e um grupo de parlamentares de baixa estatura e pouca projeção passou a controlar a Comissão Mista de Orçamento. Uma reportagem de O Globo sobre verbas para Serra Dourada (BA), base do relator João Alves, derrubou-o da relatoria. O caso só veio a público em 1993, quando o assessor técnico José Carlos Alves dos Santos, preso pelo assassinato da mulher, passou a denunciar o esquema. As denúncias originaram a CPMI do Orçamento, presidida por Jarbas Passarinho e relatada por Roberto Magalhães.",
+    mechanism: "Parlamentares aprovavam emendas para obras e usavam influência para que determinada empreiteira vencesse a licitação, recebendo de volta parte dos recursos. A palavra final cabia ao relator-geral, apoiado pelo conhecimento técnico da assessoria da comissão. Segundo a CPI, João Alves lavava o dinheiro comprando bilhetes de loteria já premiados, o que ele atribuiu à sorte. A subcomissão de bancos apontou movimentações incompatíveis com a renda de deputados e cheques repassados entre eles.",
+    impact: "Não há cifra oficial verificada do total desviado; os valores documentados são parciais. A CPI apontou que Genebaldo Correia movimentou quase US$ 2 milhões entre 1989 e 1993 e que João Alves movimentava por mês cerca de 300 vezes o salário de deputado. Um relatório interno da Odebrecht apreendido em 1993 ligava 63 emendas do Orçamento de 1992 a contratos de US$ 646 milhões, valor de faturamento esperado, e não de desvio. Nenhuma recuperação de recursos aos cofres públicos foi localizada.",
+    legalStatus: "A CPI pediu 18 cassações: seis parlamentares foram cassados, entre eles o ex-presidente da Câmara Ibsen Pinheiro, quatro renunciaram, entre eles João Alves e Genebaldo Correia, e oito foram inocentados em plenário, entre eles Ricardo Fiúza. A ação criminal contra Ibsen foi arquivada por falta de provas, e ele voltou à Câmara em 2006. O assessor José Carlos Alves dos Santos foi condenado por corrupção passiva e preso em 2014, com trânsito em julgado; em 2015, o STJ reduziu sua pena para 7 anos, 9 meses e 10 dias. Situação em novembro de 2026: caso encerrado no Congresso, sem processo criminal em curso localizado. Última atualização verificada em 4 de novembro de 2026.",
+    sources: [
+      { title: "Estrago político do mensalão supera caso dos anões (O Estado de S. Paulo, 2006)", url: "https://www2.senado.leg.br/jspui/bitstream/id/317130/3/complemento_2.htm" },
+      { title: "Esquema foi desvendado pela imprensa (Correio da Manhã, 2023)", url: "https://www.correiodamanha.com.br/especiais/2023/11/102129-esquema-foi-desvendado-pela-imprensa.html" },
+      { title: "Ex-chefe de orçamento do Senado é preso em Brasília por corrupção (Congresso em Foco, 2014)", url: "https://www.congressoemfoco.com.br/noticia/54231/ex-chefe-de-orcamento-do-senado-e-preso-em-brasilia-por-corrupcao" },
+      { title: "Atenuante de confissão espontânea reduz pena de delator de escândalo (OAB-RS, 2015)", url: "https://www2.oabrs.org.br/jornalDaOrdem/atenuante-de-confissao-espontanea-reduz-pena-de-delator-de-escandalo/36177" },
+      { title: "Morre o ex-presidente da Câmara Ibsen Pinheiro (Agência Brasil, 2020)", url: "https://www.tnh1.com.br/noticia/nid/morre-o-ex-presidente-da-camara-ibsen-pinheiro/" },
+      { title: "A cobertura de luxo de Ibsen Pinheiro, mais de 30 anos depois (Brazil Journal, 2026)", url: "https://braziljournal.com/a-cobertura-de-luxo-de-ibsen-pinheiro-mais-de-30-anos-depois" },
+      { title: "CPI descobre que Genebaldo teve depósitos de US$ 2 milhões (O Globo, 1993)", url: "https://www2.senado.leg.br/jspui/bitstream/id/699336/1/CPI_Orcamento_P008_R0167.pdf" },
+      { title: "Relatório final da CPMI do Orçamento (Biblioteca Digital do Senado, 1994)", url: "https://www2.senado.leg.br/jspui/handle/id/84896?mode=full" }
+    ]
+  },
+
+  "esquema_sivam": {
+    context: "O Sistema de Vigilância da Amazônia foi concebido em 1990 e contratado com dispensa de licitação, depois que 16 embaixadas indicaram empresas. As resoluções do Senado de 1994 nomearam a Raytheon como fornecedora e a ESCA como integradora nacional. O escândalo veio a público em novembro de 1995, quando a revista IstoÉ publicou trechos de um grampo da Polícia Federal no telefone do chefe do Cerimonial da Presidência.",
+    mechanism: "A PF obteve autorização judicial para grampear o embaixador Júlio César Gomes dos Santos alegando suspeita de tráfico de drogas. As conversas, gravadas em setembro de 1995, mostram José Afonso Assumpção, dono da Líder Táxi Aéreo e representante da Raytheon, pedindo que o embaixador ajudasse a destravar o Sivam no Senado. O embaixador viajou aos EUA em avião do empresário. Um agente da PF entregou a fita a Xico Graziano, que a levou ao presidente. Embaixador, empresário e Raytheon negaram lobby ou suborno.",
+    impact: "US$ 1,395 bilhão em financiamento externo autorizado pelo Senado em 1994, dos quais US$ 1,115 bilhão para a Raytheon e subcontratadas. Com juros e comissões, o total chegava a US$ 1,77 bilhão. Nenhuma fonte apurou valor desviado, prejuízo ou valor recuperado.",
+    legalStatus: "O embaixador foi exonerado em 17/11/1995 e o ministro da Aeronáutica, Mauro Gandra, deixou o cargo. O processo disciplinar do Itamaraty foi arquivado em 1996. A CPI da Câmara concluiu em 2002 haver indícios de advocacia administrativa, exploração de prestígio e corrupção ativa e remeteu o relatório ao MPF. Situação em novembro de 2026: não foram localizadas denúncia, sentença ou extinção da punibilidade nas fontes consultadas.",
+    sources: [
+      { title: "Relatório Final da CPI do Sivam", url: "https://www2.camara.leg.br/atividade-legislativa/comissoes/comissoes-temporarias/parlamentar-de-inquerito/51-legislatura/cpisivam/relatoriofinal.pdf" },
+      { title: "Resolução nº 97, de 1994 - Publicação Original", url: "https://www2.camara.leg.br/legin/fed/ressen/1994/resolucao-97-27-dezembro-1994-392017-publicacaooriginal-1-pl.html" },
+      { title: "CPI do Sivam quer ver contas de Júlio César nos EUA", url: "https://www.camara.leg.br/noticias/12789-cpi-do-sivam-quer-ver-contas-de-julio-cesar-nos-eua/" },
+      { title: "Raytheon Denies Bribery In Brazil", url: "https://www.spokesman.com/stories/1995/nov/19/raytheon-denies-bribery-in-brazil/" },
+      { title: "Big Surveillance Project For the Amazon Jungle Teeters Over Scandals", url: "https://www.csmonitor.com/1996/0125/25071.html" },
+      { title: "CPI - SIVAM: depoimento de Francisco Graziano (30/10/2001)", url: "https://www2.camara.leg.br/atividade-legislativa/comissoes/comissoes-temporarias/parlamentar-de-inquerito/51-legislatura/cpisivam/notas/nt301001.pdf" }
+    ]
+  }
 };
