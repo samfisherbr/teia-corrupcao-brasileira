@@ -70,5 +70,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "STJ extingue ação de improbidade contra ex-presidente do TRT-2", url: "https://www.migalhas.com.br/quentes/413553/stj-extingue-acao-de-improbidade-contra-ex-presidente-do-trt-2" },
       { title: "AGU cobrará dívida do Grupo OK por desvios nas obras do TRT-SP", url: "https://www.poder360.com.br/justica/agu-cobrara-divida-do-grupo-ok-por-desvios-nas-obras-do-trt-sp/" }
     ]
+  },
+
+  "esquema_compra_reeleicao": {
+    context: "A emenda constitucional que permitiu a reeleição para presidente, governadores e prefeitos foi articulada desde 1995 e aprovada em primeiro turno na Câmara em 28 de janeiro de 1997, por 336 votos a 17. Em 13 e 14 de maio de 1997, a Folha de S.Paulo divulgou gravações feitas a pedido do jornal em que deputados do Acre admitiam ter vendido o voto.",
+    mechanism: "Nas fitas, os deputados Ronivon Santiago e João Maia, do PFL do Acre, diziam ter recebido R$ 200 mil cada um. Ronivon descrevia repasses do governador do Amazonas, Amazonino Mendes, ao governador do Acre, Orleir Cameli, e citava os colegas Chicão Brígido, Zila Bezerra e Osmir Lima; a reportagem apontava ainda o ministro Sérgio Motta e o deputado Luís Eduardo Magalhães como operadores. Os citados negaram, e Ronivon disse que a conversa fora uma brincadeira. Em delação de 2016, sem prova judicial, Pedro Corrêa afirmou que mais de 50 deputados venderam o voto.",
+    impact: "R$ 200 mil por deputado, valor citado nas gravações por Ronivon Santiago e João Maia, sem confirmação judicial. Não há cifra oficial de valor desviado, prejuízo ou recuperação, porque nenhuma investigação quantificou o esquema. A emenda foi aprovada e permitiu a reeleição de FHC em 1998.",
+    legalStatus: "Ronivon Santiago e João Maia foram expulsos do PFL e renunciaram aos mandatos em maio de 1997, e a CPI pedida pela oposição foi barrada pela base governista. Chicão Brígido, Zila Bezerra e Osmir Lima foram absolvidos na Câmara em junho de 1998, a investigação da PF foi arquivada e o procurador-geral Geraldo Brindeiro não acolheu as representações contra FHC, que sempre negou participação. Situação em novembro de 2026: nenhuma denúncia, ação penal ou investigação em curso localizada; caso nunca esclarecido pelas autoridades (verificação em 4 de novembro de 2026).",
+    sources: [
+      { title: "CPMI ouve ex-deputado sobre compra de votos para reeleição", url: "https://www.camara.leg.br/noticias/74853-cpmi-ouve-ex-deputado-sobre-compra-de-votos-para-reeleicao/" },
+      { title: "Ecos de um escândalo", url: "https://www.congressoemfoco.com.br/noticia/101937/ecos-de-um-escandalo" },
+      { title: "Os rolos judiciais de uma dupla do barulho", url: "https://www.congressoemfoco.com.br/noticia/101941/os-rolos-judiciais-de-uma-dupla-do-barulho" },
+      { title: "Ex-deputado nega envolvimento com escândalo da reeleição", url: "https://www.congressoemfoco.com.br/noticia/103484/ex-deputado-nega-envolvimento-com-escandalo-da-reeleicao" },
+      { title: "Pronunciamento de Eduardo Suplicy em 13/05/1997", url: "https://www25.senado.leg.br/web/atividade/pronunciamentos/-/p/pronunciamento/205577" },
+      { title: "Governo FHC comprou votos para aprovar reeleição, diz delator da Lava Jato", url: "https://www.gazetadopovo.com.br/vida-publica/governo-fhc-comprou-votos-para-aprovar-reeleicao-diz-delator-da-lava-jato-0vmyu2n3ahzyjzchy7jffo50c/" },
+      { title: "FHC faz mea-culpa e afirma que emenda que permitiu reeleição foi um erro", url: "https://www.folhape.com.br/politica/fhc-faz-mea-culpa-e-afirma-que-emenda-que-permitiu-reeleicao-foi-um/153848/" }
+    ]
   }
 };
