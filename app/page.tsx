@@ -52,7 +52,9 @@ export default function Page() {
 
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Falha ao carregar: `message` é o texto principal (vindo da API quando ela
+  // explica a causa) e `detail` a mensagem técnica original do D1, se houver.
+  const [error, setError] = useState<{ message: string; detail?: string } | null>(null);
   const [reloadKey, setReloadKey] = useState(0); // incrementar = buscar os dados de novo
 
   // --- Seleção e filtros ---------------------------------------------------
@@ -86,7 +88,16 @@ export default function Page() {
       setError(null);
       try {
         const res = await fetch('/api/graph', { signal: controller.signal });
-        if (!res.ok) throw new Error(`A API retornou status ${res.status}`);
+        if (!res.ok) {
+          // A API devolve { code, error, detail } explicando a causa (ver
+          // app/api/graph/route.ts). Sem corpo legível, cai no status HTTP.
+          const body = await res.json().catch(() => null);
+          setError({
+            message: body?.error || `A API retornou status ${res.status}.`,
+            detail: [body?.code, body?.detail].filter(Boolean).join(' — ') || undefined,
+          });
+          return;
+        }
         const data = await res.json();
         if (!Array.isArray(data?.nodes) || !Array.isArray(data?.links)) {
           throw new Error('Resposta da API em formato inesperado.');
@@ -99,7 +110,7 @@ export default function Page() {
       } catch (e: any) {
         if (e?.name === 'AbortError') return;
         console.error('Failed to load graph data:', e);
-        setError(e?.message || 'Erro ao conectar ao banco de dados');
+        setError({ message: e?.message || 'Erro ao conectar ao banco de dados.' });
       } finally {
         // Previously the spinner was only cleared by a callback from the graph
         // component, which never fired if the dynamic chunk mounted late.
@@ -227,13 +238,27 @@ export default function Page() {
           {error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30 p-6 text-center">
               <span className="text-red-400 font-mono text-sm mb-2">Falha ao carregar os dados</span>
-              <p className="text-slate-400 text-xs max-w-md mb-4">{error}</p>
+              <p className="text-slate-300 text-xs max-w-lg mb-2 leading-relaxed">{error.message}</p>
+              {error.detail && (
+                <code className="text-[11px] text-slate-500 max-w-lg mb-4 break-words">{error.detail}</code>
+              )}
               <button
                 onClick={() => setReloadKey((k) => k + 1)}
                 className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-200 rounded border border-slate-700"
               >
                 Tentar novamente
               </button>
+            </div>
+          )}
+
+          {/* Banco ligado e com tabelas, mas ainda sem nenhum dossiê inserido */}
+          {!error && !isLoading && graphData.nodes.length === 0 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center pointer-events-none">
+              <span className="text-cyan-400 font-mono text-sm mb-2">Banco conectado, ainda sem dados</span>
+              <p className="text-slate-400 text-xs max-w-md leading-relaxed">
+                Insira o SQL da Fase 2 de um dossiê aprovado (nodes antes de links). Os dados aparecem aqui em até
+                ~5 minutos, por causa do cache da API.
+              </p>
             </div>
           )}
 
