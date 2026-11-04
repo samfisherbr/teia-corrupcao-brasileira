@@ -1,0 +1,39 @@
+# ============================================================================
+# Configuração do Cloudflare Pages (runtime) — Teia da Corrupção
+# ============================================================================
+# Com este arquivo no repositório, ELE passa a ser a fonte da verdade das
+# configurações de runtime do projeto: bindings, data e flags de
+# compatibilidade. No painel (Settings) esses campos ficam somente leitura.
+# As configurações de BUILD (comando, pasta de saída, branch) continuam no painel.
+#
+# Por que existe: o painel só mostrava o binding do ambiente Production, e os
+# deploys de Preview (branches / pull requests) ficavam sem banco
+# ("NO_BINDING"). Tudo que está no nível de cima deste arquivo vale para
+# Production E Preview.
+#
+# Para usar um banco diferente só nos previews, acrescente no final:
+#   [[env.preview.d1_databases]]
+#   binding = "DB"
+#   database_name = "<outro banco>"
+#   database_id = "<id do outro banco>"
+# (d1_databases não é herdado: se sobrescrever num ambiente, repita tudo nele.)
+#
+# Para voltar a gerenciar pelo painel: apague este arquivo e faça um novo
+# deploy; os valores do último deploy ficam editáveis de novo no painel.
+# ============================================================================
+
+# Nome do projeto no Cloudflare Pages (precisa ser igual ao do painel).
+name = "teia-corrupcao-brasileira"
+
+# Pasta gerada por `npx @cloudflare/next-on-pages` (igual a "Build output" no painel).
+pages_build_output_dir = ".vercel/output/static"
+
+# Copiado de Settings → Runtime → Compatibility date. Mudar a data pode alterar
+# o comportamento do runtime; avance só depois de testar num preview.
+compatibility_date = "2026-10-26"
+
+# Banco D1 usado pela rota /api/graph (app/api/graph/route.ts lê `env.DB`).
+[[d1_databases]]
+binding = "DB"
+database_name = "corruption_graph_db"
+database_id = "8ef78bfa-f668-40d9-8c30-d2db9dda631a"

@@ -1,175 +1,221 @@
 'use client';
 
-export const runtime = 'edge';
+/**
+ * ============================================================================
+ * PÁGINA PRINCIPAL (/)
+ * ============================================================================
+ * Orquestra a aplicação:
+ *   - busca os dados em /api/graph (uma vez; botão "Tentar novamente" refaz);
+ *   - guarda o estado dos filtros (busca, ano, tipos, status);
+ *   - calcula `filteredData` (o que o grafo mostra) a partir dos filtros;
+ *   - guarda qual nó/link está selecionado e repassa aos painéis.
+ *
+ * Sem `export const runtime = 'edge'` aqui de propósito: a página é estática
+ * (componente cliente sem dados de servidor). Só a rota /api/graph precisa
+ * do runtime edge para o Cloudflare (next-on-pages).
+ * ============================================================================
+ */
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import HeaderBar, { ActivePage } from '@/components/HeaderBar';
 import HeaderOverlay from '@/components/HeaderOverlay';
 import NetworkGraph from '@/components/NetworkGraph';
-//import TimelineWidget from '@/components/TimelineWidget';
 import SidebarControls from '@/components/SidebarControls';
 import InspectorDrawer from '@/components/InspectorDrawer';
 import AdBanner from '@/components/AdBanner';
 import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/graph';
+import { getLinkEnds, normalizeText, STATUS_STYLE } from '@/lib/graphConfig';
 
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < breakpoint);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, [breakpoint]);
-  return isMobile;
-}
+/** Intervalo do controle de ano enquanto os dados não chegam (ou se nenhum link tiver ano). */
+const FALLBACK_YEAR_RANGE = { min: 1989, max: new Date().getFullYear() };
+
+/** Todos os tipos de entidade começam visíveis. Troque `true` por `false` para esconder um tipo por padrão. */
+const INITIAL_TYPE_FILTERS: Record<NodeType, boolean> = {
+  politician: true,
+  party: true,
+  scheme: true,
+  company: true,
+  operator: true,
+};
+
+/** Todos os status começam visíveis (as chaves vêm de STATUS_STYLE em lib/graphConfig.ts). */
+const INITIAL_STATUS_FILTERS = Object.fromEntries(
+  Object.keys(STATUS_STYLE).map((k) => [k, true])
+) as Record<LinkStatus, boolean>;
 
 export default function Page() {
+  // Instância do grafo (zoom, centerAt…). Preenchida pelo NetworkGraph.
   const graphRef = useRef<any>(null);
-  const isMobile = useIsMobile(768);
 
-  // View state for sliding panels ('graph' | 'infographics' | 'glossary')
+  // --- Estado de navegação e dados ---------------------------------------
   const [activePage, setActivePage] = useState<ActivePage>('graph');
 
-  // Initialize EMPTY graph data (connected to Cloudflare D1 Database)
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  // Falha ao carregar: `message` é o texto principal (vindo da API quando ela
+  // explica a causa) e `detail` a mensagem técnica original do D1, se houver.
+  const [error, setError] = useState<{ message: string; detail?: string } | null>(null);
+  const [reloadKey, setReloadKey] = useState(0); // incrementar = buscar os dados de novo
+
+  // --- Seleção e filtros ---------------------------------------------------
 
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [selectedLink, setSelectedLink] = useState<GraphLink | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [startYearFilter, setStartYearFilter] = useState(2000);
-  const [activeCategory, setActiveCategory] = useState<'all' | 'transactions' | 'contracts' | 'processes'>('all');
-  const [typeFilters, setTypeFilters] = useState<Record<NodeType, boolean>>({
-    politician: true,
-    party: true,
-    scheme: true,
-    company: true,
-    operator: true
-  });
-  const [statusFilters, setStatusFilters] = useState<Record<LinkStatus, boolean>>({
-    confirmed: true,
-    under_investigation: true,
-    acquitted: true
-  });
+  const [startYearFilter, setStartYearFilter] = useState(FALLBACK_YEAR_RANGE.min);
+  const [typeFilters, setTypeFilters] = useState<Record<NodeType, boolean>>(INITIAL_TYPE_FILTERS);
+  const [statusFilters, setStatusFilters] = useState<Record<LinkStatus, boolean>>(INITIAL_STATUS_FILTERS);
 
-  // Fetch strictly from Cloudflare D1 Database endpoint
+  // Slider bounds come from the data. The old slider was hard-coded to
+  // 2000–2026, so 1990s cases (PC Farias, Anões, SIVAM…) vanished as soon as
+  // the user touched it.
+  const yearRange = useMemo(() => {
+    const years = graphData.links
+      .map((l) => Number(l.year))
+      .filter((y) => Number.isFinite(y) && y > 0);
+    if (years.length === 0) return FALLBACK_YEAR_RANGE;
+    return { min: Math.min(...years), max: Math.max(...years) };
+  }, [graphData.links]);
+
+  // --- Carregamento dos dados ----------------------------------------------
+  // AbortController cancela a requisição se o componente desmontar no meio.
   useEffect(() => {
-    async function loadDataFromD1() {
+    const controller = new AbortController();
+
+    (async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/graph');
+        const res = await fetch('/api/graph', { signal: controller.signal });
         if (!res.ok) {
-          throw new Error(`D1 API returned status ${res.status}`);
+          // A API devolve { code, error, detail } explicando a causa (ver
+          // app/api/graph/route.ts). Sem corpo legível, cai no status HTTP.
+          const body = await res.json().catch(() => null);
+          setError({
+            message: body?.error || `A API retornou status ${res.status}.`,
+            detail: [body?.code, body?.detail].filter(Boolean).join(' — ') || undefined,
+          });
+          return;
         }
         const data = await res.json();
-        if (data.nodes && data.links) {
-          setGraphData(data);
-
-          // 1. Extrai todos os anos válidos dos links retornados pelo banco
-          const years = data.links
-            .map((link: GraphLink) => Number(link.year))
-            .filter((year: number) => !isNaN(year) && year > 0);
-
-          // 2. Se houver anos válidos, define o filtro para o menor ano encontrado
-          if (years.length > 0) {
-            const minYear = Math.min(...years);
-            setStartYearFilter(minYear);
-          }
-
-          if (data.nodes.length === 0) {
-            setIsLoading(false);
-          }
+        if (!Array.isArray(data?.nodes) || !Array.isArray(data?.links)) {
+          throw new Error('Resposta da API em formato inesperado.');
         }
-        return;
+        setGraphData(data);
+        const years = (data.links as GraphLink[])
+          .map((l) => Number(l.year))
+          .filter((y) => Number.isFinite(y) && y > 0);
+        if (years.length > 0) setStartYearFilter(Math.min(...years));
       } catch (e: any) {
-        console.error('Failed to load data from Cloudflare D1:', e);
-        setError(e.message || 'Error connecting to D1 Database');
-        setIsLoading(false);
+        if (e?.name === 'AbortError') return;
+        console.error('Failed to load graph data:', e);
+        setError({ message: e?.message || 'Erro ao conectar ao banco de dados.' });
+      } finally {
+        // Previously the spinner was only cleared by a callback from the graph
+        // component, which never fired if the dynamic chunk mounted late.
+        if (!controller.signal.aborted) setIsLoading(false);
       }
+    })();
+
+    return () => controller.abort();
+  }, [reloadKey]);
+
+  // --- Filtragem -------------------------------------------------------------
+  // 1) links: ano >= filtro (links sem ano sempre passam) e status marcado;
+  // 2) nós: tipo marcado; com busca, os encontrados + vizinhos diretos;
+  // 3) só ficam links cujas DUAS pontas estão visíveis.
+  const filteredData = useMemo<GraphData>(() => {
+    const query = normalizeText(searchQuery.trim());
+
+    const validLinks = graphData.links.filter((link) => {
+      // Links with no year are kept (they used to be silently dropped,
+      // because `null >= 2000` is false).
+      const matchYear = link.year == null || link.year >= startYearFilter;
+      const matchStatus = statusFilters[link.status] ?? true;
+      return matchYear && matchStatus;
+    });
+
+    const typeOk = (n: GraphNode) => typeFilters[n.type] ?? true;
+
+    let visibleIds: Set<string>;
+    if (!query) {
+      visibleIds = new Set(graphData.nodes.filter(typeOk).map((n) => n.id));
+    } else {
+      // Search keeps the matches AND their direct neighbours, so a hit is shown
+      // in context instead of as an isolated dot with no edges.
+      const matches = new Set(
+        graphData.nodes
+          .filter((n) => typeOk(n) && (normalizeText(n.label).includes(query) || normalizeText(n.party).includes(query)))
+          .map((n) => n.id)
+      );
+      visibleIds = new Set(matches);
+      for (const l of validLinks) {
+        const { sourceId, targetId } = getLinkEnds(l);
+        if (matches.has(sourceId)) visibleIds.add(targetId);
+        if (matches.has(targetId)) visibleIds.add(sourceId);
+      }
+      const typeOkIds = new Set(graphData.nodes.filter(typeOk).map((n) => n.id));
+      visibleIds.forEach((id) => { if (!typeOkIds.has(id)) visibleIds.delete(id); });
     }
-    loadDataFromD1();
-  }, []);
-
-  const filteredData = useMemo(() => {
-    const validLinks = graphData.links.filter(link => {
-      const matchYear = link.year >= startYearFilter;
-      const matchStatus = statusFilters[link.status];
-
-      const linkTypeStr = (link.type as string) || '';
-      const matchCategory = activeCategory === 'all' ||
-        (activeCategory === 'transactions' && (linkTypeStr === 'suspect_transactions' || linkTypeStr === 'transaction')) ||
-        (activeCategory === 'contracts' && (linkTypeStr === 'direct_financing' || linkTypeStr === 'contract')) ||
-        (activeCategory === 'processes' && linkTypeStr === 'process');
-
-      return matchYear && matchStatus && matchCategory;
-    });
-
-    const validNodes = graphData.nodes.filter(node => {
-      const matchType = typeFilters[node.type];
-      const matchSearch = searchQuery === '' ||
-        node.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (node.party && node.party.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchType && matchSearch;
-    });
-
-    const validNodeIds = new Set(validNodes.map(n => n.id));
-
-    const finalLinks = validLinks.filter(l => {
-      const sId = typeof l.source === 'object' ? (l.source as any).id : l.source;
-      const tId = typeof l.target === 'object' ? (l.target as any).id : l.target;
-      return validNodeIds.has(sId) && validNodeIds.has(tId);
-    });
 
     return {
-      nodes: validNodes,
-      links: finalLinks
+      nodes: graphData.nodes.filter((n) => visibleIds.has(n.id)),
+      links: validLinks.filter((l) => {
+        const { sourceId, targetId } = getLinkEnds(l);
+        return visibleIds.has(sourceId) && visibleIds.has(targetId);
+      }),
     };
-  }, [graphData, startYearFilter, typeFilters, statusFilters, searchQuery, activeCategory]);
+  }, [graphData, startYearFilter, typeFilters, statusFilters, searchQuery]);
 
-  const toggleTypeFilter = (type: NodeType) => {
-    setTypeFilters(prev => ({ ...prev, [type]: !prev[type] }));
-  };
+  // --- Ações ------------------------------------------------------------------
+  const toggleTypeFilter = useCallback((type: NodeType) => {
+    setTypeFilters((prev) => ({ ...prev, [type]: !prev[type] }));
+  }, []);
 
-  const toggleStatusFilter = (status: LinkStatus) => {
-    setStatusFilters(prev => ({ ...prev, [status]: !prev[status] }));
-  };
+  const toggleStatusFilter = useCallback((status: LinkStatus) => {
+    setStatusFilters((prev) => ({ ...prev, [status]: !prev[status] }));
+  }, []);
 
-  const handleSelectSchemeFromIndex = (schemeNode: GraphNode) => {
-    setSelectedNode(schemeNode);
+  const selectNode = useCallback((node: GraphNode) => {
+    setSelectedNode(node);
     setSelectedLink(null);
+  }, []);
 
-    if (graphRef.current) {
-      const x = (schemeNode as any).x || 0;
-      const y = (schemeNode as any).y || 0;
+  const selectLink = useCallback((link: GraphLink) => {
+    setSelectedLink(link);
+    setSelectedNode(null);
+  }, []);
 
-      if (typeof graphRef.current.centerAt === 'function') {
-        graphRef.current.centerAt(x, y, 600);
-      }
-      if (typeof graphRef.current.zoom === 'function') {
-        graphRef.current.zoom(2.5, 600);
-      }
+  // Clique no "Índice de Esquemas" da barra lateral: seleciona e voa até o nó.
+  // 2.5 = nível de zoom; 600 = duração da animação em ms.
+  const handleSelectSchemeFromIndex = useCallback((schemeNode: GraphNode) => {
+    selectNode(schemeNode);
+    const fg = graphRef.current;
+    if (fg && typeof schemeNode.x === 'number' && typeof schemeNode.y === 'number') {
+      fg.centerAt(schemeNode.x, schemeNode.y, 600);
+      fg.zoom(2.5, 600);
     }
-  };
+  }, [selectNode]);
+
+  // Anúncio só aparece se as duas variáveis de ambiente existirem (ver README).
+  const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+  const adSlot = process.env.NEXT_PUBLIC_ADSENSE_SLOT;
 
   return (
     <div className="relative h-[100dvh] w-full bg-[#080d16] text-slate-100 font-sans overflow-hidden flex flex-col">
       <HeaderBar activePage={activePage} setActivePage={setActivePage} />
 
-      <div className="flex flex-1 w-full h-[calc(100vh-4rem)] relative overflow-hidden">
-        <HeaderOverlay
-          activePage={activePage}
-          onClose={() => setActivePage('graph')}
-          graphData={graphData}
-        />
+      <div className="flex flex-1 w-full min-h-0 relative overflow-hidden">
+        <HeaderOverlay activePage={activePage} graphData={graphData} />
 
         <SidebarControls
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           startYearFilter={startYearFilter}
           setStartYearFilter={setStartYearFilter}
+          minYear={yearRange.min}
+          maxYear={yearRange.max}
           typeFilters={typeFilters}
           toggleTypeFilter={toggleTypeFilter}
           statusFilters={statusFilters}
@@ -182,61 +228,54 @@ export default function Page() {
         />
 
         <main className="relative flex-1 w-full h-full overflow-hidden bg-[#080d16]">
-          {/* Loading overlay */}
           {isLoading && !error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30">
               <div className="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
-              <span className="text-xs font-mono text-cyan-400">Detangling Network Graph...</span>
+              <span className="text-xs font-mono text-cyan-400">Carregando a teia…</span>
             </div>
           )}
 
-          {/* Error state */}
           {error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30 p-6 text-center">
-              <span className="text-red-400 font-mono text-sm mb-2">D1 Database Connection Failure</span>
-              <p className="text-slate-400 text-xs max-w-md mb-4">{error}</p>
+              <span className="text-red-400 font-mono text-sm mb-2">Falha ao carregar os dados</span>
+              <p className="text-slate-300 text-xs max-w-lg mb-2 leading-relaxed">{error.message}</p>
+              {error.detail && (
+                <code className="text-[11px] text-slate-500 max-w-lg mb-4 break-words">{error.detail}</code>
+              )}
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => setReloadKey((k) => k + 1)}
                 className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-200 rounded border border-slate-700"
               >
-                Retry Request
+                Tentar novamente
               </button>
             </div>
           )}
 
-          {/* Network Graph */}
-          {!error && (
+          {/* Banco ligado e com tabelas, mas ainda sem nenhum dossiê inserido */}
+          {!error && !isLoading && graphData.nodes.length === 0 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center pointer-events-none">
+              <span className="text-cyan-400 font-mono text-sm mb-2">Banco conectado, ainda sem dados</span>
+              <p className="text-slate-400 text-xs max-w-md leading-relaxed">
+                Insira o SQL da Fase 2 de um dossiê aprovado (nodes antes de links). Os dados aparecem aqui em até
+                ~5 minutos, por causa do cache da API.
+              </p>
+            </div>
+          )}
+
+          {!error && !isLoading && (
             <NetworkGraph
               graphRef={graphRef}
               graphData={filteredData}
               selectedNode={selectedNode}
               selectedLink={selectedLink}
-              onSelectNode={(node) => {
-                setSelectedNode(node);
-                setSelectedLink(null);
-              }}
-              onSelectLink={(link) => {
-                setSelectedLink(link);
-                setSelectedNode(null);
-              }}
-              onGraphReady={() => {
-                setIsLoading(false);
-              }}
+              onSelectNode={selectNode}
+              onSelectLink={selectLink}
+              // Pausa a animação enquanto Infográficos/Glossário cobrem o grafo.
+              paused={activePage !== 'graph'}
             />
           )}
 
-          {/* {!isMobile && (
-            <TimelineWidget
-              startYear={startYearFilter}
-              setStartYear={setStartYearFilter}
-            />
-          )} */}
-
-          {/* Ad Banner */}
-          <AdBanner
-            adClient="ca-pub-XXXXXXXXXXXXXXXX"
-            adSlot="XXXXXXXXXX"
-          />
+          {adClient && adSlot && <AdBanner adClient={adClient} adSlot={adSlot} />}
         </main>
 
         <InspectorDrawer
@@ -248,10 +287,8 @@ export default function Page() {
           }}
           filteredData={filteredData}
           fullNodes={graphData.nodes}
-          onSelectLink={(link) => {
-            setSelectedLink(link);
-            setSelectedNode(null);
-          }}
+          onSelectLink={selectLink}
+          onSelectNode={selectNode}
         />
       </div>
     </div>

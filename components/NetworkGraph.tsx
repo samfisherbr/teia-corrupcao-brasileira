@@ -1,38 +1,98 @@
 'use client';
 
-import React, { useCallback, useRef, useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { Plus, Minus, Maximize } from 'lucide-react';
-import { forceCollide } from 'd3-force';
-import { GraphData, GraphNode, GraphLink } from '@/types/graph';
-import Link from 'next/link';
-import { Scale, ShieldCheck, Info, FileText, ChevronUp } from 'lucide-react';
+/**
+ * ============================================================================
+ * NETWORKGRAPH — o grafo interativo (canvas 2D)
+ * ============================================================================
+ * Responsável por:
+ *   1. medir o espaço disponível e redimensionar o canvas;
+ *   2. calcular o layout radial (lib/layout.ts) e configurar a física d3;
+ *   3. desenhar círculos, imagens, linhas e — numa passada FINAL — os rótulos,
+ *      para que o texto fique sempre por cima de círculos e linhas;
+ *   4. legendas, controles de câmera e menu de páginas legais.
+ *
+ * Ordem de pintura em cada quadro (feita pela biblioteca force-graph):
+ *   linhas (drawLink) → círculos (drawNode) → rótulos (drawLabels, via
+ *   onRenderFramePost). Antes, o rótulo era desenhado junto com o seu círculo,
+ *   então o círculo seguinte podia cobri-lo.
+ * ============================================================================
+ */
 
+import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp } from 'lucide-react';
+import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
+import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey } from '@/lib/graphConfig';
+import { computeLayoutTargets, seedPositions, applyLayoutForces } from '@/lib/layout';
+
+// A biblioteca usa `window`, então só carrega no navegador (ssr: false).
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 
 interface NetworkGraphProps {
-  graphRef: any;
+  graphRef: React.MutableRefObject<any>;
   graphData: GraphData;
   selectedNode: GraphNode | null;
   selectedLink: GraphLink | null;
   onSelectNode: (node: GraphNode) => void;
   onSelectLink: (link: GraphLink) => void;
-  onGraphReady?: () => void;
+  /** true quando um painel (Infográficos/Glossário) cobre o grafo: a animação pausa. */
+  paused?: boolean;
 }
 
-const COLOR_MAP = {
-  scheme: '#ff00c8',     // Magenta para Esquemas
-  politician: '#00eeff', // Ciano para Políticos
-  company: '#878787',    // Cinza para Empresas
-  operator: '#ffffff',   // White para Operadores
-  party: '#0400ff'       // Azul para Partidos
-};
+/* ---------------------------------------------------------------------------
+ * PARÂMETROS AJUSTÁVEIS DESTE COMPONENTE
+ * ------------------------------------------------------------------------- */
 
-const STATUS_COLORS: Record<string, string> = {
-  confirmed: '#b1003b',
-  under_investigation: '#f59e0b',
-  acquitted: '#10b981'
-};
+/** Largura (px) abaixo da qual a tela é tratada como celular. */
+const MOBILE_BREAKPOINT = 768;
+
+/** Anel invisível extra (unidades do grafo) em volta de cada círculo que ainda aceita clique. */
+const CLICK_PADDING = 15;
+
+/** Margem (px) entre a teia e a borda da tela ao enquadrar com "recentralizar". */
+const FIT_PADDING_DESKTOP = 60;
+const FIT_PADDING_MOBILE = 20;
+
+/**
+ * Física: quantos "passos" a simulação roda ANTES do primeiro desenho
+ * (invisível ao usuário) e por quanto tempo continua animando depois.
+ *   - WARMUP_TICKS ↑ = abre mais "assentado", porém demora mais para aparecer.
+ *     Como as posições já nascem no lugar certo (layout semeado), 100 basta.
+ *   - COOLDOWN_MS  = tempo máximo de animação após aparecer.
+ */
+const WARMUP_TICKS = 100;
+const COOLDOWN_MS = 4000;
+
+/**
+ * Desktop/notebook = mouse ou trackpad (ponteiro fino, com hover). Nesses, a
+ * simulação nunca para e a deriva suave mantém a teia "respirando".
+ * Celular/tablet (toque) = a teia se acomoda e fica parada, poupando bateria.
+ * Para ligar a deriva em todos os aparelhos, troque a expressão por `true`.
+ */
+const DESKTOP_POINTER_QUERY = '(hover: hover) and (pointer: fine)';
+
+function useIsDesktopPointer() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(DESKTOP_POINTER_QUERY);
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return isDesktop;
+}
+
+/** Espessura das linhas em unidades do grafo: normal / selecionada. */
+const LINK_WIDTH = 4;
+const LINK_WIDTH_SELECTED = 8;
+
+/** Cor de fundo do canvas; também usada como "contorno" atrás dos rótulos. */
+const BG_COLOR = '#080d16';
+
+const statusStyle = (status: string) => STATUS_STYLE[status as LinkStatus];
+const statusColor = (status: string) => statusStyle(status)?.color ?? FALLBACK_COLOR;
 
 export default function NetworkGraph({
   graphRef,
@@ -41,558 +101,439 @@ export default function NetworkGraph({
   selectedLink,
   onSelectNode,
   onSelectLink,
-  onGraphReady
+  paused = false,
 }: NetworkGraphProps) {
+  // Movimento constante só em desktop/notebook (ver DESKTOP_POINTER_QUERY).
+  const driftEnabled = useIsDesktopPointer();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const isMobile = dimensions.width < MOBILE_BREAKPOINT;
 
+  // Cache de imagens já baixadas + conjunto das que estão baixando, para não
+  // pedir a mesma foto de novo a cada mudança de filtro.
   const imgCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
-  const [, setImagesLoaded] = useState<boolean>(false);
+  const pendingRef = useRef<Set<string>>(new Set());
 
+  // Se o usuário já mexeu na câmera (zoom/arrasto), não reenquadramos sozinhos.
+  const userMovedCameraRef = useRef(false);
+
+  // O ForceGraph2D é carregado sob demanda, então graphRef.current pode ser
+  // null quando os efeitos rodam pela 1ª vez. O ref-callback + estado faz os
+  // efeitos rodarem de novo assim que a instância existe.
+  const [graphReady, setGraphReady] = useState(false);
+  const setGraphInstance = useCallback((instance: any) => {
+    graphRef.current = instance;
+    setGraphReady(!!instance);
+  }, [graphRef]);
+
+  /* -------------------------------------------------------------------------
+   * 1. TAMANHO DO CANVAS — acompanha o contêiner (inclusive ao girar o celular)
+   * ----------------------------------------------------------------------- */
   useEffect(() => {
-    if (graphRef.current && graphData.nodes.length > 0) {
-      const fg = graphRef.current;
-
-      // 1. Temporarily boost physics energy
-      if (typeof fg.d3AlphaTarget === 'function') {
-        fg.d3AlphaTarget(0.3);
-      }
-
-      // 2. Synchronously advance physics ticks (simulates time passing rapidly)
-      // This forces nodes to push apart before drawing to screen
-      for (let i = 0; i < 150; i++) {
-        if (typeof fg.tickFrame === 'function') {
-          fg.tickFrame();
-        }
-      }
-
-      // 3. Reset alpha energy back to equilibrium
-      if (typeof fg.d3AlphaTarget === 'function') {
-        fg.d3AlphaTarget(0);
-      }
-
-      // 4. Fit view to updated coordinates
-      if (typeof fg.zoomToFit === 'function') {
-        const isMobile = dimensions.width < 768;
-        fg.zoomToFit(0, isMobile ? 20 : 60); // 0ms duration for instant snap
-      }
-
-      // 5. Signal to page.tsx that background detangling is finished
-      if (onGraphReady) {
-        onGraphReady();
-      }
-    }
-  }, [graphData, dimensions.width]);
-
-  // Controla se o enquadramento inicial (refocus) já foi executado
-  const hasInitialFitRef = useRef<boolean>(false);
-
-  // 1. Observer Responsivo de Tamanho do Canvas
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const updateSize = () => {
-      if (containerRef.current) {
-        setDimensions({
-          width: containerRef.current.clientWidth,
-          height: containerRef.current.clientHeight
-        });
-      }
-    };
+    const el = containerRef.current;
+    if (!el) return;
+    const updateSize = () => setDimensions({ width: el.clientWidth, height: el.clientHeight });
     updateSize();
     const observer = new ResizeObserver(updateSize);
-    observer.observe(containerRef.current);
+    observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  // Resetar a flag de enquadramento se os dados do grafo mudarem radicalmente
+  /* -------------------------------------------------------------------------
+   * 2. LAYOUT — calcula a posição-alvo de cada nó e posiciona os nós novos.
+   *    Roda DURANTE a renderização (useMemo) e não num efeito, para que a
+   *    biblioteca já receba os nós no lugar certo no primeiro quadro.
+   *    Detalhes e parâmetros: lib/layout.ts
+   * ----------------------------------------------------------------------- */
+  const layoutTargets = useMemo(() => {
+    const targets = computeLayoutTargets(graphData.nodes, graphData.links);
+    seedPositions(graphData.nodes, targets);
+    return targets;
+  }, [graphData]);
+
+  /* -------------------------------------------------------------------------
+   * 3. FÍSICA — aplica as forças do layout na simulação da biblioteca.
+   * ----------------------------------------------------------------------- */
   useEffect(() => {
-    hasInitialFitRef.current = false;
-  }, [graphData.nodes.length]);
+    const fg = graphRef.current;
+    if (!fg) return;
+    applyLayoutForces((name, force) => fg.d3Force(name, force), layoutTargets, driftEnabled);
+    fg.d3ReheatSimulation();
+  }, [graphReady, layoutTargets, driftEnabled, graphRef]);
 
-  // 2. Pré-carregamento das Imagens dos Nós
+  /* -------------------------------------------------------------------------
+   * 3b. PAUSA — com um painel aberto por cima do grafo, a animação para (não
+   *     gasta CPU/bateria desenhando algo invisível). Com a aba do navegador
+   *     em segundo plano, o próprio navegador já suspende a animação.
+   * ----------------------------------------------------------------------- */
   useEffect(() => {
-    if (!graphData.nodes || graphData.nodes.length === 0) return;
+    const fg = graphRef.current;
+    if (!fg) return;
+    if (paused) fg.pauseAnimation?.();
+    else fg.resumeAnimation?.();
+  }, [paused, graphReady, graphRef]);
 
-    let loadedCount = 0;
-    const nodesWithImages = graphData.nodes.filter((node) => node.image_url);
+  /* -------------------------------------------------------------------------
+   * 4. CÂMERA — enquadra a teia inteira logo que ela aparece (instantâneo,
+   *    sem a animação de "zoom pulando" de antes) e de novo, suavemente,
+   *    quando ela se acomoda — a não ser que o usuário já tenha mexido.
+   *    No desktop a simulação nunca "termina" (deriva contínua), então o
+   *    segundo enquadramento é feito por tempo (COOLDOWN_MS) em vez de esperar
+   *    o fim da física.
+   * ----------------------------------------------------------------------- */
+  const fitPadding = isMobile ? FIT_PADDING_MOBILE : FIT_PADDING_DESKTOP;
 
-    if (nodesWithImages.length === 0) {
-      setImagesLoaded(true);
-      return;
-    }
+  useEffect(() => {
+    const fg = graphRef.current;
+    if (!fg || graphData.nodes.length === 0) return;
+    userMovedCameraRef.current = false;
+    // Espera um quadro para a biblioteca registrar os nós antes de medir.
+    const id = requestAnimationFrame(() => fg.zoomToFit(0, fitPadding));
+    const settle = setTimeout(() => {
+      if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
+    }, COOLDOWN_MS);
+    return () => {
+      cancelAnimationFrame(id);
+      clearTimeout(settle);
+    };
+    // Só reenquadra quando muda o CONJUNTO de nós (filtros), não a cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graphReady, graphData.nodes.length]);
 
-    nodesWithImages.forEach((node) => {
-      if (!node.image_url) return;
+  const handleEngineStop = useCallback(() => {
+    if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
+  }, [graphRef, fitPadding]);
 
-      if (imgCacheRef.current.has(node.image_url)) {
-        loadedCount++;
-        if (loadedCount === nodesWithImages.length) setImagesLoaded(true);
-        return;
-      }
-
+  /* -------------------------------------------------------------------------
+   * 5. IMAGENS — pré-carrega fotos dos nós (ex.: Wikimedia Commons)
+   * ----------------------------------------------------------------------- */
+  useEffect(() => {
+    const urls = Array.from(new Set(graphData.nodes.map((n) => n.image_url).filter((u): u is string => !!u)));
+    urls.forEach((url) => {
+      if (imgCacheRef.current.has(url) || pendingRef.current.has(url)) return;
+      pendingRef.current.add(url);
       const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = node.image_url;
+      img.crossOrigin = 'anonymous'; // necessário para desenhar no canvas sem "contaminá-lo"
       img.onload = () => {
-        imgCacheRef.current.set(node.image_url!, img);
-        loadedCount++;
-        if (loadedCount === nodesWithImages.length) {
-          setImagesLoaded(true);
-          if (graphRef.current) {
-            graphRef.current.d3ReheatSimulation();
-          }
-        }
+        pendingRef.current.delete(url);
+        imgCacheRef.current.set(url, img);
+        // Força um redesenho: o canvas pode estar parado após a física acabar.
+        graphRef.current?.d3ReheatSimulation?.();
       };
-      img.onerror = () => {
-        loadedCount++;
-        if (loadedCount === nodesWithImages.length) setImagesLoaded(true);
-      };
+      img.onerror = () => pendingRef.current.delete(url); // fica só o círculo vazio
+      img.src = url;
     });
   }, [graphData.nodes, graphRef]);
 
-  // 3. Configuração da Física D3 (Repulsão e Distância)
-  useEffect(() => {
-    if (graphRef.current) {
-      const chargeForce = graphRef.current.d3Force('charge');
-      const isMobile = dimensions.width < 768;
-
-      // Adjust force constants for mobile screens vs desktop
-      const chargeStrength = isMobile ? -1200 : -600;
-      const schemeCharge = isMobile ? -900 : -1200;
-      const linkDistance = isMobile ? 400 : 500;
-
-      if (chargeForce) {
-        chargeForce.strength((node: any) => (node.type === 'scheme' ? -1000 : -700));
-      }
-
-      const linkForce = graphRef.current.d3Force('link');
-      if (linkForce) {
-        linkForce.distance(500);
-        linkForce.strength(0.3);
-      }
-
-      graphRef.current.d3Force(
-        'collide',
-        forceCollide().radius((node: any) => {
-          if (node.type === 'scheme') return 300;
-          if (node.type === 'company' || node.type === 'party') return 150;
-          if (node.type === 'politician' || node.type === 'operator') return 100;
-          return 30;
-        }).strength(1)
-      );
-
-      const centerForce = graphRef.current.d3Force('center');
-      if (centerForce) {
-        centerForce.x(dimensions.width / 2);
-        centerForce.y(dimensions.height / 2);
-      }
-
-      graphRef.current.d3ReheatSimulation();
-    }
-  }, [dimensions, graphData, graphRef]);
-
-  // 4. Callback acionado apenas ao parar a simulação inicial para enquadrar a teia UMA VEZ
-  const handleEngineStop = useCallback(() => {
-    if (graphRef.current && !hasInitialFitRef.current) {
-      if (typeof graphRef.current.zoomToFit === 'function') {
-        const isMobile = dimensions.width < 768;
-        const padding = isMobile ? 20 : 60;
-
-        graphRef.current.zoomToFit(400, padding);
-
-        if (isMobile && typeof graphRef.current.zoom === 'function') {
-          setTimeout(() => {
-            if (graphRef.current && graphRef.current.zoom() < 0.65) {
-              graphRef.current.zoom(0.75, 300);
-            }
-          }, 100);
-        }
-
-        hasInitialFitRef.current = true;
-      }
-    }
-  }, [graphRef, dimensions.width]);
-
-  // 5. Custom 2D Canvas Node Renderer
+  /* -------------------------------------------------------------------------
+   * 6. DESENHO DOS CÍRCULOS (sem texto — o texto vem no passo 8)
+   * ----------------------------------------------------------------------- */
   const drawNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const isSelected = selectedNode?.id === node.id;
-    const color = COLOR_MAP[node.type as keyof typeof COLOR_MAP] || '#00f0ff';
-
-    let size = 20;
-    if (node.type === 'scheme') {
-      size = 100;
-    } else if (node.type === 'party' || node.type === 'company') {
-      size = 70;
-    } else if (node.type === 'politician' || node.type === 'operator') {
-      size = 40;
-    }
+    const color = NODE_STYLE[node.type as NodeType]?.color ?? '#00f0ff';
+    const size = getNodeRadius(node.type);
 
     ctx.save();
 
-    // -----------------------------------------------------------------
-    // PASS 1: DRAW NODE GEOMETRY (Glow, Borders, Inner Disc, Profile Image)
-    // -----------------------------------------------------------------
-    
-    // Brilho Externo
+    // Brilho externo. Sufixo hex = opacidade: '44' ≈ 27% (selecionado), '18' ≈ 9%.
     ctx.beginPath();
     ctx.arc(node.x, node.y, size + 8, 0, 2 * Math.PI);
-    ctx.fillStyle = isSelected ? `${color}44` : `${color}18`;
+    ctx.fillStyle = `${color}${isSelected ? '44' : '18'}`;
     ctx.fill();
 
-    // Borda Externa
+    // Disco interno escuro (fundo da foto).
     ctx.beginPath();
     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = isSelected ? 3 / globalScale : 1.8 / globalScale;
-    ctx.stroke();
-
-    // Círculo Interno e Imagem
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
-    ctx.fillStyle = '#080d16';
+    ctx.fillStyle = BG_COLOR;
     ctx.fill();
 
+    // Foto recortada em círculo, se já carregou.
     if (node.image_url) {
       const img = imgCacheRef.current.get(node.image_url);
-      if (img && img.complete && img.naturalWidth > 0) {
+      if (img && img.naturalWidth > 0) {
         ctx.save();
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
         ctx.clip();
         ctx.drawImage(img, node.x - size, node.y - size, size * 2, size * 2);
         ctx.restore();
       }
     }
 
+    // Borda colorida por cima da foto. Dividir por globalScale mantém a
+    // espessura constante na tela, independentemente do zoom.
+    ctx.strokeStyle = color;
+    ctx.lineWidth = (isSelected ? 3 : 1.8) / globalScale;
+    ctx.stroke();
 
-  // -----------------------------------------------------------------
-  // 2. CONFIGURAÇÃO CUSTOMIZADA DE RÓTULOS POR TIPO DE NÓ
-  // -----------------------------------------------------------------
-  let primaryLabel = node.label || '';
-  let subLabel = '';
-  let fontSize = Math.max(10, 11 / globalScale);
-  let fontWeight = isSelected ? '700' : '500';
-  let fontColor = isSelected ? '#ffffff' : '#cbd5e1';
+    ctx.restore();
+  }, [selectedNode]);
 
-  switch (node.type) {
-    case 'politician':
-      if (node.party && node.party !== 'N/A' && node.party !== 'NULL') {
-        subLabel = `(${node.party})`;
-      }
-      fontColor = isSelected ? '#000000' : '#a5f3fc';
-      break;
+  // Área de clique = raio desenhado + folga (antes era menor que o círculo).
+  const paintPointerArea = useCallback((node: any, color: string, ctx: CanvasRenderingContext2D) => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, getNodeRadius(node.type) + CLICK_PADDING, 0, 2 * Math.PI);
+    ctx.fill();
+  }, []);
 
-    case 'scheme':
-      primaryLabel = primaryLabel.toUpperCase();
-      fontSize = Math.max(12, 13 / globalScale);
-      fontWeight = '600';
-      fontColor = isSelected ? '#ffffff' : '#ff00c8';
-      break;
+  /* -------------------------------------------------------------------------
+   * 7. DESENHO DAS LINHAS
+   * ----------------------------------------------------------------------- */
+  const selectedLinkKey = selectedLink ? getLinkKey(selectedLink) : null;
+  const isLinkSelected = useCallback(
+    (link: any) => selectedLinkKey !== null && getLinkKey(link) === selectedLinkKey,
+    [selectedLinkKey]
+  );
 
-    case 'company':
-      fontColor = isSelected ? '#ffffff' : '#878787';
-      break;
+  const drawLink = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const start = link.source;
+    const end = link.target;
+    // Nos primeiros quadros o d3 ainda pode não ter trocado ids por objetos.
+    if (typeof start !== 'object' || typeof end !== 'object' || typeof start.x !== 'number' || typeof end.x !== 'number') return;
 
-    case 'operator':
-      fontColor = isSelected ? '#ffffff' : '#cdcdcd';
-      break;
+    const style = statusStyle(link.status);
+    const color = style?.color ?? FALLBACK_COLOR;
+    const baseWidth = isLinkSelected(link) ? LINK_WIDTH_SELECTED : LINK_WIDTH;
+    const safeScale = globalScale > 0 ? globalScale : 1;
 
-    case 'party':
-      fontWeight = '600';
-      fontColor = isSelected ? '#ffffff' : '#0400ff';
-      break;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
 
-    default:
-      break;
-  }
+    // Passada 1: aura translúcida mais larga.
+    ctx.strokeStyle = `${color}44`;
+    ctx.lineWidth = baseWidth + 2 / safeScale;
+    ctx.stroke();
 
-  // -----------------------------------------------------------------
-  // 3. RENDERIZAÇÃO PROGRESSIVA DE RÓTULOS (Level of Detail por Zoom)
-  // -----------------------------------------------------------------
-  const isScheme = node.type === 'scheme';
-  const isPartyOrCompany = node.type === 'party' || node.type === 'company';
-  const isPoliticianOrOperator = node.type === 'politician' || node.type === 'operator';
+    // Passada 2: linha principal (tracejada se o caso está em aberto).
+    ctx.strokeStyle = color;
+    ctx.lineWidth = baseWidth;
+    ctx.setLineDash(style?.dashed ? [12, 10] : []);
+    ctx.stroke();
+    ctx.restore();
+  }, [isLinkSelected]);
 
-  // Regras de visibilidade por nível de zoom:
-  // 1. Nós selecionados e Esquemas SEMPRE mostram seus rótulos
-  // 2. Partidos e Empresas aparecem no zoom intermediário (globalScale >= 0.6)
-  // 3. Políticos aparecem apenas quando houver zoom próximo (globalScale >= 1.1)
-  const shouldShowLabel =
-    isSelected ||
-    isScheme ||
-    (isPartyOrCompany && globalScale >= 0.3) ||
-    (isPoliticianOrOperator && globalScale >= 0.5);
+  /* -------------------------------------------------------------------------
+   * 8. RÓTULOS — desenhados DEPOIS de tudo (onRenderFramePost), então ficam
+   *    sempre na frente de círculos e linhas. Cada texto ganha um contorno da
+   *    cor do fundo ("halo") para continuar legível mesmo sobre uma linha.
+   *
+   *    Ajustes:
+   *      - tamanho e zoom mínimo por tipo → NODE_STYLE em lib/graphConfig.ts
+   *      - espessura do halo              → HALO_PX abaixo
+   *      - limite de caracteres           → MAX_LABEL_CHARS abaixo
+   * ----------------------------------------------------------------------- */
+  const HALO_PX = 4;
+  const MAX_LABEL_CHARS = 38;
 
-  if (shouldShowLabel) {
-    ctx.font = `${fontWeight} ${fontSize}px Inter, sans-serif`;
+  const drawLabels = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const scale = globalScale > 0 ? globalScale : 1;
+
+    // O selecionado é desenhado por último → fica por cima até de outros rótulos.
+    const ordered = selectedNode
+      ? [...graphData.nodes.filter((n) => n.id !== selectedNode.id), ...graphData.nodes.filter((n) => n.id === selectedNode.id)]
+      : graphData.nodes;
+
+    ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillStyle = fontColor;
+    ctx.lineJoin = 'round';
 
-    // Posiciona o texto com folga proporcional ao tamanho da bolha
-    const labelYPosition = node.y + size + 8 / globalScale;
+    for (const node of ordered as any[]) {
+      if (typeof node.x !== 'number') continue;
+      const style = NODE_STYLE[node.type as NodeType];
+      const isSelected = selectedNode?.id === node.id;
+      // Nível de detalhe: com a câmera afastada só aparecem esquemas/partidos.
+      if (!isSelected && scale < (style?.minZoom ?? 0.5)) continue;
 
-    // Linha Principal
-    ctx.fillText(primaryLabel, node.x, labelYPosition);
+      // Tamanho em px de tela convertido para unidades do grafo.
+      const px = style?.labelPx ?? 11;
+      const fontSize = px / scale;
+      const weight = isSelected ? 700 : node.type === 'scheme' || node.type === 'party' ? 600 : 500;
 
-    // Segunda Linha (Ex: Sigla do Partido) — só aparece com zoom mais próximo
-    if (subLabel && globalScale >= 1.3) {
-      const subFontSize = Math.max(9, 10 / globalScale);
-      ctx.font = `400 ${subFontSize}px Inter, sans-serif`;
-      ctx.fillStyle = isSelected ? '#e0f2fe' : '#94a3b8';
-      ctx.fillText(subLabel, node.x, labelYPosition + fontSize + 2 / globalScale);
+      let text = String(node.label ?? '');
+      if (node.type === 'scheme') text = text.toUpperCase();
+      if (text.length > MAX_LABEL_CHARS && !isSelected) text = `${text.slice(0, MAX_LABEL_CHARS - 1)}…`;
+
+      const y = node.y + getNodeRadius(node.type) + 6 / scale;
+      ctx.font = `${weight} ${fontSize}px Inter, system-ui, sans-serif`;
+      ctx.lineWidth = HALO_PX / scale;
+      ctx.strokeStyle = BG_COLOR;
+      ctx.strokeText(text, node.x, y);
+      ctx.fillStyle = isSelected ? '#ffffff' : style?.labelColor ?? '#cbd5e1';
+      ctx.fillText(text, node.x, y);
+
+      // Segunda linha com a sigla do partido (políticos, com zoom próximo).
+      if (node.type === 'politician' && node.party && (scale >= 1 || isSelected)) {
+        const subSize = (px - 1) / scale;
+        ctx.font = `400 ${subSize}px Inter, system-ui, sans-serif`;
+        const y2 = y + fontSize + 2 / scale;
+        ctx.strokeText(`(${node.party})`, node.x, y2);
+        ctx.fillStyle = isSelected ? '#e0f2fe' : '#94a3b8';
+        ctx.fillText(`(${node.party})`, node.x, y2);
+      }
     }
-  }
+    ctx.restore();
+  }, [graphData.nodes, selectedNode]);
 
-  ctx.restore();
-}, [selectedNode]);
+  /* -------------------------------------------------------------------------
+   * 9. TELA CHEIA — protegido para iOS Safari (sem API) e promessas rejeitadas
+   * ----------------------------------------------------------------------- */
+  const toggleFullscreen = () => {
+    const doc = document as Document & { webkitFullscreenElement?: Element };
+    if (!document.fullscreenElement && !doc.webkitFullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
 
-return (
-  <div ref={containerRef} className="relative w-full h-full flex-1 bg-[#080d16] overflow-hidden">
-    <ForceGraph2D
-      ref={graphRef}
-      width={dimensions.width}
-      height={dimensions.height}
-      graphData={graphData}
-      nodeCanvasObject={drawNode}
-      nodePointerAreaPaint={(node: any, color, ctx) => {
-        ctx.fillStyle = color;
-        ctx.beginPath();
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full h-full flex-1 bg-[#080d16] overflow-hidden"
+      // Qualquer interação manual cancela o reenquadramento automático.
+      onWheel={() => { userMovedCameraRef.current = true; }}
+      onPointerDown={() => { userMovedCameraRef.current = true; }}
+    >
+      <ForceGraph2D
+        // A tipagem da biblioteca só aceita objeto de ref, mas ref-callback funciona.
+        ref={setGraphInstance as any}
+        width={dimensions.width}
+        height={dimensions.height}
+        graphData={graphData as any}
+        // Desenho customizado (passos 6–8)
+        nodeCanvasObject={drawNode}
+        nodePointerAreaPaint={paintPointerArea}
+        linkCanvasObjectMode={() => 'replace'}
+        linkCanvasObject={drawLink}
+        onRenderFramePost={drawLabels}
+        // No modo 'replace' a cor/tracejado vêm de drawLink; linkWidth ainda
+        // define a área de clique da linha, por isso acompanha a espessura.
+        linkWidth={(link: any) => (isLinkSelected(link) ? LINK_WIDTH_SELECTED : LINK_WIDTH)}
+        // Partículas animadas (quantidade por status em STATUS_STYLE.particles)
+        linkDirectionalParticles={(link: any) => statusStyle(link.status)?.particles ?? 0}
+        linkDirectionalParticleSpeed={0.005}
+        linkDirectionalParticleWidth={5}
+        linkDirectionalParticleColor={(link: any) => statusColor(link.status)}
+        // Interação
+        onNodeClick={(node: any) => onSelectNode(node)}
+        onLinkClick={(link: any) => onSelectLink(link)}
+        // Arrastar: a biblioteca já faz o comportamento desejado sozinha —
+        //   • esquema (fixo antes do arraste) → continua fixo onde foi solto;
+        //   • demais nós (livres) → são soltos e voltam a se acomodar na teia.
+        // Para fixar também os outros nós ao soltar, acrescente:
+        //   onNodeDragEnd={(node: any) => { node.fx = node.x; node.fy = node.y; }}
+        onEngineStop={handleEngineStop}
+        // Física: ver constantes no topo do arquivo e lib/layout.ts
+        warmupTicks={WARMUP_TICKS}
+        // Desktop: Infinity = a simulação nunca para (deriva contínua).
+        // Celular: para depois de COOLDOWN_MS e a teia fica em repouso.
+        cooldownTime={driftEnabled ? Infinity : COOLDOWN_MS}
+        d3AlphaDecay={0.03}   // ↑ assenta mais rápido (e mais "duro"); ↓ mais lento e suave
+        d3VelocityDecay={0.35} // "atrito": ↑ nós param mais cedo, menos tremedeira
+        backgroundColor={BG_COLOR}
+      />
 
-        let size = 15;
-        if (node.type === 'scheme') size = 50;
-        else if (node.type === 'party' || node.type === 'company') size = 30;
-
-        // Adds a 15px invisible clickable padding ring around any bubble
-        const clickPadding = 15;
-        ctx.arc(node.x, node.y, size + clickPadding, 0, 2 * Math.PI);
-        ctx.fill();
-      }}
-
-      linkCanvasObjectMode={() => 'replace'}
-      linkCanvasObject={(link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-        // 1. Garante suporte tanto para IDs em string quanto para objetos D3 já resolvidos
-        const start = typeof link.source === 'object' ? link.source : null;
-        const end = typeof link.target === 'object' ? link.target : null;
-
-        // Se o D3 ainda não vinculou as coordenadas dos nós neste frame, aguarda o próximo ciclo
-        if (!start || typeof start.x !== 'number' || !end || typeof end.x !== 'number') return;
-
-        const color = STATUS_COLORS[link.status] || '#ff0055';
-        const isSelected = selectedLink?.id === link.id;
-        const baseWidth = isSelected ? 8 : 4;
-
-        // 2. Proteção contra divisão por zero / escala inválida no Canvas 2D
-        const safeScale = globalScale && globalScale > 0 ? globalScale : 1;
-        const calculatedGlowWidth = baseWidth + 2 / safeScale;
-        const glowWidth = Number.isFinite(calculatedGlowWidth) ? calculatedGlowWidth : baseWidth + 2;
-
-        ctx.save();
-
-        // Pass 1: Aura translúcida (Glow)
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.strokeStyle = `${color}44`;
-        ctx.lineWidth = glowWidth;
-        ctx.stroke();
-
-        // Pass 2: Linha principal
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = baseWidth;
-
-        if (link.status === 'under_investigation') {
-          ctx.setLineDash([4, 4]);
-        } else {
-          ctx.setLineDash([]);
-        }
-
-        ctx.stroke();
-        ctx.restore();
-      }}
-
-      /* Keep directional particles and event handlers intact */
-      linkDirectionalParticles={(link: any) => (link.status === 'under_investigation' ? 3 : 0)}
-      linkDirectionalParticleSpeed={0.005}
-      linkDirectionalParticleWidth={5.0}
-      linkDirectionalParticleColor={(link: any) => STATUS_COLORS[link.status] || '#f59e0b'}
-      onNodeClick={(node: any) => onSelectNode(node)}
-      onLinkClick={(link: any) => onSelectLink(link)}
-      onEngineStop={handleEngineStop}
-
-      linkColor={(link: any) => STATUS_COLORS[link.status] || '#ff0055'}
-      linkWidth={(link: any) => (selectedLink?.id === link.id ? 3.0 : 1.5)}
-      linkLineDash={(link: any) => (link.status === 'under_investigation' ? [4, 4] : undefined)}
-
-      // vvv Pre-computes 120 physics ticks BEFORE the canvas first paints: vvv
-      warmupTicks={120}
-      cooldownTicks={150}
-      d3AlphaDecay={0.02}
-      d3VelocityDecay={0.3}
-      // ^^^ Pre-computes 120 physics ticks BEFORE the canvas first paints ^^^
-
-      backgroundColor="#080d16"
-    />
-
-    {/* ----------------------------------------------------------------- */}
-    {/* LEGENDA FIXA DE CORES DAS CONEXÕES (Canto Superior Direito)       */}
-    {/* ----------------------------------------------------------------- */}
-    <div className="absolute top-4 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-20 font-mono shadow-2xl select-none">
-      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-        Legenda das Conexões
-      </div>
-
-      {/* Status: Condenado / Confirmado */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#ff0055] inline-block rounded-full shadow-[0_0_8px_#ff0055]" />
-        <span className="text-slate-200">Condenado / Confirmado</span>
-      </div>
-
-      {/* Status: Sob Investigação (Tracejado) */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0 border-b-2 border-dashed border-[#f59e0b] inline-block" />
-        <span className="text-slate-200">Sob Investigação</span>
-      </div>
-
-      {/* Status: Absolvido / Arquivado */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#10b981] inline-block rounded-full shadow-[0_0_8px_#10b981]" />
-        <span className="text-slate-200">Absolvido / Arquivado</span>
-      </div>
-    </div>
-
-    {/* ----------------------------------------------------------------- */}
-    {/* LEGENDA FIXA DE CORES DOS CIRCULOS (Canto Superior Direito)       */}
-    {/* ----------------------------------------------------------------- */}
-    <div className="absolute top-36 right-6 bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 z-20 font-mono shadow-2xl select-none">
-      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-        Legenda dos Círculos
-      </div>
-
-      {/* Status: Esquema */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#ff36d3] inline-block rounded-full shadow-[0_0_8px_#ff00c8]" />
-        <span className="text-slate-200">Esquema</span>
-      </div>
-
-      {/* Status: Partido */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#322fff] inline-block rounded-full shadow-[0_0_8px_#1713e4]" />
-        <span className="text-slate-200">Partido</span>
-      </div>
-
-      {/* Status: Político */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#2ef1ff] inline-block rounded-full shadow-[0_0_8px_#00eeff]" />
-        <span className="text-slate-200">Político</span>
-      </div>
-
-      {/* Status: Empresa */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#939c98] inline-block rounded-full shadow-[0_0_8px_#bfcac5]" />
-        <span className="text-slate-200">Empresa / Operador</span>
-      </div>
-
-      {/* Status: Operador */}
-      <div className="flex items-center space-x-2.5">
-        <span className="w-5 h-0.5 bg-[#e3e3e3] inline-block rounded-full shadow-[0_0_8px_#ffffff]" />
-        <span className="text-slate-200">Operador</span>
-      </div>
-    </div>
-
-    {/* Botões de Controle de Câmera */}
-    <div className="absolute bottom-6 md:bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
-      <button
-        onClick={() => {
-          if (graphRef.current && typeof graphRef.current.zoom === 'function') {
-            graphRef.current.zoom(graphRef.current.zoom() * 1.2, 400);
-          }
-        }}
-        className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
-        aria-label="Zoom in"
-      >
-        <Plus className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => {
-          if (graphRef.current && typeof graphRef.current.zoom === 'function') {
-            graphRef.current.zoom(graphRef.current.zoom() / 1.2, 400);
-          }
-        }}
-        className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
-        aria-label="Zoom out"
-      >
-        <Minus className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => {
-          if (graphRef.current && typeof graphRef.current.zoomToFit === 'function') {
-            const isMobile = dimensions.width < 768;
-            graphRef.current.zoomToFit(400, isMobile ? 20 : 50);
-          }
-        }}
-        className="px-2.5 py-1.5 md:py-1 hover:bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-mono rounded transition-colors"
-      >
-        refocus
-      </button>
-      <button
-        onClick={() => {
-          if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-          else document.exitFullscreen();
-        }}
-        className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
-        aria-label="Toggle fullscreen"
-      >
-        <Maximize className="w-4 h-4" />
-      </button>
-    </div>
-
-    {/* Floating Legal & Policy Menu (Bottom-Right - Aligned with Camera Controls) */}
-    <div className="absolute bottom-16 md:bottom-6 right-4 md:right-6 z-20 group">
-      {/* Expanded Links Container (Reveals on hover or focus) */}
-      <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200 flex flex-col space-y-1 text-xs">
-        <div className="px-2 py-1 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-slate-800/80 mb-1">
-          Informações Legais
+      {/* LEGENDAS — geradas de lib/graphConfig.ts; escondidas em telas pequenas */}
+      <div className="absolute top-4 right-6 hidden sm:block space-y-3 z-20 select-none">
+        <div className="bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Legenda das Conexões</div>
+          {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => {
+            const st = STATUS_STYLE[key];
+            return (
+              <div key={key} className="flex items-center space-x-2.5">
+                {st.dashed ? (
+                  <span className="w-5 h-0 border-b-2 border-dashed inline-block" style={{ borderColor: st.color }} />
+                ) : (
+                  <span className="w-5 h-0.5 inline-block rounded-full" style={{ backgroundColor: st.color, boxShadow: `0 0 8px ${st.color}` }} />
+                )}
+                <span className="text-slate-200">{st.label}</span>
+              </div>
+            );
+          })}
         </div>
 
-        <Link
-          href="/about"
-          className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
-        >
-          <Info className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Sobre nós</span>
-        </Link>
-
-        <Link
-          href="/privacy"
-          className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
-        >
-          <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Política de privacidade</span>
-        </Link>
-
-        <Link
-          href="/terms"
-          className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors"
-        >
-          <Scale className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Termos de serviço</span>
-        </Link>
+        <div className="bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Legenda dos Círculos</div>
+          {(Object.keys(NODE_STYLE) as NodeType[]).map((key) => (
+            <div key={key} className="flex items-center space-x-2.5">
+              <span
+                className="w-2.5 h-2.5 inline-block rounded-full border"
+                style={{ borderColor: NODE_STYLE[key].color, boxShadow: `0 0 8px ${NODE_STYLE[key].color}` }}
+              />
+              <span className="text-slate-200">{NODE_STYLE[key].label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Trigger Button */}
-      <button
-        className="flex items-center space-x-2 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-2 md:py-1.5 text-xs text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
-        aria-label="Legal pages menu"
-      >
-        <FileText className="w-4 h-4 text-cyan-400" />
-        <span className="font-mono text-xs hidden sm:inline">Termos & Política</span>
-        <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 transition-transform duration-200" />
-      </button>
+      {/* CONTROLES DE CÂMERA — o fator 1.2 é o "passo" de cada clique de zoom.
+          Alinhados na base com o MENU LEGAL (mesmo bottom-6 e mesma altura). */}
+      <div className="absolute bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
+        <button
+          onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          aria-label="Aproximar"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => graphRef.current?.zoom(graphRef.current.zoom() / 1.2, 400)}
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          aria-label="Afastar"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => graphRef.current?.zoomToFit(400, fitPadding)}
+          className="px-2.5 py-1.5 md:py-1 hover:bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-mono rounded transition-colors"
+        >
+          recentralizar
+        </button>
+        <button
+          onClick={toggleFullscreen}
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          aria-label="Tela cheia"
+        >
+          <Maximize className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* MENU LEGAL — abre com o mouse (hover) e também com toque/teclado (focus-within).
+          Posição (bottom-6) e altura do botão iguais às dos controles de câmera, para
+          os dois ficarem alinhados na base: o py-3.5/md:py-3 do botão reproduz a altura
+          da caixa de câmera (46px no celular, 42px no desktop). Se mudar o padding de
+          um, mude o do outro. */}
+      <div className="absolute bottom-6 right-4 md:right-6 z-20 group">
+        <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 flex flex-col space-y-1 text-xs">
+          <div className="px-2 py-1 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-slate-800/80 mb-1">
+            Informações Legais
+          </div>
+          <Link href="/about" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+            <Info className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Sobre nós</span>
+          </Link>
+          <Link href="/privacy" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Política de privacidade</span>
+          </Link>
+          <Link href="/terms" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+            <Scale className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Termos de uso</span>
+          </Link>
+        </div>
+
+        <button
+          className="flex items-center space-x-2 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-3.5 md:py-3 text-xs leading-4 text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
+          aria-label="Menu de páginas legais"
+          aria-haspopup="true"
+        >
+          <FileText className="w-4 h-4 text-cyan-400" />
+          <span className="font-mono text-xs hidden sm:inline">Termos & Privacidade</span>
+          <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 group-focus-within:rotate-180 transition-transform duration-200" />
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
 }

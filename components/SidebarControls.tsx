@@ -1,21 +1,33 @@
 'use client';
 
+/**
+ * ============================================================================
+ * SIDEBARCONTROLS — painel de controle à esquerda (só desktop, ≥ 768px)
+ * ============================================================================
+ * Busca, controle de ano, filtros por tipo e por status, índice de esquemas
+ * e contadores. Não guarda estado próprio: tudo vem de app/page.tsx por props.
+ *
+ * Largura: `w-80` no <aside>. Para mostrar no celular, troque `hidden md:flex`
+ * por `flex` (e trate o espaço, ex. como gaveta).
+ * Altura máxima do índice de esquemas: `max-h-40` (≈160px) mais abaixo.
+ * ============================================================================
+ */
+
 import React from 'react';
-import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen, Component, Scale } from 'lucide-react';
+import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen, Component, Scale, Briefcase } from 'lucide-react';
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
+import { NODE_STYLE, STATUS_STYLE } from '@/lib/graphConfig';
 
-export const NODE_TYPES: Record<NodeType, { label: string; color: string; icon: React.ElementType }> = {
-  politician: { label: 'Político', color: '#00c3d1', icon: UserCheck },
-  party: { label: 'Partido', color: '#1713e4', icon: Layers },
-  scheme: { label: 'Esquema de Corrupção', color: '#ff00c8', icon: ShieldAlert },
-  company: { label: 'Empresa', color: '#666d6a', icon: Building2 },
-  operator: { label: 'Operador', color: '#ffff', icon: Building2 }
-};
-
-export const STATUS_COLORS: Record<LinkStatus, string> = {
-  confirmed: '#b1003b',
-  under_investigation: '#f59e0b',
-  acquitted: '#10b981'
+// Icons stay here (UI-only); colors/labels come from the shared config.
+// Operators previously reused the company icon and had color '#ffff' (4-digit hex),
+// which became '#ffff44' (yellow) once an alpha suffix was appended.
+// Ícones lucide-react por tipo (lista em https://lucide.dev/icons).
+const NODE_ICONS: Record<NodeType, React.ElementType> = {
+  politician: UserCheck,
+  party: Layers,
+  scheme: ShieldAlert,
+  company: Building2,
+  operator: Briefcase,
 };
 
 interface SidebarControlsProps {
@@ -23,6 +35,8 @@ interface SidebarControlsProps {
   setSearchQuery: (query: string) => void;
   startYearFilter: number;
   setStartYearFilter: (year: number) => void;
+  minYear: number;
+  maxYear: number;
   typeFilters: Record<NodeType, boolean>;
   toggleTypeFilter: (type: NodeType) => void;
   statusFilters: Record<LinkStatus, boolean>;
@@ -39,6 +53,8 @@ export default function SidebarControls({
   setSearchQuery,
   startYearFilter,
   setStartYearFilter,
+  minYear,
+  maxYear,
   typeFilters,
   toggleTypeFilter,
   statusFilters,
@@ -50,10 +66,11 @@ export default function SidebarControls({
   onSelectScheme
 }: SidebarControlsProps) {
   // Filtra apenas as entidades do tipo "Esquema de Corrupção"
-  const schemeNodes = nodes.filter((node) => node.type === 'scheme');
+  // Só os nós de esquema VISÍVEIS (já filtrados) entram no índice.
+  const schemeNodes = React.useMemo(() => nodes.filter((node) => node.type === 'scheme'), [nodes]);
 
   return (
-    <aside className="hidden md:flex w-80 bg-[#090f1b] border-r border-slate-800/80 flex flex-col z-20 shadow-xl h-full">
+    <aside className="hidden md:flex w-80 bg-[#090f1b] border-r border-slate-800/80 flex-col z-20 shadow-xl h-full">
       
       {/* Cabeçalho */}
       <div className="p-4 border-b border-slate-800/80 flex items-center space-x-3">
@@ -62,7 +79,6 @@ export default function SidebarControls({
         </div>
         <div>
           <h1 className="text-sm font-bold text-slate-100 leading-tight">Painel de Controle</h1>
-          {/* <p className="text-[11px] text-slate-400 font-mono">CORRWEB Visualizer</p> */}
         </div>
       </div>
 
@@ -98,30 +114,32 @@ export default function SidebarControls({
           </div>
           <input
             type="range"
-            min="2000"
-            max="2026"
+            min={minYear}
+            max={maxYear}
             step="1"
             value={startYearFilter}
             onChange={(e) => setStartYearFilter(Number(e.target.value))}
+            aria-label="Ano de início"
             className="w-full accent-cyan-400 cursor-pointer bg-slate-900 rounded-lg h-1.5"
           />
         </div>
 
         {/* Tipos de Entidade */}
         <div>
-          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
+          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
             <Filter className="w-3.5 h-3.5 text-cyan-400" />
             Tipos de Entidade
           </label>
           <div className="space-y-1.5">
-            {(Object.keys(NODE_TYPES) as NodeType[]).map((typeKey) => {
-              const cfg = NODE_TYPES[typeKey];
-              const IconComp = cfg.icon;
+            {(Object.keys(NODE_STYLE) as NodeType[]).map((typeKey) => {
+              const cfg = NODE_STYLE[typeKey];
+              const IconComp = NODE_ICONS[typeKey];
               const active = typeFilters[typeKey];
               return (
                 <button
                   key={typeKey}
                   onClick={() => toggleTypeFilter(typeKey)}
+                  aria-pressed={active}
                   className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg border text-xs transition-all ${
                     active
                       ? 'bg-slate-800/80 border-slate-700 text-slate-200'
@@ -141,19 +159,16 @@ export default function SidebarControls({
 
         {/* Status Jurídico */}
         <div>
-          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
+          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
             <Scale className="w-3.5 h-3.5 text-cyan-400" />
             Status Jurídico
           </label>
           <div className="space-y-1.5">
-            {[
-              { key: 'confirmed' as LinkStatus, label: 'Condenado / Confirmado', color: STATUS_COLORS.confirmed },
-              { key: 'under_investigation' as LinkStatus, label: 'Sob Investigação', color: STATUS_COLORS.under_investigation },
-              { key: 'acquitted' as LinkStatus, label: 'Absolvido / Arquivado', color: STATUS_COLORS.acquitted }
-            ].map((st) => (
+            {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => ({ key, ...STATUS_STYLE[key] })).map((st) => (
               <button
                 key={st.key}
                 onClick={() => toggleStatusFilter(st.key)}
+                aria-pressed={statusFilters[st.key]}
                 className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg border text-xs transition-all ${
                   statusFilters[st.key]
                     ? 'bg-slate-800/50 border-slate-700 text-slate-300'
@@ -169,11 +184,11 @@ export default function SidebarControls({
 
         {/* ÍNDICE DE ESQUEMAS DE CORRUPÇÃO ROLÁVEL */}
         <div>
-          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
+          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
             Índice de Esquemas
           </label>
-          <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+          <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
             {schemeNodes.length === 0 ? (
               <span className="text-xs text-slate-600 italic block p-1">Nenhum esquema encontrado</span>
             ) : (
