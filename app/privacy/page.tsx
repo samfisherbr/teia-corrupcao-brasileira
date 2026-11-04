@@ -1,96 +1,94 @@
+/**
+ * Página "Política de Privacidade" (/privacy). Conteúdo estático.
+ * Nome, domínio, e-mail e data de atualização vêm de lib/site.ts.
+ * Revise o texto se passar a coletar outros dados (ex.: analytics, formulários).
+ */
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ShieldCheck, Lock, Eye, Cookie, FileText } from 'lucide-react';
+import { SITE_NAME, SITE_DOMAIN, CONTACT_EMAIL, LEGAL_LAST_UPDATED } from '@/lib/site';
 
 export const metadata = {
-  title: 'Privacy Policy | Teia da Corrupção',
-  description: 'Privacy Policy and Cookie Usage Guidelines for Teia da Corrupção Corruption Visualizer.',
+  title: `Política de Privacidade | ${SITE_NAME}`,
+  description: `Política de privacidade e uso de cookies da ${SITE_NAME}.`,
 };
 
-export default function PrivacyPolicyPage() {
-  const lastUpdated = 'November 1, 2026';
-  const contactEmail = 'samfisherbr@gmail.com'; // Replace with your actual email
-  const domainName = 'teiadacorrupcao.io'; // Replace with your domai
+// Classe reaproveitada nos links externos desta página.
+const LINK_CLASS = 'text-cyan-400 underline hover:text-cyan-300';
 
+export default function PrivacyPolicyPage() {
   return (
     <div className="h-[100dvh] w-full bg-[#080d16] text-slate-200 font-sans px-4 py-12 sm:px-8 md:px-16 lg:px-24 overflow-y-auto select-text">
       <div className="max-w-4xl mx-auto space-y-8">
 
-        {/* Navigation Back */}
+        {/* Voltar ao grafo */}
         <Link
           href="/"
           className="inline-flex items-center space-x-2 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Return to Dashboard</span>
+          <span>Voltar ao painel</span>
         </Link>
 
-        {/* Header */}
+        {/* Cabeçalho */}
         <div className="border-b border-slate-800 pb-6">
           <div className="flex items-center space-x-3 mb-2">
             <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-400/30 text-cyan-400">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-100">Privacy Policy</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-100">Política de Privacidade</h1>
           </div>
-          <p className="text-xs font-mono text-slate-400">Last Updated: {lastUpdated}</p>
+          <p className="text-xs font-mono text-slate-400">Última atualização: {LEGAL_LAST_UPDATED}</p>
         </div>
 
-        {/* Content Sections */}
+        {/* Seções */}
         <div className="space-y-8 text-sm leading-relaxed text-slate-300">
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
               <Eye className="w-4 h-4 text-cyan-400" />
-              1. Overview & Commitment
+              1. Visão geral e compromisso
             </h2>
             <p>
-              At <strong>Teia da Corrupção</strong> ({domainName}), accessible from https://{domainName}, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by Teia da Corrupção and how we use it.
+              Na <strong>{SITE_NAME}</strong>, acessível em https://{SITE_DOMAIN}, a privacidade dos visitantes é uma
+              prioridade. Este documento descreve quais informações são coletadas e registradas e como são usadas, em
+              conformidade com a Lei Geral de Proteção de Dados Pessoais (LGPD — Lei nº 13.709/2018).
             </p>
             <p>
-              If you have additional questions or require more information about our Privacy Policy, do not hesitate to contact us.
+              O site não exige cadastro nem login. Se tiver dúvidas ou precisar de mais informações sobre esta política,
+              entre em contato.
             </p>
           </section>
 
           <section className="space-y-3 border-t border-slate-800/80 pt-6">
             <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
               <Cookie className="w-4 h-4 text-cyan-400" />
-              2. Cookies & Third-Party Advertising (Google AdSense)
+              2. Cookies e publicidade de terceiros (Google AdSense)
             </h2>
             <p>
-              Teia da Corrupção uses cookies to store information about visitors&apos; preferences, the pages on the website that the visitor accessed or visited, and to optimize the user experience by customizing our web page content based on visitors&apos; browser type or other information.
+              A {SITE_NAME} pode usar cookies para guardar preferências de navegação e para exibir anúncios. Os cookies de
+              publicidade são definidos por terceiros, conforme abaixo.
             </p>
             <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-3 text-xs text-slate-300">
               <p className="font-semibold text-slate-100 uppercase tracking-wider font-mono text-[11px]">
-                Google DoubleClick DART Cookie & Third-Party Vendors:
+                Google e fornecedores terceiros:
               </p>
               <ul className="list-disc pl-5 space-y-2">
                 <li>
-                  Google is a third-party vendor on our site. It uses cookies, known as DART cookies, to serve ads to our site visitors based upon their visit to {domainName} and other sites on the internet.
+                  O Google, como fornecedor terceiro, usa cookies para exibir anúncios aos visitantes com base em suas
+                  visitas a {SITE_DOMAIN} e a outros sites na internet.
                 </li>
                 <li>
-                  Third-party vendors, including Google, use cookies to serve ads based on a user&apos;s prior visits to your website or other websites.
+                  Os cookies de publicidade permitem que o Google e seus parceiros exibam anúncios com base nas visitas do
+                  usuário a este e a outros sites.
                 </li>
                 <li>
-                  Google&apos;s use of advertising cookies enables it and its partners to serve ads to users based on their visit to your sites and/or other sites on the Internet.
-                </li>
-                <li>
-                  Users may opt out of personalized advertising by visiting{' '}
-                  <a
-                    href="https://www.google.com/settings/ads"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-cyan-400 underline hover:text-cyan-300"
-                  >
-                    Google Ads Settings
+                  É possível desativar a publicidade personalizada nas{' '}
+                  <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
+                    Configurações de anúncios do Google
                   </a>
-                  . Alternatively, users can opt out of a third-party vendor&apos;s use of cookies for personalized advertising by visiting{' '}
-                  <a
-                    href="https://www.aboutads.info"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-cyan-400 underline hover:text-cyan-300"
-                  >
+                  . Também é possível recusar o uso de cookies de fornecedores terceiros para publicidade personalizada em{' '}
+                  <a href="https://www.aboutads.info" target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
                     www.aboutads.info
                   </a>
                   .
@@ -102,45 +100,54 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3 border-t border-slate-800/80 pt-6">
             <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
               <Lock className="w-4 h-4 text-cyan-400" />
-              3. Log Files & Analytics
+              3. Registros de acesso (logs)
             </h2>
             <p>
-              Teia da Corrupção follows a standard procedure of using log files. These files log visitors when they visit websites. All hosting companies do this as part of hosting services&apos; analytics. The information collected by log files includes internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any information that is personally identifiable. The purpose of the information is for analyzing trends, administering the site, tracking users&apos; movement on the website, and gathering demographic information.
+              Como em praticamente todo serviço de hospedagem, o provedor do site (Cloudflare) registra automaticamente
+              dados técnicos de acesso: endereço IP, tipo de navegador, provedor de internet, data e hora, páginas de
+              origem e de saída. Essas informações são usadas para segurança, administração do site e estatísticas
+              agregadas de uso, e não são associadas a nenhuma identificação pessoal.
             </p>
           </section>
 
           <section className="space-y-3 border-t border-slate-800/80 pt-6">
             <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
               <FileText className="w-4 h-4 text-cyan-400" />
-              4. Third-Party Privacy Policies
+              4. Políticas de privacidade de terceiros
             </h2>
             <p>
-              Teia da Corrupção&apos;s Privacy Policy does not apply to other advertisers or websites. Thus, we are advising you to consult the respective Privacy Policies of these third-party ad servers for more detailed information. It may include their practices and instructions about how to opt-out of certain options.
+              Esta política não se aplica a anunciantes nem a sites externos para os quais o grafo aponta (como portais de
+              notícias e tribunais). Recomendamos consultar as políticas de privacidade desses serviços.
             </p>
             <p>
-              You can choose to disable cookies through your individual browser options. Detailed information about cookie management with specific web browsers can be found at the browsers&apos; respective websites.
+              Você pode desativar os cookies nas configurações do seu navegador. Instruções específicas estão disponíveis
+              nos sites de cada navegador.
             </p>
           </section>
 
           <section className="space-y-3 border-t border-slate-800/80 pt-6">
-            <h2 className="text-lg font-semibold text-slate-100">5. GDPR & LGPD Data Protection Rights</h2>
+            <h2 className="text-lg font-semibold text-slate-100">5. Seus direitos pela LGPD</h2>
             <p>
-              We would like to make sure you are fully aware of all of your data protection rights. Every user is entitled to the following:
+              Nos termos do art. 18 da LGPD, você pode solicitar, a qualquer momento:
             </p>
             <ul className="list-disc pl-5 space-y-1 text-slate-400 text-xs">
-              <li><strong>The right to access</strong> – You have the right to request copies of your personal data.</li>
-              <li><strong>The right to rectification</strong> – You have the right to request that we correct any information you believe is inaccurate.</li>
-              <li><strong>The right to erasure</strong> – You have the right to request that we erase your personal data, under certain conditions.</li>
-              <li><strong>The right to restrict processing</strong> – You have the right to request that we restrict the processing of your personal data, under certain conditions.</li>
+              <li><strong>Confirmação e acesso</strong> — saber se tratamos dados seus e obter uma cópia deles.</li>
+              <li><strong>Correção</strong> — corrigir dados incompletos, inexatos ou desatualizados.</li>
+              <li><strong>Anonimização, bloqueio ou eliminação</strong> — de dados desnecessários, excessivos ou tratados em desconformidade com a lei.</li>
+              <li><strong>Informação sobre compartilhamento</strong> — saber com quais entidades seus dados são compartilhados.</li>
+              <li><strong>Revogação do consentimento</strong> — quando o tratamento se basear nele.</li>
             </ul>
+            <p className="text-xs text-slate-400">
+              Também é possível apresentar reclamação à Autoridade Nacional de Proteção de Dados (ANPD).
+            </p>
           </section>
 
           <section className="space-y-3 border-t border-slate-800/80 pt-6">
-            <h2 className="text-lg font-semibold text-slate-100">6. Contact Us</h2>
+            <h2 className="text-lg font-semibold text-slate-100">6. Contato</h2>
             <p>
-              If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us at{' '}
-              <a href={`mailto:${contactEmail}`} className="text-cyan-400 underline">
-                {contactEmail}
+              Dúvidas, sugestões ou pedidos relacionados a esta política podem ser enviados para{' '}
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-cyan-400 underline">
+                {CONTACT_EMAIL}
               </a>
               .
             </p>

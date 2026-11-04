@@ -1,3 +1,9 @@
+/**
+ * Layout raiz do Next.js (envolve todas as páginas).
+ *  - metadata: título/descrição da aba e de compartilhamento, e o ícone.
+ *  - <html lang="pt-BR" className="dark">: idioma (leitores de tela, tradutor)
+ *    e tema escuro do Tailwind.
+ */
 import React from 'react';
 import './globals.css';
 
