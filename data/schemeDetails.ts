@@ -53,5 +53,22 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Big Surveillance Project For the Amazon Jungle Teeters Over Scandals", url: "https://www.csmonitor.com/1996/0125/25071.html" },
       { title: "CPI - SIVAM: depoimento de Francisco Graziano (30/10/2001)", url: "https://www2.camara.leg.br/atividade-legislativa/comissoes/comissoes-temporarias/parlamentar-de-inquerito/51-legislatura/cpisivam/notas/nt301001.pdf" }
     ]
+  },
+
+  "esquema_trt_sp": {
+    context: "Em 1992, o Tribunal Regional do Trabalho da 2ª Região, presidido pelo juiz Nicolau dos Santos Neto, abriu a licitação para construir o Fórum Trabalhista da Barra Funda, em São Paulo, vencida pela construtora Incal. O caso veio a público em 1998, depois que um ex-genro do juiz denunciou ao Ministério Público Federal seu patrimônio incompatível com o salário de magistrado. A CPI do Judiciário, em 1999, quebrou sigilos e chegou às empresas do senador Luiz Estevão, cassado pelo Senado em junho de 2000.",
+    mechanism: "Segundo o MPF, a Incal Incorporações, de Fábio Monteiro de Barros e José Eduardo Ferraz, e o Grupo OK, de Luiz Estevão, combinaram-se para disputar a licitação, e a execução da obra teve superfaturamento de materiais, pagamentos antecipados e transferências ilícitas para contas no Brasil e no exterior. Uma auditoria constatou que, seis anos após a licitação, só 64% da obra estava pronta, embora toda a verba já tivesse sido liberada. A quebra de sigilos mostrou transferências da Incal para o Grupo OK coincidentes com os pagamentos do tribunal. Os réus negam os desvios.",
+    impact: "R$ 169.400.000 desviados em valores de 1998, segundo o MPF, que em 2017 cobrou R$ 1,04 bilhão em ressarcimento, somando o desvio corrigido e danos morais. Em 2012, o Grupo OK firmou acordo de R$ 468 milhões com a AGU e pagou R$ 338 milhões até suspender as parcelas, em março de 2016. Em 2023, a AGU retomou a cobrança de uma dívida de mais de R$ 800 milhões decorrente da condenação no TCU; Luiz Estevão afirma que os valores penhorados já quitam o débito.",
+    legalStatus: "Nicolau dos Santos Neto, Luiz Estevão, Fábio Monteiro de Barros e José Eduardo Ferraz foram condenados em definitivo; o STF manteve em 2015 a pena de 31 anos e 6 meses de Estevão e Monteiro de Barros, reduzida a cerca de 26 anos pela prescrição de dois crimes. Nicolau teve a pena extinta por indulto em 2014 e morreu em 2020; Estevão foi preso em 2016 e obteve o regime aberto em 2021; Ferraz foi preso em 2017. O ex-presidente do TRT-2 Délvio Buffulin foi absolvido em todas as instâncias, com a ação de improbidade extinta pelo STJ em 2024. Situação em novembro de 2026: condenações criminais transitadas em julgado e execução cível contra o Grupo OK em curso, conforme último registro verificado, de junho de 2023.",
+    sources: [
+      { title: "MPF pede ressarcimento de R$ 1 bilhão por desvios em obra do TRT de São Paulo", url: "https://agenciabrasil.ebc.com.br/geral/noticia/2017-09/mpf-pede-ressarcimento-de-r-1-bilhao-por-desvios-em-obra-do-trt-de-sao-paulo" },
+      { title: "Senado cassa mandato de Luiz Estevão", url: "https://www12.senado.leg.br/noticias/materias/2000/06/28/senado-cassa-mandato-de-luiz-estevao" },
+      { title: "STF mantém em 31 anos e 6 meses condenação do ex-senador Luís Estevão", url: "https://www.gazetadopovo.com.br/vida-publica/stf-mantem-em-31-anos-e-6-meses-condenacao-do-ex-senador-luis-estevao-087kfze3j3fs09gt8dukkgzxm/" },
+      { title: "Governo recupera R$ 468 milhões desviados do TRT-SP", url: "https://www.congressoemfoco.com.br/noticia/75291/governo-recupera-r-468-milhoes-desviados-do-trt-sp" },
+      { title: "Condenado por desvio no TRT paulista, ex-juiz Lalau deixa a prisão", url: "https://www.congressoemfoco.com.br/noticia/50251/condenado-por-desvio-no-trt-paulista-ex-juiz-lalau-deixa-a-prisao" },
+      { title: "Mantida condenação de Lalau e Luiz Estevão por desvio de verbas", url: "https://www.migalhas.com.br/quentes/189701/mantida-condenacao-de-lalau-e-luiz-estevao-por-desvio-de-verbas" },
+      { title: "STJ extingue ação de improbidade contra ex-presidente do TRT-2", url: "https://www.migalhas.com.br/quentes/413553/stj-extingue-acao-de-improbidade-contra-ex-presidente-do-trt-2" },
+      { title: "AGU cobrará dívida do Grupo OK por desvios nas obras do TRT-SP", url: "https://www.poder360.com.br/justica/agu-cobrara-divida-do-grupo-ok-por-desvios-nas-obras-do-trt-sp/" }
+    ]
   }
 };
