@@ -9,7 +9,14 @@
  * resultado é um "novelo" embolado no meio da tela na primeira abertura.
  *
  * O que faz: calcula, ANTES da simulação, uma posição-alvo para cada nó e já
- * coloca o nó nessa posição. A física (d3-force) só faz o ajuste fino.
+ * coloca o nó nessa posição.
+ *   • ESQUEMAS ficam FIXOS no anel (fx/fy) — são a moldura da teia. Arrastados,
+ *     ficam onde forem soltos.
+ *   • Todos os OUTROS nós flutuam: a posição-alvo é só o ponto de partida.
+ *     Depois, quem os organiza são as molas dos links (comprimento por tipo de
+ *     ligação), a repulsão entre TODOS os nós e a colisão. Arrastados, voltam
+ *     a se acomodar na teia quando soltos.
+ *   • No desktop, uma deriva suave (forceDrift) mantém a teia "respirando".
  *
  *   • Os ESQUEMAS ficam num anel externo, em ordem cronológica no sentido
  *     horário a partir do topo (o mais antigo às 12h).
@@ -68,29 +75,28 @@ export const RADIUS_FRACTION: Record<NodeType, [number, number]> = {
 };
 
 /**
- * Força com que cada nó é puxado para sua posição-alvo (0..1).
- *   ↑ aumentar → layout mais "rígido" e organizado, links podem esticar.
- *   ↓ diminuir → a física dos links tem mais influência (mais orgânico,
- *                 porém volta a embolar se ficar muito baixo, ex. < 0.03).
+ * Âncora de segurança dos nós que flutuam (0..1). É bem fraca de propósito:
+ * só impede que um nó sem ligações visíveis (ex.: depois de um filtro) se
+ * afaste para sempre. Quem organiza de fato são os links e a repulsão.
+ *   ↑ aumentar (ex. 0.05) → nós ficam mais perto da posição inicial calculada
+ *   ↓ diminuir (ex. 0.005) → mais livres; 0 desliga
  */
-export const ANCHOR_STRENGTH = 0.12;
+export const FREE_ANCHOR_STRENGTH = 0.02;
 
 /**
- * Âncora extra por tipo (multiplica ANCHOR_STRENGTH). Os esquemas são a
- * "moldura" da teia, então ficam mais presos ao seu lugar no anel; sem isso,
- * esquemas que compartilham partidos se atraem e se amontoam.
+ * Repulsão entre nós (negativo = repelir). Vale entre TODOS os pares de nós,
+ * de qualquer tipo, a qualquer distância (sem distanceMax).
+ * Os esquemas repelem mais forte; como estão fixos, a repulsão deles só
+ * empurra os nós ao redor, abrindo espaço em volta de cada caso.
+ *   ↑ (mais negativo) → teia mais espaçada; ↓ → mais compacta
  */
-export const ANCHOR_MULTIPLIER: Partial<Record<NodeType, number>> = {
-  scheme: 3,
-  party: 1.5,
+export const REPULSION: Record<NodeType, number> = {
+  scheme: -1500,
+  party: -700,
+  company: -450,
+  politician: -450,
+  operator: -400,
 };
-
-/**
- * Repulsão entre nós (negativo = repelir). Atua só até `CHARGE_DISTANCE_MAX`,
- * para afastar vizinhos sem empurrar o grafo inteiro para fora.
- */
-export const CHARGE_STRENGTH = -220;
-export const CHARGE_DISTANCE_MAX = 900;
 
 /**
  * Folga extra no raio de colisão (unidades do grafo) para sobrar espaço para
@@ -99,11 +105,44 @@ export const CHARGE_DISTANCE_MAX = 900;
 export const COLLIDE_PADDING = 30;
 
 /**
- * Força das molas dos links. Fica baixa de propósito: quem organiza é a
- * posição-alvo; os links só aproximam levemente quem está conectado.
+ * Comprimento de repouso de cada tipo de ligação (unidades do grafo).
+ * É a "tensão" que impede a teia de se amassar: a mola empurra quando a
+ * ligação fica mais curta que isso e puxa quando fica mais longa.
+ * A chave é a dupla de tipos em ordem alfabética, unida por "-".
+ *   ↑ aumentar um valor → aquele tipo de ligação fica mais comprido
  */
-export const LINK_STRENGTH = 0.04;
-export const LINK_DISTANCE = 200;
+export const LINK_LENGTH: Record<string, number> = {
+  'party-politician': 180,
+  'company-operator': 200,
+  'company-scheme': 260,
+  'operator-scheme': 260,
+  'operator-politician': 240,
+  'company-politician': 260,
+  'politician-scheme': 320,
+  'party-scheme': 380,
+  'politician-politician': 220,
+};
+/** Comprimento para duplas de tipos que não estão na tabela acima. */
+export const DEFAULT_LINK_LENGTH = 260;
+
+/**
+ * Rigidez das molas dos links (0..1). Dividida pela raiz do número de ligações
+ * do nó mais conectado da dupla, para que "hubs" (ex.: um partido presente em
+ * muitos casos) não tremam puxados para todos os lados.
+ *   ↑ aumentar → ligações mantêm o comprimento com mais firmeza
+ *   ↓ diminuir → teia mais elástica
+ */
+export const LINK_STRENGTH = 0.5;
+
+/**
+ * Deriva suave ("respiração") dos nós livres, só no desktop. Cada nó oscila
+ * devagar em torno da sua posição, com fase própria, sem sair do lugar.
+ *   - DRIFT_AMPLITUDE ↑ → movimento mais amplo (0.008 ≈ 10–15 unidades)
+ *   - DRIFT_SPEED     ↑ → movimento mais rápido (radianos por segundo)
+ * Para desligar no desktop também, use DRIFT_AMPLITUDE = 0.
+ */
+export const DRIFT_AMPLITUDE = 0.008;
+export const DRIFT_SPEED = 0.45;
 
 /* ---------------------------------------------------------------------------
  * CÁLCULO DAS POSIÇÕES-ALVO
@@ -216,36 +255,77 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
 }
 
 /**
- * Coloca na posição-alvo os nós que ainda não têm posição (primeira carga).
- * Nós que já têm x/y (usuário filtrou ou arrastou) são mantidos onde estão;
- * a força de ancoragem os leva suavemente ao novo alvo.
+ * Coloca na posição-alvo os nós que ainda não têm posição (primeira carga) e
+ * FIXA os esquemas no anel (fx/fy).
+ * Nós que já têm posição (o usuário filtrou ou arrastou) ficam onde estão;
+ * um esquema que o usuário arrastou continua no lugar em que foi solto.
  */
 export function seedPositions(nodes: GraphNode[], targets: Map<string, LayoutTarget>) {
   for (const n of nodes) {
     const t = targets.get(n.id);
-    if (t && (typeof n.x !== 'number' || typeof n.y !== 'number')) {
+    if (!t) continue;
+    if (typeof n.x !== 'number' || typeof n.y !== 'number') {
       n.x = t.x;
       n.y = t.y;
+    }
+    if (n.type === 'scheme' && typeof n.fx !== 'number') {
+      n.fx = n.x;
+      n.fy = n.y;
     }
   }
 }
 
 /**
+ * Força de deriva: empurrão senoidal suave, com fase própria por nó. Não
+ * depende da energia (alpha) da simulação — de propósito: a biblioteca zera
+ * essa energia a cada arraste, e a deriva precisa continuar mesmo assim.
+ * Média zero → o nó oscila em torno do lugar, não se afasta. Nós fixos (fx)
+ * não são afetados.
+ */
+export function forceDrift(amplitude = DRIFT_AMPLITUDE, speed = DRIFT_SPEED) {
+  let nodes: any[] = [];
+  let phases: number[] = [];
+  const force: any = () => {
+    if (amplitude === 0) return;
+    const t = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      if (typeof n.fx === 'number') continue;
+      const p = phases[i];
+      n.vx += amplitude * Math.sin(t * speed + p);
+      n.vy += amplitude * Math.cos(t * speed * 0.83 + p * 1.7);
+    }
+  };
+  force.initialize = (ns: any[]) => {
+    nodes = ns;
+    phases = ns.map((n) => hashUnit(String(n.id)) * 2 * Math.PI);
+  };
+  return force;
+}
+
+/** Chave da tabela LINK_LENGTH para uma ligação (tipos em ordem alfabética). */
+const linkKey = (l: any) =>
+  [String(l.source?.type ?? ''), String(l.target?.type ?? '')].sort().join('-');
+
+/**
  * Aplica as forças do layout em qualquer objeto com a API `d3Force(nome, força)`
  * (o ref do react-force-graph) — ou numa simulação d3 pura, via adaptador.
+ *
+ * @param drift  true = liga a deriva suave (desktop); false = teia em repouso (celular)
  */
 export function applyLayoutForces(
   setForce: (name: string, force?: unknown) => any,
-  targets: Map<string, LayoutTarget>
+  targets: Map<string, LayoutTarget>,
+  drift = false
 ) {
-  // Âncora: puxa cada nó para seu alvo (substitui a força "center" padrão).
+  // Âncora de segurança, fraca, só para os nós livres (esquemas já estão fixos).
+  // Substitui a força "center" padrão da biblioteca.
   setForce('center', null);
-  const anchor = (n: any) => ANCHOR_STRENGTH * (ANCHOR_MULTIPLIER[n.type as NodeType] ?? 1);
-  setForce('x', forceX((n: any) => targets.get(n.id)?.x ?? 0).strength(anchor));
-  setForce('y', forceY((n: any) => targets.get(n.id)?.y ?? 0).strength(anchor));
+  setForce('x', forceX((n: any) => targets.get(n.id)?.x ?? 0).strength(FREE_ANCHOR_STRENGTH));
+  setForce('y', forceY((n: any) => targets.get(n.id)?.y ?? 0).strength(FREE_ANCHOR_STRENGTH));
 
-  // Repulsão local entre vizinhos.
-  setForce('charge', forceManyBody().strength(CHARGE_STRENGTH).distanceMax(CHARGE_DISTANCE_MAX));
+  // Repulsão entre TODOS os nós (sem limite de distância).
+  setForce('charge', forceManyBody().strength((n: any) => REPULSION[n.type as NodeType] ?? -450));
 
   // Colisão: círculo desenhado + folga para o rótulo. 2 iterações = mais firme.
   setForce(
@@ -255,7 +335,32 @@ export function applyLayoutForces(
       .iterations(2)
   );
 
-  // Links: mola fraca (a força "link" é criada pela própria biblioteca).
+  // Links com tensão: comprimento por tipo de ligação e rigidez ajustada a hubs.
+  // (A força "link" é criada pela própria biblioteca; aqui só a configuramos.)
   const link = setForce('link');
-  link?.distance?.(LINK_DISTANCE).strength?.(LINK_STRENGTH);
+  if (link?.distance) {
+    // O d3 chama o acessor com (link, índice, todosOsLinks) sempre que o
+    // conjunto de links muda; o grau de cada nó é recalculado nesse momento.
+    let cachedFor: unknown = null;
+    let degree = new Map<string, number>();
+    const idOf = (end: any) => (typeof end === 'object' && end ? end.id : end);
+    const degreeOf = (end: any, all: any[]) => {
+      if (cachedFor !== all) {
+        cachedFor = all;
+        degree = new Map();
+        for (const l of all) {
+          for (const e of [l.source, l.target]) degree.set(idOf(e), (degree.get(idOf(e)) ?? 0) + 1);
+        }
+      }
+      return degree.get(idOf(end)) ?? 1;
+    };
+    link
+      .distance((l: any) => LINK_LENGTH[linkKey(l)] ?? DEFAULT_LINK_LENGTH)
+      .strength((l: any, _i: number, all: any[]) =>
+        LINK_STRENGTH / Math.sqrt(Math.max(degreeOf(l.source, all), degreeOf(l.target, all)))
+      );
+  }
+
+  // Deriva suave (só quando pedida).
+  setForce('drift', drift ? forceDrift() : null);
 }

@@ -270,6 +270,8 @@ export default function Page() {
               selectedLink={selectedLink}
               onSelectNode={selectNode}
               onSelectLink={selectLink}
+              // Pausa a animação enquanto Infográficos/Glossário cobrem o grafo.
+              paused={activePage !== 'graph'}
             />
           )}
 

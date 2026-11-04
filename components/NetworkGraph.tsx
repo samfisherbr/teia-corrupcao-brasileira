@@ -36,6 +36,8 @@ interface NetworkGraphProps {
   selectedLink: GraphLink | null;
   onSelectNode: (node: GraphNode) => void;
   onSelectLink: (link: GraphLink) => void;
+  /** true quando um painel (Infográficos/Glossário) cobre o grafo: a animação pausa. */
+  paused?: boolean;
 }
 
 /* ---------------------------------------------------------------------------
@@ -62,6 +64,26 @@ const FIT_PADDING_MOBILE = 20;
 const WARMUP_TICKS = 100;
 const COOLDOWN_MS = 4000;
 
+/**
+ * Desktop/notebook = mouse ou trackpad (ponteiro fino, com hover). Nesses, a
+ * simulação nunca para e a deriva suave mantém a teia "respirando".
+ * Celular/tablet (toque) = a teia se acomoda e fica parada, poupando bateria.
+ * Para ligar a deriva em todos os aparelhos, troque a expressão por `true`.
+ */
+const DESKTOP_POINTER_QUERY = '(hover: hover) and (pointer: fine)';
+
+function useIsDesktopPointer() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(DESKTOP_POINTER_QUERY);
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return isDesktop;
+}
+
 /** Espessura das linhas em unidades do grafo: normal / selecionada. */
 const LINK_WIDTH = 4;
 const LINK_WIDTH_SELECTED = 8;
@@ -79,7 +101,10 @@ export default function NetworkGraph({
   selectedLink,
   onSelectNode,
   onSelectLink,
+  paused = false,
 }: NetworkGraphProps) {
+  // Movimento constante só em desktop/notebook (ver DESKTOP_POINTER_QUERY).
+  const driftEnabled = useIsDesktopPointer();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const isMobile = dimensions.width < MOBILE_BREAKPOINT;
@@ -132,14 +157,29 @@ export default function NetworkGraph({
   useEffect(() => {
     const fg = graphRef.current;
     if (!fg) return;
-    applyLayoutForces((name, force) => fg.d3Force(name, force), layoutTargets);
+    applyLayoutForces((name, force) => fg.d3Force(name, force), layoutTargets, driftEnabled);
     fg.d3ReheatSimulation();
-  }, [graphReady, layoutTargets, graphRef]);
+  }, [graphReady, layoutTargets, driftEnabled, graphRef]);
+
+  /* -------------------------------------------------------------------------
+   * 3b. PAUSA — com um painel aberto por cima do grafo, a animação para (não
+   *     gasta CPU/bateria desenhando algo invisível). Com a aba do navegador
+   *     em segundo plano, o próprio navegador já suspende a animação.
+   * ----------------------------------------------------------------------- */
+  useEffect(() => {
+    const fg = graphRef.current;
+    if (!fg) return;
+    if (paused) fg.pauseAnimation?.();
+    else fg.resumeAnimation?.();
+  }, [paused, graphReady, graphRef]);
 
   /* -------------------------------------------------------------------------
    * 4. CÂMERA — enquadra a teia inteira logo que ela aparece (instantâneo,
    *    sem a animação de "zoom pulando" de antes) e de novo, suavemente,
-   *    quando a física termina — a não ser que o usuário já tenha mexido.
+   *    quando ela se acomoda — a não ser que o usuário já tenha mexido.
+   *    No desktop a simulação nunca "termina" (deriva contínua), então o
+   *    segundo enquadramento é feito por tempo (COOLDOWN_MS) em vez de esperar
+   *    o fim da física.
    * ----------------------------------------------------------------------- */
   const fitPadding = isMobile ? FIT_PADDING_MOBILE : FIT_PADDING_DESKTOP;
 
@@ -149,7 +189,13 @@ export default function NetworkGraph({
     userMovedCameraRef.current = false;
     // Espera um quadro para a biblioteca registrar os nós antes de medir.
     const id = requestAnimationFrame(() => fg.zoomToFit(0, fitPadding));
-    return () => cancelAnimationFrame(id);
+    const settle = setTimeout(() => {
+      if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
+    }, COOLDOWN_MS);
+    return () => {
+      cancelAnimationFrame(id);
+      clearTimeout(settle);
+    };
     // Só reenquadra quando muda o CONJUNTO de nós (filtros), não a cada render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphReady, graphData.nodes.length]);
@@ -373,14 +419,17 @@ export default function NetworkGraph({
         // Interação
         onNodeClick={(node: any) => onSelectNode(node)}
         onLinkClick={(link: any) => onSelectLink(link)}
-        // Nó arrastado fica FIXO onde foi solto (fx/fy). Sem isso, a âncora do layout
-        // (lib/layout.ts) o puxaria de volta para a posição calculada. Para deixá-lo
-        // voltar sozinho, troque por: node.fx = undefined; node.fy = undefined;
-        onNodeDragEnd={(node: any) => { node.fx = node.x; node.fy = node.y; }}
+        // Arrastar: a biblioteca já faz o comportamento desejado sozinha —
+        //   • esquema (fixo antes do arraste) → continua fixo onde foi solto;
+        //   • demais nós (livres) → são soltos e voltam a se acomodar na teia.
+        // Para fixar também os outros nós ao soltar, acrescente:
+        //   onNodeDragEnd={(node: any) => { node.fx = node.x; node.fy = node.y; }}
         onEngineStop={handleEngineStop}
         // Física: ver constantes no topo do arquivo e lib/layout.ts
         warmupTicks={WARMUP_TICKS}
-        cooldownTime={COOLDOWN_MS}
+        // Desktop: Infinity = a simulação nunca para (deriva contínua).
+        // Celular: para depois de COOLDOWN_MS e a teia fica em repouso.
+        cooldownTime={driftEnabled ? Infinity : COOLDOWN_MS}
         d3AlphaDecay={0.03}   // ↑ assenta mais rápido (e mais "duro"); ↓ mais lento e suave
         d3VelocityDecay={0.35} // "atrito": ↑ nós param mais cedo, menos tremedeira
         backgroundColor={BG_COLOR}
