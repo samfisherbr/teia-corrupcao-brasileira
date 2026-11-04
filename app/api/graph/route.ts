@@ -30,26 +30,53 @@ interface Env {
 }
 
 /**
- * Colunas explícitas (nada de SELECT *). Os NULLIF() são uma proteção: se um
- * INSERT gerado escrever 'NULL' entre aspas (texto) em vez de NULL, o
- * navegador ainda recebe null de verdade.
+ * `SELECT *` de propósito: a API funciona com QUALQUER versão das tabelas
+ * (a antiga, sem amount_brl/amount_note, ou a do Master Prompt v2). Colunas
+ * que faltarem são preenchidas com null em `normalizeLink`. Pedir colunas pelo
+ * nome fazia a consulta inteira falhar ("no such column") se uma delas não
+ * existisse — foi o que quebrou o preview com tabelas no formato antigo.
  */
-const NODES_SQL = `
-  SELECT id, label, type,
-         NULLIF(NULLIF(party, 'NULL'), 'N/A')  AS party,
-         NULLIF(summary, 'NULL')               AS summary,
-         NULLIF(NULLIF(image_url, 'NULL'), '') AS image_url
-  FROM nodes`;
+const NODES_SQL = 'SELECT * FROM nodes';
+const LINKS_SQL = 'SELECT rowid AS _rowid, * FROM links';
 
-/** Schema do Master Prompt v2 (com amount_brl e amount_note). */
-const LINKS_SQL = `
-  SELECT rowid AS id, source, target, relation, type, status,
-         NULLIF(NULLIF(amount, 'NULL'), 'N/A') AS amount,
-         amount_brl,
-         NULLIF(amount_note, 'NULL')           AS amount_note,
-         CAST(NULLIF(year, 'NULL') AS INTEGER) AS year,
-         NULLIF(source_url, 'NULL')            AS source_url
-  FROM links`;
+type Row = Record<string, unknown>;
+
+/** Texto 'NULL'/'N/A'/'' vindo de INSERTs gerados vira null de verdade. */
+const clean = (v: unknown): unknown =>
+  v === undefined || v === '' || v === 'NULL' || v === 'N/A' ? null : v;
+
+/** Converte para inteiro, ou null se não for número (ex.: year = 'NULL'). */
+const toInt = (v: unknown): number | null => {
+  const n = Number(clean(v));
+  return Number.isFinite(n) && clean(v) !== null ? Math.trunc(n) : null;
+};
+
+function normalizeNode(r: Row) {
+  return {
+    id: r.id,
+    label: r.label,
+    type: r.type,
+    party: clean(r.party),
+    summary: clean(r.summary),
+    image_url: clean(r.image_url),
+  };
+}
+
+function normalizeLink(r: Row) {
+  return {
+    id: r.id ?? r._rowid, // tabelas antigas podem não ter coluna id
+    source: r.source,
+    target: r.target,
+    relation: r.relation,
+    type: clean(r.type),
+    status: r.status,
+    amount: clean(r.amount),
+    amount_brl: toInt(r.amount_brl), // ausente nas tabelas antigas → null
+    amount_note: clean(r.amount_note), // ausente nas tabelas antigas → null
+    year: toInt(r.year),
+    source_url: clean(r.source_url),
+  };
+}
 
 /**
  * Cache de respostas BEM-SUCEDIDAS. Os dados só mudam quando um dossiê
@@ -87,7 +114,7 @@ function diagnose(raw: string) {
   if (/no such column/i.test(raw)) {
     return fail(
       'SCHEMA_MISMATCH',
-      'As tabelas existem, mas com colunas diferentes do schema atual (Master Prompt v2). Recrie as tabelas com o schema.sql do repositório.',
+      'As tabelas existem, mas falta uma coluna essencial (ex.: id, source, target). Recrie as tabelas com o schema.sql do repositório.',
       raw
     );
   }
@@ -114,10 +141,10 @@ export async function GET() {
 
   try {
     // batch = as duas consultas numa única ida ao banco.
-    const [nodesRes, linksRes] = await DB.batch([DB.prepare(NODES_SQL), DB.prepare(LINKS_SQL)]);
+    const [nodesRes, linksRes] = await DB.batch<Row>([DB.prepare(NODES_SQL), DB.prepare(LINKS_SQL)]);
 
     return Response.json(
-      { nodes: nodesRes.results, links: linksRes.results },
+      { nodes: nodesRes.results.map(normalizeNode), links: linksRes.results.map(normalizeLink) },
       { headers: { 'Cache-Control': CACHE_CONTROL } }
     );
   } catch (error) {
