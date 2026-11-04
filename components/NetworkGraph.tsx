@@ -373,7 +373,10 @@ export default function NetworkGraph({
         // Interação
         onNodeClick={(node: any) => onSelectNode(node)}
         onLinkClick={(link: any) => onSelectLink(link)}
-        onNodeDragEnd={(node: any) => { node.fx = node.x; node.fy = node.y; }} // nó arrastado fica onde foi solto
+        // Nó arrastado fica FIXO onde foi solto (fx/fy). Sem isso, a âncora do layout
+        // (lib/layout.ts) o puxaria de volta para a posição calculada. Para deixá-lo
+        // voltar sozinho, troque por: node.fx = undefined; node.fy = undefined;
+        onNodeDragEnd={(node: any) => { node.fx = node.x; node.fy = node.y; }}
         onEngineStop={handleEngineStop}
         // Física: ver constantes no topo do arquivo e lib/layout.ts
         warmupTicks={WARMUP_TICKS}
@@ -416,7 +419,8 @@ export default function NetworkGraph({
         </div>
       </div>
 
-      {/* CONTROLES DE CÂMERA — o fator 1.2 é o "passo" de cada clique de zoom */}
+      {/* CONTROLES DE CÂMERA — o fator 1.2 é o "passo" de cada clique de zoom.
+          Alinhados na base com o MENU LEGAL (mesmo bottom-6 e mesma altura). */}
       <div className="absolute bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}
@@ -447,8 +451,12 @@ export default function NetworkGraph({
         </button>
       </div>
 
-      {/* MENU LEGAL — abre com o mouse (hover) e também com toque/teclado (focus-within) */}
-      <div className="absolute bottom-16 md:bottom-6 right-4 md:right-6 z-20 group">
+      {/* MENU LEGAL — abre com o mouse (hover) e também com toque/teclado (focus-within).
+          Posição (bottom-6) e altura do botão iguais às dos controles de câmera, para
+          os dois ficarem alinhados na base: o py-3.5/md:py-3 do botão reproduz a altura
+          da caixa de câmera (46px no celular, 42px no desktop). Se mudar o padding de
+          um, mude o do outro. */}
+      <div className="absolute bottom-6 right-4 md:right-6 z-20 group">
         <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 flex flex-col space-y-1 text-xs">
           <div className="px-2 py-1 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-slate-800/80 mb-1">
             Informações Legais
@@ -468,7 +476,7 @@ export default function NetworkGraph({
         </div>
 
         <button
-          className="flex items-center space-x-2 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-2 md:py-1.5 text-xs text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
+          className="flex items-center space-x-2 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-3.5 md:py-3 text-xs leading-4 text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
           aria-label="Menu de páginas legais"
           aria-haspopup="true"
         >
