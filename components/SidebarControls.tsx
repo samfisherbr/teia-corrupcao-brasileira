@@ -14,21 +14,10 @@
  */
 
 import React from 'react';
-import { ShieldAlert, Search, Calendar, Filter, Layers, UserCheck, Building2, BookOpen, Component, Scale, Briefcase } from 'lucide-react';
+import { Search, Calendar, Filter, BookOpen, Scale, Component } from 'lucide-react';
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE } from '@/lib/graphConfig';
-
-// Icons stay here (UI-only); colors/labels come from the shared config.
-// Operators previously reused the company icon and had color '#ffff' (4-digit hex),
-// which became '#ffff44' (yellow) once an alpha suffix was appended.
-// Ícones lucide-react por tipo (lista em https://lucide.dev/icons).
-const NODE_ICONS: Record<NodeType, React.ElementType> = {
-  politician: UserCheck,
-  party: Layers,
-  scheme: ShieldAlert,
-  company: Building2,
-  operator: Briefcase,
-};
+import { NODE_ICONS } from '@/lib/nodeIcons';
 
 interface SidebarControlsProps {
   searchQuery: string;
@@ -148,7 +137,7 @@ export default function SidebarControls({
                 >
                   <div className="flex items-center space-x-2.5">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
-                    <IconComp className="w-3.5 h-3.5 text-slate-400" />
+                    <IconComp size={16} className="w-4 h-4 shrink-0" style={{ color: cfg.labelColor }} aria-hidden="true" />
                     <span>{cfg.label}</span>
                   </div>
                 </button>
@@ -200,12 +189,21 @@ export default function SidebarControls({
                     onClick={() => onSelectScheme(scheme)}
                     className={`w-full text-left p-2 rounded-lg border text-xs transition-all flex items-center justify-between group ${
                       isSelected
-                        ? 'bg-pink-950/40 border-pink-500/80 text-pink-200 shadow-[0_0_10px_rgba(204,1,160,0.2)]'
+                        ? 'text-slate-100'
                         : 'bg-[#0e1726] border-slate-800 text-slate-300 hover:border-slate-700 hover:text-slate-100'
                     }`}
+                    style={
+                      isSelected
+                        ? {
+                            backgroundColor: `${NODE_STYLE.scheme.color}1f`,
+                            borderColor: `${NODE_STYLE.scheme.color}cc`,
+                            boxShadow: `0 0 10px ${NODE_STYLE.scheme.color}33`,
+                          }
+                        : undefined
+                    }
                   >
                     <div className="flex items-center space-x-2 truncate">
-                      <span className="w-2 h-2 rounded-full bg-[#cc01a0] flex-shrink-0" />
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: NODE_STYLE.scheme.color }} />
                       <span className="font-medium truncate">{scheme.label}</span>
                     </div>
                   </button>

@@ -321,10 +321,63 @@ export default function NetworkGraph({
    *    Ajustes:
    *      - tamanho e zoom mínimo por tipo → NODE_STYLE em lib/graphConfig.ts
    *      - espessura do halo              → HALO_PX abaixo
-   *      - limite de caracteres           → MAX_LABEL_CHARS abaixo
+   *      - largura máxima de cada linha   → LABEL_MAX_WIDTH_PX abaixo
+   *      - nº máximo de linhas            → LABEL_MAX_LINES abaixo (o nó
+   *        selecionado mostra o nome inteiro, sem limite de linhas)
+   *
+   *    Nomes longos quebram em várias linhas, de preferência nos espaços (e
+   *    depois de "/"); se passar do limite de linhas, a última termina em "…".
+   *    A quebra é calculada em pixels de tela, então não muda com o zoom e
+   *    pode ficar em cache (labelLinesCache).
    * ----------------------------------------------------------------------- */
   const HALO_PX = 4;
-  const MAX_LABEL_CHARS = 38;
+  const LABEL_MAX_WIDTH_PX = 170;
+  const LABEL_MAX_LINES = 3;
+  const LABEL_LINE_HEIGHT = 1.2;
+  const labelLinesCache = useRef(new Map<string, string[]>());
+  // Se a fonte Inter terminar de carregar depois do 1º desenho, as medidas
+  // feitas com a fonte reserva ficariam erradas: limpa o cache.
+  useEffect(() => {
+    document.fonts?.ready.then(() => labelLinesCache.current.clear()).catch(() => {});
+  }, []);
+
+  const wrapLabel = useCallback((ctx: CanvasRenderingContext2D, text: string, maxLines: number): string[] => {
+    const words = text.split(/\s+/).filter(Boolean);
+    const lines: string[] = [];
+    let current = '';
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (!current || ctx.measureText(candidate).width <= LABEL_MAX_WIDTH_PX) {
+        current = candidate;
+      } else {
+        lines.push(current);
+        current = word;
+      }
+    }
+    if (current) lines.push(current);
+
+    // Palavra única mais larga que o limite (raro): corta por caracteres.
+    const fitted = lines.flatMap((line) => {
+      if (ctx.measureText(line).width <= LABEL_MAX_WIDTH_PX) return [line];
+      const parts: string[] = [];
+      let chunk = '';
+      for (const ch of line) {
+        if (chunk && ctx.measureText(chunk + ch).width > LABEL_MAX_WIDTH_PX) {
+          parts.push(chunk);
+          chunk = ch;
+        } else chunk += ch;
+      }
+      if (chunk) parts.push(chunk);
+      return parts;
+    });
+
+    if (fitted.length <= maxLines) return fitted;
+    const kept = fitted.slice(0, maxLines);
+    let last = kept[maxLines - 1];
+    while (last.length > 1 && ctx.measureText(`${last}…`).width > LABEL_MAX_WIDTH_PX) last = last.slice(0, -1);
+    kept[maxLines - 1] = `${last.trimEnd()}…`;
+    return kept;
+  }, []);
 
   const drawLabels = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     const scale = globalScale > 0 ? globalScale : 1;
@@ -353,28 +406,40 @@ export default function NetworkGraph({
 
       let text = String(node.label ?? '');
       if (node.type === 'scheme') text = text.toUpperCase();
-      if (text.length > MAX_LABEL_CHARS && !isSelected) text = `${text.slice(0, MAX_LABEL_CHARS - 1)}…`;
+
+      // Quebra medida na fonte em px de tela (independe do zoom → cacheável).
+      const maxLines = isSelected ? Infinity : LABEL_MAX_LINES;
+      const cacheKey = `${weight}|${px}|${maxLines}|${text}`;
+      let lines = labelLinesCache.current.get(cacheKey);
+      if (!lines) {
+        ctx.font = `${weight} ${px}px Inter, system-ui, sans-serif`;
+        lines = wrapLabel(ctx, text, maxLines);
+        labelLinesCache.current.set(cacheKey, lines);
+      }
 
       const y = node.y + getNodeRadius(node.type) + 6 / scale;
+      const lineStep = fontSize * LABEL_LINE_HEIGHT;
       ctx.font = `${weight} ${fontSize}px Inter, system-ui, sans-serif`;
       ctx.lineWidth = HALO_PX / scale;
       ctx.strokeStyle = BG_COLOR;
-      ctx.strokeText(text, node.x, y);
       ctx.fillStyle = isSelected ? '#ffffff' : style?.labelColor ?? '#cbd5e1';
-      ctx.fillText(text, node.x, y);
+      lines.forEach((line, i) => {
+        ctx.strokeText(line, node.x, y + i * lineStep);
+        ctx.fillText(line, node.x, y + i * lineStep);
+      });
 
-      // Segunda linha com a sigla do partido (políticos, com zoom próximo).
+      // Linha extra com a sigla do partido (políticos, com zoom próximo).
       if (node.type === 'politician' && node.party && (scale >= 1 || isSelected)) {
         const subSize = (px - 1) / scale;
         ctx.font = `400 ${subSize}px Inter, system-ui, sans-serif`;
-        const y2 = y + fontSize + 2 / scale;
+        const y2 = y + (lines.length - 1) * lineStep + fontSize + 2 / scale;
         ctx.strokeText(`(${node.party})`, node.x, y2);
         ctx.fillStyle = isSelected ? '#e0f2fe' : '#94a3b8';
         ctx.fillText(`(${node.party})`, node.x, y2);
       }
     }
     ctx.restore();
-  }, [graphData.nodes, selectedNode]);
+  }, [graphData.nodes, selectedNode, wrapLabel]);
 
   /* -------------------------------------------------------------------------
    * 9. TELA CHEIA — protegido para iOS Safari (sem API) e promessas rejeitadas

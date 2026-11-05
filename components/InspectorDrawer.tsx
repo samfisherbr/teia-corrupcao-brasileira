@@ -7,8 +7,9 @@
  * Abre ao clicar num círculo ("Dossiê da Entidade") ou numa linha ("Detalhes
  * do Vínculo"). Em celular ocupa a tela toda; no desktop, 384px (w-96).
  *
- *  - Entidade: foto, tipo, partido, resumo e lista de conexões visíveis
- *    (clicar numa conexão abre o vínculo).
+ *  - Entidade: foto, tipo, partido, resumo e conexões visíveis, agrupadas em
+ *    seções por tipo da outra ponta (Esquemas, Partidos, Empresas…), na ordem
+ *    e nas cores de NODE_STYLE (clicar numa conexão abre o vínculo).
  *  - Vínculo: origem → destino (clicáveis), tipo, status, ano, valor,
  *    ressalva do valor (amount_note), descrição e fonte.
  *
@@ -19,7 +20,11 @@
 import React from 'react';
 import { FileText, X, ExternalLink, ArrowRight } from 'lucide-react';
 import { GraphNode, GraphLink, GraphData, NodeType, LinkStatus, LinkType } from '@/types/graph';
-import { NODE_STYLE, STATUS_STYLE, LINK_TYPE_STYLE, FALLBACK_COLOR, getLinkEnds, getLinkKey } from '@/lib/graphConfig';
+import { NODE_STYLE, STATUS_STYLE, LINK_TYPE_STYLE, FALLBACK_COLOR, getLinkEnds, getLinkKey, entityChipStyle } from '@/lib/graphConfig';
+import { NODE_ICONS } from '@/lib/nodeIcons';
+
+/** Ordem das seções de conexões = ordem da legenda do grafo. */
+const SECTION_ORDER = Object.keys(NODE_STYLE) as NodeType[];
 
 interface InspectorDrawerProps {
   selectedNode: GraphNode | null;
@@ -45,6 +50,24 @@ export default function InspectorDrawer({
   // nodeById: busca O(1) de nós; brokenImage: lembra a foto que falhou ao carregar.
   const nodeById = React.useMemo(() => new Map(fullNodes.map((n) => [n.id, n])), [fullNodes]);
   const [brokenImage, setBrokenImage] = React.useState<string | null>(null);
+
+  // Conexões da entidade selecionada, agrupadas pelo tipo da outra ponta.
+  const connectionSections = React.useMemo(() => {
+    if (!selectedNode) return [];
+    const groups = new Map<string, { link: GraphLink; otherId: string; other: GraphNode | undefined }[]>();
+    filteredData.links.forEach((link) => {
+      const { sourceId, targetId } = getLinkEnds(link);
+      if (sourceId !== selectedNode.id && targetId !== selectedNode.id) return;
+      const otherId = sourceId === selectedNode.id ? targetId : sourceId;
+      const other = nodeById.get(otherId);
+      const key = other && other.type in NODE_STYLE ? other.type : 'other';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push({ link, otherId, other });
+    });
+    return [...SECTION_ORDER, 'other']
+      .filter((key) => groups.has(key))
+      .map((key) => ({ key, items: groups.get(key)! }));
+  }, [selectedNode, filteredData.links, nodeById]);
 
   if (!selectedNode && !selectedLink) return null;
 
@@ -101,16 +124,19 @@ export default function InspectorDrawer({
                 className="w-16 h-16 rounded-xl object-cover border border-slate-700 shadow-md flex-shrink-0"
               />
             ) : (
-              <div className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500 font-bold text-xl flex-shrink-0">
+              <div
+                className="w-16 h-16 rounded-xl border flex items-center justify-center font-bold text-xl flex-shrink-0"
+                style={entityChipStyle(selectedNode.type)}
+              >
                 {(selectedNode.label || '?').charAt(0)}
               </div>
             )}
             <div>
               <h2 className="text-base font-bold text-slate-100 leading-snug">{selectedNode.label}</h2>
               <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                <span 
-                  className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
-                  style={{ backgroundColor: nodeStyle?.color || '#3b82f6', color: selectedNode.type === 'operator' ? '#0f172a' : '#ffffff' }}
+                <span
+                  className="px-2 py-0.5 rounded border text-[10px] font-semibold uppercase tracking-wider"
+                  style={entityChipStyle(selectedNode.type)}
                 >
                   {nodeStyle?.label || selectedNode.type}
                 </span>
@@ -130,37 +156,57 @@ export default function InspectorDrawer({
             </p>
           </div>
 
-          <div>
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 font-mono">Conexões Mapeadas</h3>
-            <div className="space-y-2">
-              {filteredData.links
-                .filter(l => {
-                  const { sourceId, targetId } = getLinkEnds(l);
-                  return sourceId === selectedNode.id || targetId === selectedNode.id;
-                })
-                .map(link => {
-                  const { sourceId, targetId } = getLinkEnds(link);
-                  const otherId = sourceId === selectedNode.id ? targetId : sourceId;
-                  const otherNode = nodeById.get(otherId);
-
-                  return (
-                    <button
-                      type="button"
-                      key={getLinkKey(link)}
-                      onClick={() => onSelectLink(link)}
-                      className="w-full text-left p-3 bg-slate-950 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors cursor-pointer"
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Conexões Mapeadas</h3>
+            {connectionSections.length === 0 && (
+              <p className="text-xs text-slate-500 italic">Nenhuma conexão visível com os filtros atuais.</p>
+            )}
+            {connectionSections.map(({ key, items }) => {
+              const st = NODE_STYLE[key as NodeType];
+              const Icon = NODE_ICONS[key as NodeType];
+              const color = st?.color ?? FALLBACK_COLOR;
+              return (
+                <section key={key} aria-label={st?.plural ?? 'Outros'}>
+                  <h4
+                    className="flex items-center gap-2 mb-2 pb-1.5 border-b text-[11px] font-mono font-semibold uppercase tracking-wider"
+                    style={{ color: st?.labelColor ?? '#cbd5e1', borderColor: `${color}40` }}
+                  >
+                    {Icon && <Icon size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />}
+                    <span>{st?.plural ?? 'Outros'}</span>
+                    <span
+                      className="ml-auto px-1.5 py-0.5 rounded border text-[10px] leading-none"
+                      style={entityChipStyle(key)}
                     >
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="text-xs font-medium text-slate-200">{otherNode?.label || otherId}</span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
-                          {link.year || 'N/A'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 line-clamp-2">{link.relation}</p>
-                    </button>
-                  );
-                })}
-            </div>
+                      {items.length}
+                    </span>
+                  </h4>
+                  <div className="space-y-2">
+                    {items.map(({ link, otherId, other }) => (
+                      <button
+                        type="button"
+                        key={getLinkKey(link)}
+                        onClick={() => onSelectLink(link)}
+                        className="w-full text-left p-3 bg-slate-950 border border-slate-800 border-l-2 rounded-lg hover:border-slate-700 transition-colors cursor-pointer"
+                        style={{ borderLeftColor: color }}
+                      >
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                          <span className="text-xs font-medium text-slate-200">
+                            {other?.label || otherId}
+                            {other?.party && other.type === 'politician' && (
+                              <span className="ml-1 font-mono text-slate-500">({other.party})</span>
+                            )}
+                          </span>
+                          <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                            {link.year || 'N/A'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 line-clamp-2">{link.relation}</p>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         </div>
       )}
