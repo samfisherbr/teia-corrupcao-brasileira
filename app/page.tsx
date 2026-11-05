@@ -67,16 +67,39 @@ export default function Page() {
   const [typeFilters, setTypeFilters] = useState<Record<NodeType, boolean>>(INITIAL_TYPE_FILTERS);
   const [statusFilters, setStatusFilters] = useState<Record<LinkStatus, boolean>>(INITIAL_STATUS_FILTERS);
 
-  // Slider bounds come from the data. The old slider was hard-coded to
-  // 2000–2026, so 1990s cases (PC Farias, Anões, SIVAM…) vanished as soon as
-  // the user touched it.
+  // Ano de início de cada esquema = ano do seu vínculo datado mais antigo.
+  // É ele que o slider "Ano de Início" compara: um esquema de 1993 some por
+  // inteiro ao passar de 1993, mesmo que tenha desdobramentos datados de 2015
+  // ou vínculos sem ano. Esquema sem nenhum vínculo datado não tem ano de
+  // início e não é afetado pelo slider.
+  const schemeStartYear = useMemo(() => {
+    const schemeIds = new Set(graphData.nodes.filter((n) => n.type === 'scheme').map((n) => n.id));
+    const start = new Map<string, number>();
+    for (const l of graphData.links) {
+      const y = Number(l.year);
+      if (!Number.isFinite(y) || y <= 0) continue;
+      const { sourceId, targetId } = getLinkEnds(l);
+      for (const id of [sourceId, targetId]) {
+        if (schemeIds.has(id) && (!start.has(id) || y < start.get(id)!)) start.set(id, y);
+      }
+    }
+    return start;
+  }, [graphData]);
+
+  // Limites do slider vêm dos dados. O máximo é o início do esquema mais
+  // recente (passar dele esvaziaria o grafo); sem esquemas datados, usa os
+  // anos dos vínculos. O antigo slider fixo em 2000–2026 escondia os casos
+  // dos anos 1990 (PC Farias, Anões, SIVAM…) assim que era tocado.
   const yearRange = useMemo(() => {
-    const years = graphData.links
+    const linkYears = graphData.links
       .map((l) => Number(l.year))
       .filter((y) => Number.isFinite(y) && y > 0);
-    if (years.length === 0) return FALLBACK_YEAR_RANGE;
-    return { min: Math.min(...years), max: Math.max(...years) };
-  }, [graphData.links]);
+    if (linkYears.length === 0) return FALLBACK_YEAR_RANGE;
+    const starts = Array.from(schemeStartYear.values());
+    const min = Math.min(...linkYears);
+    const max = starts.length > 0 ? Math.max(...starts) : Math.max(...linkYears);
+    return { min, max: Math.max(min, max) };
+  }, [graphData.links, schemeStartYear]);
 
   // --- Carregamento dos dados ----------------------------------------------
   // AbortController cancela a requisição se o componente desmontar no meio.
@@ -125,7 +148,11 @@ export default function Page() {
   }, [reloadKey]);
 
   // --- Filtragem -------------------------------------------------------------
-  // 1) links: ano >= filtro (links sem ano sempre passam) e status marcado;
+  // 1) links: status marcado e filtro de ano —
+  //    - link ligado a um esquema: passa se o esquema começou no ano do filtro
+  //      ou depois (ver schemeStartYear); o ano do próprio link não importa;
+  //    - outros links (ex.: político–partido): ano >= filtro, e links sem ano
+  //      sempre passam;
   // 2) nós: tipo marcado; com busca, os encontrados + vizinhos diretos;
   // 3) só ficam links cujas DUAS pontas estão visíveis;
   // 4) somem os nós que ficaram sem nenhum link visível (ex.: ao mover o
@@ -133,16 +160,28 @@ export default function Page() {
   //    os resultados diretos da busca (para a busca nunca parecer vazia) e o
   //    nó selecionado (para o painel de detalhes não descrever um nó sumido).
   //    Nós sem nenhum link no banco também ficam ocultos.
+  const nodeTypeById = useMemo(() => new Map(graphData.nodes.map((n) => [n.id, n.type])), [graphData.nodes]);
+
   const baseFiltered = useMemo(() => {
     const query = normalizeText(searchQuery.trim());
     let matches = new Set<string>();
 
+    const schemeOk = (id: string) => {
+      const start = schemeStartYear.get(id);
+      return start === undefined || start >= startYearFilter;
+    };
+
     const validLinks = graphData.links.filter((link) => {
-      // Links with no year are kept (they used to be silently dropped,
-      // because `null >= 2000` is false).
-      const matchYear = link.year == null || link.year >= startYearFilter;
       const matchStatus = statusFilters[link.status] ?? true;
-      return matchYear && matchStatus;
+      if (!matchStatus) return false;
+      const { sourceId, targetId } = getLinkEnds(link);
+      const touchesScheme = nodeTypeById.get(sourceId) === 'scheme' || nodeTypeById.get(targetId) === 'scheme';
+      if (touchesScheme) {
+        // Ambas as pontas que forem esquemas precisam passar (link esquema–esquema).
+        return [sourceId, targetId].every((id) => nodeTypeById.get(id) !== 'scheme' || schemeOk(id));
+      }
+      // Links sem ano são mantidos (antes sumiam: `null >= 2000` é false).
+      return link.year == null || link.year >= startYearFilter;
     });
 
     const typeOk = (n: GraphNode) => typeFilters[n.type] ?? true;
@@ -187,7 +226,7 @@ export default function Page() {
       // Passaram nos filtros mas ficaram sem links (só voltam se selecionados).
       isolatedIds: new Set(graphData.nodes.filter((n) => visibleIds.has(n.id) && !keep(n.id)).map((n) => n.id)),
     };
-  }, [graphData, startYearFilter, typeFilters, statusFilters, searchQuery]);
+  }, [graphData, nodeTypeById, schemeStartYear, startYearFilter, typeFilters, statusFilters, searchQuery]);
 
   // Exceção do nó selecionado, separada para que selecionar um nó comum não
   // gere arrays novos (o que reaqueceria a simulação do grafo a cada clique).
