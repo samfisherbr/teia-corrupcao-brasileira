@@ -14,6 +14,7 @@
  */
 
 import React from 'react';
+import Link from 'next/link';
 import { Search, Calendar, Filter, BookOpen, Scale, Component } from 'lucide-react';
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE } from '@/lib/graphConfig';
@@ -173,10 +174,16 @@ export default function SidebarControls({
 
         {/* ÍNDICE DE ESQUEMAS DE CORRUPÇÃO ROLÁVEL */}
         <div>
-          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
-            Índice de Esquemas
-          </label>
+          <div className="mb-2.5 flex items-center justify-between gap-2">
+            <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+              Índice de Esquemas
+            </label>
+            {/* Página com todos os dossiês em texto (legível por robôs de busca). */}
+            <Link href="/esquemas" className="text-[10px] font-mono text-cyan-400 hover:text-cyan-200 hover:underline">
+              Ver todos →
+            </Link>
+          </div>
           <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
             {schemeNodes.length === 0 ? (
               <span className="text-xs text-slate-600 italic block p-1">Nenhum esquema encontrado</span>

@@ -29,6 +29,8 @@ import { NODE_ICONS } from '@/lib/nodeIcons';
 import type { LinkStatus } from '@/types/graph';
 import { parseAmount, formatAmount } from '@/lib/money';
 import { SCHEME_DETAILS } from '@/data/schemeDetails';
+import { schemePath } from '@/lib/schemes';
+import Link from 'next/link';
 import { 
   ExternalLink, 
   Coins, 
@@ -805,6 +807,14 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                               </ul>
                             </div>
                           )}
+
+                          <Link
+                            href={schemePath(scheme.id)}
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-400 hover:text-cyan-200 hover:underline"
+                          >
+                            <BookOpen size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
+                            Abrir a página deste dossiê
+                          </Link>
                         </div>
                       )}
                     </article>

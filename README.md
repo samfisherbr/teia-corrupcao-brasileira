@@ -20,9 +20,15 @@ O binding do D1 no Cloudflare Pages deve se chamar `DB`. O schema segue o Master
 ### Variáveis de ambiente (opcionais)
 | Variável | Uso |
 |---|---|
-| `NEXT_PUBLIC_ADSENSE_CLIENT` | ID `ca-pub-…` do AdSense. Sem ela, o banner não é renderizado. |
-| `NEXT_PUBLIC_ADSENSE_SLOT` | ID do bloco de anúncio. |
-| `NEXT_PUBLIC_SITE_DOMAIN` | Domínio exibido nas páginas legais (padrão em `lib/site.ts`). |
+| `NEXT_PUBLIC_ADSENSE_CLIENT` | ID `ca-pub-…` do AdSense. Sozinha, já coloca em todas as páginas a meta tag de verificação e o script do AdSense (o que a análise do Google exige) e gera o `/ads.txt`. |
+| `NEXT_PUBLIC_ADSENSE_SLOT` | ID do bloco de anúncio (só existe depois da aprovação). Com as duas variáveis, aparece o banner fixo sobre o grafo. |
+| `NEXT_PUBLIC_SITE_DOMAIN` | Domínio público, sem `https://` (padrão em `lib/site.ts`). Usado nas páginas legais, nos endereços canônicos, no `sitemap.xml` e no `robots.txt`. |
+
+As variáveis `NEXT_PUBLIC_*` são lidas **no build**: depois de mudar uma no Cloudflare Pages, faça um novo deploy.
+
+### Páginas para busca e AdSense
+- `/esquemas` e `/esquemas/<slug>` — um dossiê por esquema, renderizado no servidor a partir do D1 e de `data/schemeDetails.ts` (o grafo é um `<canvas>` e o Glossário só abre com clique, então os robôs não leem nenhum dos dois). O slug é o id sem `esquema_`, com hífens: `esquema_anoes_orcamento` → `/esquemas/anoes-orcamento`.
+- `/sitemap.xml`, `/robots.txt` e `/ads.txt` — gerados no build (`app/sitemap.ts`, `app/robots.ts`, `app/ads.txt/route.ts`).
 
 ### Ajustando o layout do grafo
 Os parâmetros do layout radial (tamanho do anel, distância de cada tipo ao centro, força de ancoragem, repulsão) estão no topo de `lib/layout.ts`, com comentários. Cores, tamanhos de círculo e de rótulo ficam em `lib/graphConfig.ts`.
