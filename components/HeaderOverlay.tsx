@@ -13,7 +13,8 @@
  *     2. Rosca com a proporção de tipos de vínculo + contagem por status
  *     3. Cartões com o valor financeiro de cada esquema
  *   Glossário:
- *     Um cartão por esquema, com o texto de data/schemeDetails.ts
+ *     Um cartão por esquema, com o texto de data/schemeDetails.ts, e uma
+ *     barra de busca fixa no topo que filtra os cartões (ver glossaryMatches).
  *
  * Ajustes comuns: quantos partidos mostrar → PARTY_RANKING_SIZE;
  * cores da rosca → `categories` em operationalFlowMetrics.
@@ -23,7 +24,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ActivePage } from './HeaderBar';
 import { GraphData, GraphNode } from '@/types/graph';
-import { getLinkEnds, STATUS_STYLE } from '@/lib/graphConfig';
+import { getLinkEnds, normalizeText, STATUS_STYLE } from '@/lib/graphConfig';
 import type { LinkStatus } from '@/types/graph';
 import { parseAmount, formatAmount } from '@/lib/money';
 import { SCHEME_DETAILS } from '@/data/schemeDetails';
@@ -41,7 +42,9 @@ import {
   Activity,
   TrendingUp,
   ShieldAlert,
-  UserCheck
+  UserCheck,
+  Search,
+  X
 } from 'lucide-react';
 
 /** Quantos partidos aparecem no ranking do infográfico 1. */
@@ -249,6 +252,42 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
     Array.from(neighbours.get(schemeId) ?? [])
       .map((id) => nodeById.get(id))
       .filter((n): n is GraphNode => !!n);
+
+  // ===========================================================================
+  // BUSCA DO GLOSSÁRIO
+  // Independente da busca da barra lateral (que filtra o grafo). Procura, sem
+  // diferenciar acentos/maiúsculas, no nome e resumo do esquema, nos textos do
+  // dossiê (impacto, contexto, funcionamento, situação jurídica) e no nome/
+  // partido das entidades ligadas. Todas as palavras digitadas precisam
+  // aparecer (em qualquer campo).
+  // ===========================================================================
+  const [glossaryQuery, setGlossaryQuery] = useState('');
+
+  const glossarySearchIndex = useMemo(
+    () =>
+      new Map(
+        schemeNodes.map((scheme) => {
+          const d = SCHEME_DETAILS[scheme.id];
+          const entities = Array.from(neighbours.get(scheme.id) ?? [])
+            .map((id) => nodeById.get(id))
+            .flatMap((n) => (n ? [n.label, n.party] : []));
+          const haystack = [scheme.label, scheme.summary, d?.impact, d?.context, d?.mechanism, d?.legalStatus, ...entities]
+            .map(normalizeText)
+            .join(' ');
+          return [scheme.id, haystack];
+        })
+      ),
+    [schemeNodes, neighbours, nodeById]
+  );
+
+  const filteredSchemeNodes = useMemo(() => {
+    const terms = normalizeText(glossaryQuery).split(/\s+/).filter(Boolean);
+    if (terms.length === 0) return schemeNodes;
+    return schemeNodes.filter((scheme) => {
+      const haystack = glossarySearchIndex.get(scheme.id) ?? '';
+      return terms.every((t) => haystack.includes(t));
+    });
+  }, [schemeNodes, glossarySearchIndex, glossaryQuery]);
 
   return (
     <div
@@ -530,11 +569,74 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
               </p>
             </div>
 
+            {/* Barra de busca: fica presa ao topo do painel (que é o elemento
+                que rola) enquanto o usuário percorre os cartões. As margens
+                negativas estendem o fundo até as bordas da coluna. */}
+            {schemeNodes.length > 0 && (
+              <div
+                role="search"
+                className="sticky top-0 z-10 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80"
+              >
+                <label htmlFor="glossary-search" className="sr-only">
+                  Buscar no glossário
+                </label>
+                <div className="relative">
+                  <Search
+                    size={16}
+                    className="w-4 h-4 shrink-0 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                  <input
+                    id="glossary-search"
+                    type="search"
+                    autoComplete="off"
+                    placeholder="Buscar esquema, político, partido, empresa ou termo..."
+                    value={glossaryQuery}
+                    onChange={(e) => setGlossaryQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setGlossaryQuery('');
+                    }}
+                    aria-describedby="glossary-search-count"
+                    className="w-full bg-[#0e1726] border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 [&::-webkit-search-cancel-button]:hidden"
+                  />
+                  {glossaryQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setGlossaryQuery('')}
+                      aria-label="Limpar busca"
+                      title="Limpar busca"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-800"
+                    >
+                      <X size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
+                <p id="glossary-search-count" aria-live="polite" className="mt-2 text-[11px] font-mono text-slate-500">
+                  {glossaryQuery.trim()
+                    ? `${filteredSchemeNodes.length} de ${schemeNodes.length} esquemas encontrados`
+                    : `${schemeNodes.length} esquemas cadastrados`}
+                </p>
+              </div>
+            )}
+
             <div className="space-y-6">
               {schemeNodes.length === 0 ? (
                 <p className="text-sm text-slate-500">Nenhum esquema cadastrado no banco de dados ainda.</p>
+              ) : filteredSchemeNodes.length === 0 ? (
+                <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl">
+                  <p className="text-sm text-slate-400">
+                    Nenhum esquema encontrado para <strong className="text-slate-200">“{glossaryQuery.trim()}”</strong>.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setGlossaryQuery('')}
+                    className="mt-3 text-xs font-semibold text-cyan-400 hover:text-cyan-200 hover:underline"
+                  >
+                    Limpar busca
+                  </button>
+                </div>
               ) : (
-                schemeNodes.map((scheme) => {
+                filteredSchemeNodes.map((scheme) => {
                   const details = SCHEME_DETAILS[scheme.id];
                   const connectedEntities = getConnectedEntities(scheme.id);
                   const isExpanded = expandedSchemeId === scheme.id;
