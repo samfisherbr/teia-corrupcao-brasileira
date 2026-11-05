@@ -651,22 +651,26 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                       className="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden shadow-md"
                     >
                       <div className="p-6 space-y-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <span className="text-[10px] font-mono font-bold tracking-widest text-cyan-400 uppercase bg-cyan-950/80 px-2.5 py-1 rounded border border-cyan-800/60">
+                        {/* Etiqueta e botão dividem a linha de cima e nunca quebram
+                            por dentro; se não couberem lado a lado (celulares), o
+                            botão desce para baixo da etiqueta (flex-wrap). O título
+                            fica embaixo, com a largura inteira do cartão. */}
+                        <div>
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <span className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest text-cyan-400 uppercase bg-cyan-950/80 px-2.5 py-1 rounded border border-cyan-800/60">
                               ESQUEMA DE CORRUPÇÃO
                             </span>
-                            <h2 className="text-2xl font-bold text-white mt-2">{scheme.label}</h2>
-                          </div>
 
-                          <button
-                            onClick={() => toggleExpand(scheme.id)}
-                            aria-expanded={isExpanded}
-                            className="flex items-center space-x-1 text-xs font-semibold text-cyan-400 hover:text-cyan-200 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800/50 px-3 py-1.5 rounded-lg transition-colors"
-                          >
-                            <span>{isExpanded ? 'Recolher Dossiê' : 'Ver Dossiê Completo'}</span>
-                            {isExpanded ? <ChevronUp size={16} className="w-4 h-4 shrink-0" /> : <ChevronDown size={16} className="w-4 h-4 shrink-0" />}
-                          </button>
+                            <button
+                              onClick={() => toggleExpand(scheme.id)}
+                              aria-expanded={isExpanded}
+                              className="shrink-0 whitespace-nowrap flex items-center gap-1 text-xs font-semibold text-cyan-400 hover:text-cyan-200 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800/50 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              <span>{isExpanded ? 'Recolher dossiê' : 'Expandir dossiê'}</span>
+                              {isExpanded ? <ChevronUp size={16} className="w-4 h-4 shrink-0" /> : <ChevronDown size={16} className="w-4 h-4 shrink-0" />}
+                            </button>
+                          </div>
+                          <h2 className="text-2xl font-bold text-white mt-2 break-words">{scheme.label}</h2>
                         </div>
 
                         <p className="text-sm text-slate-300 leading-relaxed font-sans">
