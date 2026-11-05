@@ -19,6 +19,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import HeaderBar, { ActivePage } from '@/components/HeaderBar';
 import HeaderOverlay from '@/components/HeaderOverlay';
+import MobileTimeline from '@/components/MobileTimeline';
 import NetworkGraph from '@/components/NetworkGraph';
 import SidebarControls from '@/components/SidebarControls';
 import InspectorDrawer from '@/components/InspectorDrawer';
@@ -275,6 +276,18 @@ export default function Page() {
   return (
     <div className="relative h-[100dvh] w-full bg-[#080d16] text-slate-100 font-sans overflow-hidden flex flex-col">
       <HeaderBar activePage={activePage} setActivePage={setActivePage} />
+
+      {/* Filtro de ano no celular (a barra lateral some < 768px). Oculto com
+          Infográficos/Glossário abertos, que não dependem dele. */}
+      {activePage === 'graph' && (
+        <MobileTimeline
+          startYearFilter={startYearFilter}
+          setStartYearFilter={setStartYearFilter}
+          minYear={yearRange.min}
+          maxYear={yearRange.max}
+          nodeCount={filteredData.nodes.length}
+        />
+      )}
 
       <div className="flex flex-1 w-full min-h-0 relative overflow-hidden">
         <HeaderOverlay activePage={activePage} graphData={graphData} />
