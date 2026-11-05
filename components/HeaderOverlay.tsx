@@ -24,14 +24,13 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ActivePage } from './HeaderBar';
 import { GraphData, GraphNode } from '@/types/graph';
-import { getLinkEnds, normalizeText, STATUS_STYLE } from '@/lib/graphConfig';
+import { getLinkEnds, normalizeText, STATUS_STYLE, NODE_STYLE, entityChipStyle } from '@/lib/graphConfig';
+import { NODE_ICONS } from '@/lib/nodeIcons';
 import type { LinkStatus } from '@/types/graph';
 import { parseAmount, formatAmount } from '@/lib/money';
 import { SCHEME_DETAILS } from '@/data/schemeDetails';
 import { 
   ExternalLink, 
-  Users, 
-  Building, 
   Coins, 
   ChevronDown, 
   ChevronUp, 
@@ -42,10 +41,16 @@ import {
   Activity,
   TrendingUp,
   ShieldAlert,
-  UserCheck,
   Search,
   X
 } from 'lucide-react';
+
+/** Ordem dos tipos de entidade = ordem da legenda do grafo. */
+const TYPE_ORDER = Object.keys(NODE_STYLE) as GraphNode['type'][];
+// Ícones por tipo (mesmos da barra lateral e do painel de detalhes).
+const PoliticianIcon = NODE_ICONS.politician;
+const CompanyIcon = NODE_ICONS.company;
+const OperatorIcon = NODE_ICONS.operator;
 
 /** Quantos partidos aparecem no ranking do infográfico 1. */
 const PARTY_RANKING_SIZE = 6;
@@ -247,11 +252,13 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
     setExpandedSchemeId((prev) => (prev === id ? null : id));
   };
 
-  // Entidades ligadas diretamente a um esquema (usado nos cartões do Glossário).
+  // Entidades ligadas diretamente a um esquema (usado nos cartões do Glossário),
+  // agrupadas por tipo na ordem da legenda do grafo (NODE_STYLE).
   const getConnectedEntities = (schemeId: string): GraphNode[] =>
     Array.from(neighbours.get(schemeId) ?? [])
       .map((id) => nodeById.get(id))
-      .filter((n): n is GraphNode => !!n);
+      .filter((n): n is GraphNode => !!n)
+      .sort((a, b) => TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type));
 
   // ===========================================================================
   // BUSCA DO GLOSSÁRIO
@@ -291,11 +298,13 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
 
   return (
     <div
-      className={`absolute inset-0 z-40 bg-slate-950 text-slate-100 transition-transform duration-500 ease-in-out shadow-2xl overflow-y-auto ${
+      className={`absolute inset-0 z-40 bg-slate-950 text-slate-100 transition-transform duration-500 ease-in-out overflow-y-auto ${
         isOpen ? 'translate-y-0 pointer-events-auto' : '-translate-y-full pointer-events-none'
       }`}
       // When closed the panel is only translated off-screen; without this its
       // links stay reachable with Tab and screen readers.
+      // No box-shadow here: while parked above the graph it would cast a dark
+      // band right under the header.
       ref={panelRef}
       aria-hidden={!isOpen}
     >
@@ -341,11 +350,11 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                   <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
                     Esquemas Registrados
                   </span>
-                  <span className="text-2xl font-bold text-cyan-400 mt-1 block">
+                  <span className="text-2xl font-bold mt-1 block" style={{ color: NODE_STYLE.scheme.labelColor }}>
                     {schemeNodes.length} Casos
                   </span>
                 </div>
-                <div className="p-3 bg-cyan-950/60 border border-cyan-800/40 rounded-lg text-cyan-400">
+                <div className="p-3 border rounded-lg" style={entityChipStyle('scheme')}>
                   <ShieldAlert className="w-6 h-6" />
                 </div>
               </div>
@@ -355,11 +364,11 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                   <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
                     Conexões Ativas
                   </span>
-                  <span className="text-2xl font-bold text-pink-400 mt-1 block">
+                  <span className="text-2xl font-bold text-blue-400 mt-1 block">
                     {graphData.links.length} Vínculos
                   </span>
                 </div>
-                <div className="p-3 bg-pink-950/60 border border-pink-800/40 rounded-lg text-pink-400">
+                <div className="p-3 bg-blue-950/60 border border-blue-800/40 rounded-lg text-blue-400">
                   <Activity className="w-6 h-6" />
                 </div>
               </div>
@@ -372,10 +381,10 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 <div>
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5 text-purple-400" />
+                      <BarChart3 className="w-5 h-5" style={{ color: NODE_STYLE.party.labelColor }} />
                       1. Ranking de centralidade por partido
                     </h2>
-                    <span className="text-[11px] font-mono bg-purple-950/80 text-purple-300 border border-purple-800/50 px-2 py-0.5 rounded">
+                    <span className="shrink-0 whitespace-nowrap text-[11px] font-mono border px-2 py-0.5 rounded" style={entityChipStyle('party')}>
                       Grau de Conexões
                     </span>
                   </div>
@@ -394,14 +403,17 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                           <span className="font-bold font-mono text-slate-200">
                             {item.party} <span className="text-slate-500 font-normal">({item.politicianCount} políticos)</span>
                           </span>
-                          <span className="font-mono text-purple-400 font-semibold">
+                          <span className="font-mono font-semibold" style={{ color: NODE_STYLE.party.labelColor }}>
                             {item.count} vínculos
                           </span>
                         </div>
                         <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
                           <div
-                            className="h-full bg-gradient-to-r from-purple-600 to-cyan-400 rounded-full transition-all duration-500"
-                            style={{ width: `${item.percentage}%` }}
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${item.percentage}%`,
+                              backgroundImage: `linear-gradient(to right, ${NODE_STYLE.party.color}, ${NODE_STYLE.party.labelColor})`,
+                            }}
                           />
                         </div>
                       </div>
@@ -657,8 +669,11 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                             fica embaixo, com a largura inteira do cartão. */}
                         <div>
                           <div className="flex flex-wrap items-center justify-between gap-3">
-                            <span className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest text-cyan-400 uppercase bg-cyan-950/80 px-2.5 py-1 rounded border border-cyan-800/60">
-                              ESQUEMA DE CORRUPÇÃO
+                            <span
+                              className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded border"
+                              style={entityChipStyle('scheme')}
+                            >
+                              {NODE_STYLE.scheme.label}
                             </span>
 
                             <button
@@ -692,16 +707,16 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                           </div>
                           <div className="flex flex-wrap gap-x-4 gap-y-2 font-mono">
                             <div className="flex items-center gap-1.5">
-                              <Users size={16} className="w-4 h-4 shrink-0 text-blue-400" aria-hidden="true" />
+                              <PoliticianIcon size={16} className="w-4 h-4 shrink-0" style={{ color: NODE_STYLE.politician.labelColor }} aria-hidden="true" />
                               <span>Políticos Vinculados: <strong className="text-slate-100">{politicians.length}</strong></span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <Building size={16} className="w-4 h-4 shrink-0 text-amber-400" aria-hidden="true" />
+                              <CompanyIcon size={16} className="w-4 h-4 shrink-0" style={{ color: NODE_STYLE.company.labelColor }} aria-hidden="true" />
                               <span>Empresas Envolvidas: <strong className="text-slate-100">{companies.length}</strong></span>
                             </div>
                             {operators.length > 0 && (
                               <div className="flex items-center gap-1.5">
-                                <UserCheck size={16} className="w-4 h-4 shrink-0 text-purple-400" aria-hidden="true" />
+                                <OperatorIcon size={16} className="w-4 h-4 shrink-0" style={{ color: NODE_STYLE.operator.labelColor }} aria-hidden="true" />
                                 <span>Operadores Financeiros: <strong className="text-slate-100">{operators.length}</strong></span>
                               </div>
                             )}
@@ -740,21 +755,18 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                               </h3>
                               <div className="flex flex-wrap gap-2">
                                 {connectedEntities.map((ent) => {
-                                  const eType = ent.type;
+                                  const Icon = NODE_ICONS[ent.type];
                                   return (
                                     <span
                                       key={ent.id}
-                                      className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
-                                        eType === 'politician'
-                                          ? 'bg-blue-950/60 text-blue-300 border-blue-800/60'
-                                          : eType === 'company'
-                                          ? 'bg-amber-950/60 text-amber-300 border-amber-800/60'
-                                          : eType === 'operator'
-                                          ? 'bg-purple-950/60 text-purple-300 border-purple-800/60'
-                                          : 'bg-slate-800 text-slate-300 border-slate-700'
-                                      }`}
+                                      title={NODE_STYLE[ent.type]?.label}
+                                      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border font-medium"
+                                      style={entityChipStyle(ent.type)}
                                     >
-                                      {ent.label} {ent.party ? `(${ent.party})` : ''}
+                                      {Icon && <Icon size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />}
+                                      <span>
+                                        {ent.label} {ent.party ? `(${ent.party})` : ''}
+                                      </span>
                                     </span>
                                   );
                                 })}
