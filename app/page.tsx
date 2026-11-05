@@ -127,9 +127,15 @@ export default function Page() {
   // --- Filtragem -------------------------------------------------------------
   // 1) links: ano >= filtro (links sem ano sempre passam) e status marcado;
   // 2) nós: tipo marcado; com busca, os encontrados + vizinhos diretos;
-  // 3) só ficam links cujas DUAS pontas estão visíveis.
-  const filteredData = useMemo<GraphData>(() => {
+  // 3) só ficam links cujas DUAS pontas estão visíveis;
+  // 4) somem os nós que ficaram sem nenhum link visível (ex.: ao mover o
+  //    slider de ano ou desmarcar um tipo). Exceções que continuam na tela:
+  //    os resultados diretos da busca (para a busca nunca parecer vazia) e o
+  //    nó selecionado (para o painel de detalhes não descrever um nó sumido).
+  //    Nós sem nenhum link no banco também ficam ocultos.
+  const baseFiltered = useMemo(() => {
     const query = normalizeText(searchQuery.trim());
+    let matches = new Set<string>();
 
     const validLinks = graphData.links.filter((link) => {
       // Links with no year are kept (they used to be silently dropped,
@@ -147,7 +153,7 @@ export default function Page() {
     } else {
       // Search keeps the matches AND their direct neighbours, so a hit is shown
       // in context instead of as an isolated dot with no edges.
-      const matches = new Set(
+      matches = new Set(
         graphData.nodes
           .filter((n) => typeOk(n) && (normalizeText(n.label).includes(query) || normalizeText(n.party).includes(query)))
           .map((n) => n.id)
@@ -162,14 +168,36 @@ export default function Page() {
       visibleIds.forEach((id) => { if (!typeOkIds.has(id)) visibleIds.delete(id); });
     }
 
+    const links = validLinks.filter((l) => {
+      const { sourceId, targetId } = getLinkEnds(l);
+      return visibleIds.has(sourceId) && visibleIds.has(targetId);
+    });
+
+    // Passo 4: uma passada basta — tirar um nó sem links não remove outros links.
+    const connected = new Set<string>();
+    for (const l of links) {
+      const { sourceId, targetId } = getLinkEnds(l);
+      connected.add(sourceId);
+      connected.add(targetId);
+    }
+    const keep = (id: string) => connected.has(id) || matches.has(id);
+
     return {
-      nodes: graphData.nodes.filter((n) => visibleIds.has(n.id)),
-      links: validLinks.filter((l) => {
-        const { sourceId, targetId } = getLinkEnds(l);
-        return visibleIds.has(sourceId) && visibleIds.has(targetId);
-      }),
+      data: { nodes: graphData.nodes.filter((n) => visibleIds.has(n.id) && keep(n.id)), links } as GraphData,
+      // Passaram nos filtros mas ficaram sem links (só voltam se selecionados).
+      isolatedIds: new Set(graphData.nodes.filter((n) => visibleIds.has(n.id) && !keep(n.id)).map((n) => n.id)),
     };
   }, [graphData, startYearFilter, typeFilters, statusFilters, searchQuery]);
+
+  // Exceção do nó selecionado, separada para que selecionar um nó comum não
+  // gere arrays novos (o que reaqueceria a simulação do grafo a cada clique).
+  const selectedId = selectedNode?.id;
+  const filteredData = useMemo<GraphData>(() => {
+    const { data, isolatedIds } = baseFiltered;
+    if (!selectedId || !isolatedIds.has(selectedId)) return data;
+    const shown = new Set(data.nodes.map((n) => n.id));
+    return { nodes: graphData.nodes.filter((n) => n.id === selectedId || shown.has(n.id)), links: data.links };
+  }, [baseFiltered, selectedId, graphData.nodes]);
 
   // --- Ações ------------------------------------------------------------------
   const toggleTypeFilter = useCallback((type: NodeType) => {
