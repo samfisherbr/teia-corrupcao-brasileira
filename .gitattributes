@@ -1,0 +1,16 @@
+# Finais de linha: o repositório guarda todo arquivo de texto com LF; o Git
+# converte na hora do checkout (no Windows, os arquivos ficam com CRLF no disco).
+# Assim editores, scripts e o build não fazem os finais de linha "andarem" e
+# o diff mostra só o que mudou de verdade.
+* text=auto
+
+# Binários: nunca converter.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
