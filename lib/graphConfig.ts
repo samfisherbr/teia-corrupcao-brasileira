@@ -63,12 +63,12 @@ export const getNodeRadius = (type: string | undefined): number =>
  * A ordem das chaves aqui é a ordem em que aparecem na legenda e nos filtros.
  */
 export const STATUS_STYLE: Record<LinkStatus, { label: string; color: string; dashed: boolean; particles: number }> = {
-  confirmed:           { label: 'Fato documentado',                color: '#60a5fa', dashed: false, particles: 0 },
+  confirmed:           { label: 'Fatos documentados',                color: '#60a5fa', dashed: false, particles: 0 },
   under_investigation: { label: 'Sob investigação',                color: '#f59e0b', dashed: true,  particles: 2 },
-  convicted_appealing: { label: 'Condenado (cabe recurso)',        color: '#f97316', dashed: true,  particles: 0 },
-  convicted_final:     { label: 'Condenado (trânsito em julgado)', color: '#e11d48', dashed: false, particles: 0 },
-  annulled:            { label: 'Condenação anulada',              color: '#a78bfa', dashed: false, particles: 0 },
-  acquitted:           { label: 'Absolvido',                       color: '#10b981', dashed: false, particles: 0 },
+  convicted_appealing: { label: 'Condenados (cabe recurso)',        color: '#f97316', dashed: true,  particles: 0 },
+  convicted_final:     { label: 'Condenados (trânsito em julgado)', color: '#e11d48', dashed: false, particles: 0 },
+  annulled:            { label: 'Condenações anuladas',              color: '#a78bfa', dashed: false, particles: 0 },
+  acquitted:           { label: 'Absolvidos',                       color: '#10b981', dashed: false, particles: 0 },
 };
 
 /** Categoria operacional do vínculo (painel de detalhes e infográficos). */

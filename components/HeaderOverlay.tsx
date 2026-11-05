@@ -422,7 +422,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 </div>
 
                 <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-lg text-[11px] text-slate-400 leading-relaxed">
-                  💡 <strong>Insight:</strong> Revela quais partidos possuem maior travessia de ligações transversais entre diferentes esquemas investigados.
+                  💡 <strong>Insight:</strong> Revela quais partidos possuem maior número de ligações entre diferentes esquemas investigados.
                 </div>
               </div>
 
