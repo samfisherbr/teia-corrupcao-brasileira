@@ -184,7 +184,14 @@ export default function SidebarControls({
               Ver todos →
             </Link>
           </div>
-          <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+          {/* Altura: até 20rem, mas nunca maior que a tela menos 16rem (cabeçalho
+              do site, título e rodapé da barra lateral), e nunca menor que 6rem.
+              Assim, rolando a barra lateral até o índice, ele cabe inteiro na
+              tela em qualquer altura de janela. Lista curta = caixa menor. */}
+          <div
+            className="overflow-y-auto space-y-1.5 pr-1"
+            style={{ maxHeight: 'min(20rem, max(6rem, calc(100dvh - 16rem)))' }}
+          >
             {schemeNodes.length === 0 ? (
               <span className="text-xs text-slate-600 italic block p-1">Nenhum esquema encontrado</span>
             ) : (

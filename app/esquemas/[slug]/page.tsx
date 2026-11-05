@@ -88,11 +88,12 @@ export default async function SchemeDossierPage({ params }: { params: Promise<{ 
   return (
     <div className="h-[100dvh] w-full bg-[#080d16] text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
       <article className="max-w-3xl mx-auto space-y-8">
-        <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-mono">
+        <nav className="flex items-center gap-3 text-xs font-mono">
           <Link href="/" className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300">
             <ArrowLeft size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
             Voltar ao painel
           </Link>
+          <span aria-hidden="true" className="h-4 w-px bg-slate-600" />
           <Link href="/esquemas" className="text-cyan-400 hover:text-cyan-300">
             Todos os esquemas
           </Link>
