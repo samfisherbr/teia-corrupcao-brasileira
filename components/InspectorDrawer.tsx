@@ -18,7 +18,9 @@
  */
 
 import React from 'react';
-import { FileText, X, ExternalLink, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { FileText, X, ExternalLink, ArrowRight, BookOpen } from 'lucide-react';
+import { schemePath } from '@/lib/schemes';
 import { GraphNode, GraphLink, GraphData, NodeType, LinkStatus, LinkType } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, LINK_TYPE_STYLE, FALLBACK_COLOR, getLinkEnds, getLinkKey, entityChipStyle } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
@@ -154,6 +156,15 @@ export default function InspectorDrawer({
             <p className="text-sm text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-lg border border-slate-800">
               {selectedNode.summary}
             </p>
+            {selectedNode.type === 'scheme' && (
+              <Link
+                href={schemePath(selectedNode.id)}
+                className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-400 hover:text-cyan-200 hover:underline"
+              >
+                <BookOpen size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
+                Ler o dossiê completo
+              </Link>
+            )}
           </div>
 
           <div className="space-y-4">

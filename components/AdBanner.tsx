@@ -2,6 +2,8 @@
 
 /**
  * ADBANNER — bloco de anúncio do Google AdSense (728×90, só em telas ≥ 1024px).
+ * O script do AdSense é carregado uma vez para o site todo em app/layout.tsx;
+ * este componente só desenha o bloco e pede o anúncio.
  * Configuração via variáveis de ambiente (ver README):
  *   NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-…   NEXT_PUBLIC_ADSENSE_SLOT=…
  * Posição: classes `bottom-3 left-1/2` do contêiner. Para outro formato,
@@ -9,7 +11,6 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import Script from 'next/script';
 
 declare global {
   interface Window {
@@ -43,13 +44,6 @@ export default function AdBanner({ adClient, adSlot }: AdBannerProps) {
 
   return (
     <>
-      <Script
-        id="adsense"
-        async
-        strategy="afterInteractive"
-        crossOrigin="anonymous"
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
-      />
       <div className="hidden lg:flex absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
         <div className="w-[728px] h-[90px] bg-[#0e1726]/90 border border-slate-800 rounded-lg backdrop-blur-md flex items-center justify-center overflow-hidden shadow-2xl relative">
           <ins
