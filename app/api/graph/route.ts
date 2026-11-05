@@ -79,15 +79,19 @@ function normalizeLink(r: Row) {
 }
 
 /**
- * Cache de respostas BEM-SUCEDIDAS. Os dados só mudam quando um dossiê
- * aprovado é inserido, então a borda do Cloudflare pode guardar a resposta:
- *   max-age=60   → o navegador reaproveita por 1 minuto
- *   s-maxage=300 → a CDN reaproveita por 5 minutos (↑ = menos leituras no D1)
- *   stale-while-revalidate → serve a versão anterior enquanto busca a nova
- * Consequência: um caso recém-inserido aparece em até ~5 minutos.
- * Respostas de erro nunca são guardadas (ver `fail`).
+ * Cache: NENHUM. Toda visita lê o banco de novo.
+ *
+ * Antes era 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400'.
+ * O stale-while-revalidate deixava o navegador mostrar uma cópia de até 24 h
+ * e só buscar a nova em segundo plano — por isso o celular (aberto com menos
+ * frequência) continuava exibindo só o primeiro caso inserido, enquanto o
+ * desktop, recarregado toda hora, já via tudo.
+ *
+ * O custo é baixo: duas consultas simples ao D1 por visita. Se o volume de
+ * acessos crescer muito, use um cache CURTO e sem stale-while-revalidate,
+ * por exemplo 'public, max-age=0, s-maxage=60' (nunca stale no navegador).
  */
-const CACHE_CONTROL = 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400';
+const CACHE_CONTROL = 'no-store';
 
 /** Tipos de falha reconhecidos. O frontend usa `code` para escolher o texto de ajuda. */
 type FailureCode = 'NO_BINDING' | 'NO_TABLES' | 'SCHEMA_MISMATCH' | 'DB_UNAVAILABLE' | 'QUERY_FAILED';
