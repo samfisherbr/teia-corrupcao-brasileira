@@ -298,11 +298,13 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
 
   return (
     <div
-      className={`absolute inset-0 z-40 bg-slate-950 text-slate-100 transition-transform duration-500 ease-in-out shadow-2xl overflow-y-auto ${
+      className={`absolute inset-0 z-40 bg-slate-950 text-slate-100 transition-transform duration-500 ease-in-out overflow-y-auto ${
         isOpen ? 'translate-y-0 pointer-events-auto' : '-translate-y-full pointer-events-none'
       }`}
       // When closed the panel is only translated off-screen; without this its
       // links stay reachable with Tab and screen readers.
+      // No box-shadow here: while parked above the graph it would cast a dark
+      // band right under the header.
       ref={panelRef}
       aria-hidden={!isOpen}
     >
