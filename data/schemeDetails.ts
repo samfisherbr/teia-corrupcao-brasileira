@@ -284,6 +284,197 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Deputado é absolvido de envolvimento com Máfia dos Sanguessugas", url: "https://www2.oabrs.org.br/jornalDaOrdem/deputado-eacute-absolvido-de-envolvimento-com-maacute-fia-dos-sanguessugas/35634" },
       { title: "Conselho absolve senadores citados na CPI", url: "https://www.congressoemfoco.com.br/noticia/100560/conselho-absolve-senadores-citados-na-cpi" }
     ]
+  },
+
+  "esquema_operacao_navalha": {
+    context: "A Operação Navalha foi deflagrada pela Polícia Federal em maio de 2007 para desarticular uma rede de corrupção voltada a fraudes em licitações, superfaturamento e repasses de propinas em obras públicas federais e estaduais (como no PAC e no programa Luz Para Todos). O centro empresarial do esquema era a Construtora Gautama, pertencente ao empresário Zuleido Soares de Veras.",
+    mechanism: "A Construtora Gautama direcionava editais de licitação públicos em governos estaduais (Maranhão, Alagoas, Sergipe, Piauí) e órgãos federais. Executivos da empresa pagavam vantagens indevidas a servidores e assessores públicos (como Ivo Almeida Costa no Ministério de Minas e Energia) para acelerar liberações orçamentárias, aprovar aditivos contratuais e atestar medições irregulares.",
+    impact: "R$ 178.700.000 de prejuízo auditado e valor em contratos com irregularidades apurados pela Controladoria-Geral da União (CGU) na Construtora Gautama.",
+    legalStatus: "O escândalo provocou a demissão do ministro de Minas e Energia, Silas Rondeau, e a exoneração de diversos secretários estaduais. Em 2008, a PGR denunciou 61 investigados ao STJ. Com o desmembramento das ações para varas federais regionais, os processos enfrentaram anulações probatórias de interceptações, absolvições e prescrições. Situação em novembro de 2026: processos principais encerrados ou com punibilidade extinta.",
+    sources: [
+      { title: "Confira a lista de presos na Operação Navalha - G1", url: "https://g1.globo.com/Noticias/Politica/0,,MUL38115-5601,00.html" },
+      { title: "Operação Navalha - Wikipédia", url: "https://pt.wikipedia.org/wiki/Opera%C3%A7%C3%A3o_Navalha" },
+      { title: "Especial Máfia das Obras - Folha Online", url: "https://www1.folha.uol.com.br/folha/especial/2007/mafiadasobras/" },
+      { title: "Acusado pela PF, Silas Rondeau entrega o cargo a Lula - Senado Notícias", url: "https://www2.senado.leg.br/bdsf/bitstream/handle/id/406619/noticia.htm?sequence=1&isAllowed=y" },
+      { title: "Corrupção desde 2003 desviou mais que o dobro gasto na Copa - Estado de Minas", url: "https://www.em.com.br/app/noticia/politica/2015/03/09/interna_politica,625390/o-que-ja-foi-pelo-ralo.shtml" }
+    ]
+  },
+
+  "esquema_caixa_pandora": {
+    context: "A Operação Caixa de Pandora (Mensalão do DF) foi deflagrada pela Polícia Federal em novembro de 2009. A investigação desarticulou uma ampla rede de corrupção instalada no Governo do Distrito Federal durante a gestão do governador José Roberto Arruda (DEM) e do vice Paulo Octávio (DEM).",
+    mechanism: "Empresas prestadoras de serviços (especialmente de tecnologia e logística) repassavam entre 10% e 20% do valor de faturas e contratos públicos como retorno ilícito. O ex-secretário Durval Barbosa centralizava a arrecadação e distribuía o dinheiro vivo em mesadas para deputados distritais e secretários para garantir apoio parlamentar e aprovação de contas. A operação teve enorme repercussão pública por contar com dezenas de vídeos gravados pelo próprio delator registrando o recebimento de propina.",
+    impact: "R$ 600.000.000 em movimentações ilícitas e propinas apuradas pela Polícia Federal e MPF, dentro de apurações globais de danos potenciais ao erário estimadas em até R$ 2,8 bilhões.",
+    legalStatus: "O escândalo culminou na prisão preventiva de José Roberto Arruda em 2010 (primeiro governador no cargo preso no Brasil) e sua posterior cassação do mandato pelo TSE. Na esfera cível, Arruda e aliados acumulam condenações por improbidade administrativa com suspensão de direitos políticos e multas de ressarcimento. Na esfera criminal, a acusação de formação de quadrilha foi declarada extinta por prescrição em 2023. Situação em novembro de 2026: absolvições e condenações em improbidade seguem em fase de recurso no TJDFT e tribunais superiores.",
+    sources: [
+      { title: "Mensalão do DEM desviou pelo menos R$ 110 milhões, diz PGR - G1", url: "https://g1.globo.com/politica/noticia/2012/06/mensalao-do-dem-desviou-pelo-menos-r-110-milhoes-diz-pgr.html" },
+      { title: "Caixa de Pandora: ex-governador Arruda é condenado à suspensão de direitos políticos por 12 anos - G1 DF", url: "https://g1.globo.com/df/distrito-federal/noticia/2024/09/06/caixa-de-pandora-ex-governador-arruda-e-condenado-a-suspensao-de-direitos-politicos-por-12-anos.ghtml" },
+      { title: "Caixa de Pandora: Justiça do DF absolve Arruda por improbidade administrativa - G1 DF", url: "https://g1.globo.com/df/distrito-federal/noticia/2026/10/22/caixa-de-pandora-justica-do-df-absolve-arruda-e-outros-tres-reus-por-improbidade-administrativa.ghtml" },
+      { title: "Condenado a devolver R$ 594 milhões ao erário, Arruda levaria 2.001 anos para quitar dívida - Metrópoles", url: "https://www.metropoles.com/colunas/grande-angular/condenado-a-devolver-r-594-milhoes-ao-erario-arruda-levaria-2-001-anos-para-quitar-divida" },
+      { title: "Arruda, Paulo Octávio e a coligação que dilapidou os cofres do DF - Metrópoles", url: "https://www.metropoles.com/materias-especiais/arruda-paulo-octavio-e-a-coligacao-que-dilapidou-os-cofres-do-df" }
+    ]
+  },
+
+  "esquema_operacao_porto_seguro": {
+    context: "A Operação Porto Seguro foi deflagrada pela Polícia Federal e pelo Ministério Público Federal em novembro de 2012 para desarticular uma organização criminosa incrustada na administração pública federal encarregada da negociação, encomenda e elaboração de pareceres técnicos e jurídicos fraudulentos.",
+    mechanism: "O grupo utilizava a influência de Rosemary Noronha, chefe do escritório da Presidência em SP, para nomear e manter aliados em cargos diretivos de agências reguladoras (como Paulo Vieira na ANA e Rubens Vieira na ANAC). A rede cooptou autoridades como o vice-advogado-geral da União, José Weber Holanda, expedindo pareceres sob encomenda para beneficiar empresas privadas em contratos no Porto de Santos e empreendimentos nas ilhas de Bagre e das Cabras.",
+    impact: "R$ 1.300.000.000 a R$ 2.000.000.000 (Valores referentes a contratos do terminal portuário Tecondi e empreendimentos imobiliários nas ilhas paulistas beneficiados pelos pareceres sob suspeita)",
+    legalStatus: "A eclosão do caso levou à exoneração de Rosemary Noronha e José Weber, além da demissão dos irmãos Vieira das agências reguladoras. O MPF ofereceu denúncias criminais contra 24 investigados. Em outubro de 2021, a Justiça Federal em SP encerrou as ações penais e trancou os processos contra os réus devido ao reconhecimento da anulação das escutas telefônicas por ilegalidade probatória.",
+    sources: [
+      { title: "PF deflagra operação para desarticular esquema de pareceres - G1", url: "https://g1.globo.com/politica/noticia/2012/11/pf-deflagra-operacao-para-desarticular-esquema-de-pareceres.html" },
+      { title: "Polícia Federal entrega relatório final da Operação Porto Seguro - G1", url: "https://g1.globo.com/politica/noticia/2012/12/policia-federal-entrega-relatorio-final-da-operacao-porto-seguro.html" },
+      { title: "MPF denuncia 24 investigados na Operação Porto Seguro - G1", url: "https://g1.globo.com/sao-paulo/noticia/2012/12/mpf-denuncia-24-investigados-na-operacao-porto-seguro.html" },
+      { title: "Procuradoria apresenta nova denúncia da Operação Porto Seguro - Folha de S.Paulo", url: "https://www1.folha.uol.com.br/poder/2014/05/1462837-procuradoria-apresenta-nova-denuncia-da-operacao-porto-seguro.shtml" },
+      { title: "Justiça Federal em SP encerra ação penal contra Rosemary Noronha - G1", url: "https://g1.globo.com/sp/sao-paulo/noticia/2021/10/19/justica-federal-em-sp-encerra-acao-penal-contra-rosemary-noronha-ex-assessora-de-lula.ghtml" }
+    ]
+  },
+
+  "esquema_trensalao": {
+    context: "O Trensalão (ou Máfia dos Trens de SP) veio a público em maio de 2013, quando a multinacional alemã Siemens assinou acordo de leniência com o CADE e o Ministério Público Federal. A empresa revelou a existência de um cartel formado por fabricantes globais para manipular licitações de compra, modernização e manutenção de trens da CPTM e do Metrô de SP entre 1998 e 2008.",
+    mechanism: "As multinacionais envolvidas (Siemens, Alstom, CAF, Bombardier, entre outras) reuniam-se previamente para definir o consórcio vencedor de cada edital, apresentando propostas de cobertura inflacionadas para simular concorrência. As empresas derrotadas eram compensadas por subcontratações cruzadas. Os repasses de propinas a diretores estatais e políticos ocorriam via contratos simulados de consultoria com empresas de fachada (como a Procint) e contas bancárias secretas na Suíça.",
+    impact: "R$ 9.400.000.000 (Soma dos contratos licitatórios auditados pelo CADE sob suspeita de manipulação, gerando sobrepreço estimado entre R$ 800 milhões e R$ 1,5 bilhão aos cofres públicos paulistas)",
+    legalStatus: "Em julho de 2019, o CADE aplicou R$ 535 milhões em multas administrativas a 11 empresas e 42 pessoas físicas, proibindo a Alstom de participar de licitações federais por 5 anos. Na esfera penal e de improbidade, a apuração desmembrou-se em diversas ações judiciais com bloqueios de contas no exterior, havendo também absolvições e prescrições de executivos por falta de provas materiais diretas.",
+    sources: [
+      { title: "Cade condena 11 empresas e 42 pessoas por cartel de trens e metrôs - G1", url: "https://g1.globo.com/economia/noticia/2019/07/08/cade-condena-11-empresas-e-42-pessoas-por-cartel-de-trens-e-metros.ghtml" },
+      { title: "PF conclui inquérito do cartel dos trens em SP e indicia 33 pessoas - G1", url: "https://g1.globo.com/sao-paulo/noticia/2014/12/pf-conclui-inquerito-do-cartel-dos-trens-e-indicia-33-pessoas.html" },
+      { title: "PF indicia consultor por lavagem de dinheiro em cartel no Metrô de SP - G1", url: "https://g1.globo.com/sao-paulo/noticia/2013/11/pf-indicia-consultor-por-lavagem-de-dinheiro-em-cartel-no-metro-de-sp.html" },
+      { title: "Consultor confirma ter pago US$ 250 mil para ex-diretor da CPTM - Jornal Nacional", url: "https://g1.globo.com/jornal-nacional/noticia/2014/01/consultor-confirma-ter-pago-us-250-mil-para-ex-diretor-da-cptm.html" },
+      { title: "O cartel dos trens leva a maré anticorrupção para São Paulo - EL PAÍS Brasil", url: "https://brasil.elpais.com/brasil/2014/12/05/politica/1417813172_432211.html" }
+    ]
+  },
+
+  "esquema_lava_jato": {
+    context: "A Operação Lava Jato foi deflagrada pela Polícia Federal em março de 2014, inicialmente focada na apuração de redes de lavagem de dinheiro mantidas por doleiros. O avanço das apurações e colaborações premiadas revelou um esquema de corrupção sistêmica e loteamento de diretorias da Petrobras por legendas políticas e empreiteiras.",
+    mechanism: "Um cartel composto pelas maiores construtoras do país combinava resultados e superfaturava contratos de obras da Petrobras. Uma parcela de 1% a 3% do valor dos contratos alimentava propinas a executivos da estatal e a partidos políticos encarregados de indicar diretores, com o suporte de doleiros e contratos de consultoria fictícios.",
+    impact: "R$ 6.200.000.000 de perdas diretas por corrupção reconhecidas pela Petrobras no balanço de 2014, em meio a estimativas globais de movimentações ilícitas superiores a R$ 42 bilhões e acertos de leniência que fixaram ressarcimentos multilaterais.",
+    legalStatus: "A operação promoveu a condenação de executivos, operadores e políticos. A partir de 2021, o STF anulou condenações, incluindo as do ex-presidente Lula, por incompetência de foro e parcialidade do juízo, além de trancar investigações e suspender pagamentos de leniências em virtude de nulidades processuais. Situação em novembro de 2026: processos principais contra os núcleos políticos arquivados ou trancados.",
+    sources: [
+      { title: "Doleiro diz que PT, PMDB e PP recebiam propina da Petrobras - G1", url: "https://g1.globo.com/politica/operacao-lava-jato/noticia/2014/10/doleiro-diz-que-pt-pmdb-e-pp-recebiam-propina-da-petrobras.html" },
+      { title: "Paulo Roberto Costa revela que recebeu propina para vazar dados - G1", url: "https://g1.globo.com/politica/operacao-lava-jato/noticia/2014/10/paulo-roberto-costa-revela-que-recebeu-propina-para-vazar-dados.html" },
+      { title: "Petrobras reconhece perda de 6,2 bilhões de reais com a corrupção - EL PAÍS Brasil", url: "https://brasil.elpais.com/brasil/2015/04/23/politica/1429744001_078177.html" },
+      { title: "Moro condena Vaccari, Duque e mais 11 réus em ação da Lava Jato - G1", url: "https://g1.globo.com/pr/parana/noticia/2015/09/moro-condena-vaccari-duque-e-mais-11-reus-em-acao-da-lava-jato.html" },
+      { title: "Odebrecht e Braskem assinam acordos de leniência com EUA e Suíça - G1", url: "https://g1.globo.com/politica/operacao-lava-jato/noticia/odebrecht-e-braskem-fecham-acordo-com-suica.ghtml" },
+      { title: "Eduardo Cunha é condenado a 15 anos e quatro meses de prisão na Lava Jato - G1", url: "https://g1.globo.com/pr/parana/noticia/2017/03/eduardo-cunha-e-condenado-15-anos-e-quatro-meses-de-prisao-na-lava-jato.html" },
+      { title: "Fachin anula condenações de Lula relacionadas à Lava Jato - G1", url: "https://g1.globo.com/politica/noticia/2021/03/08/fachin-anula-condenacoes-de-lula-relacionadas-a-operacao-lava-jato.ghtml" }
+    ]
+  },
+
+  "esquema_operacao_zelotes": {
+    context: "A Operação Zelotes foi deflagrada pela Polícia Federal em março de 2015 para desarticular um esquema criminoso atuante no Conselho Administrativo de Recursos Fiscais (CARF), órgão do Ministério da Fazenda responsável por julgar recursos tributários. Em fases subsequentes, a operação expandiu seu escopo para apurar a suposta compra e venda de Medidas Provisórias destinadas à concessão de incentivos fiscais ao setor automotivo.",
+    mechanism: "O esquema no CARF funcionava mediante o vazamento de informações sigilosas sobre pautas de julgamento por conselheiros e servidores cooptados para escritórios de advocacia e consultorias privadas (como S3 Gestão). Intermediários contatavam grandes devedores do Fisco oferecendo decisões favoráveis e anulação de autuações bilionárias mediante pagamento de propinas maquiadas como honorários. Na frente legislativa, investigaram-se pagamentos de montadoras a escritórios de consultoria para obter prorrogações de benefícios tributários via Medidas Provisórias (como a MP 471/2009 e a MP 627/2013).",
+    impact: "R$ 19.000.000.000 (Soma dos débitos cobrados pela Receita Federal em processos fiscais sob suspeita no CARF, com prejuízo direto auditado de R$ 5,7 bilhões e R$ 32 milhões rastreados em repasses de consultorias do setor automotivo)",
+    legalStatus: "O escândalo motivou a reformulação integral do regimento interno do CARF. Na esfera penal, as acusações referentes à compra de Medidas Provisórias resultaram na absolvição unânime de réus e agentes políticos (como o ex-presidente Lula e o ex-ministro Gilberto Carvalho) pelo TRF-1 e pela Justiça Federal do DF entre 2020 e 2021 por falta de provas materiais. Inquéritos contra o ex-ministro Guido Mantega foram trancados em 2025.",
+    sources: [
+      { title: "Entenda a Operação Zelotes - G1", url: "https://g1.globo.com/politica/noticia/2016/02/entenda-operacao-zelotes.html" },
+      { title: "Entenda a Operação Zelotes da Polícia Federal - Folha de S.Paulo", url: "https://www1.folha.uol.com.br/mercado/2015/04/1611246-entenda-a-operacao-zelotes-da-policia-federal.shtml" },
+      { title: "TRF-1 absolve nove condenados por venda de medidas provisórias - Migalhas", url: "https://www.migalhas.com.br/quentes/325747/trf-1-absolve-nove-condenados-por-venda-de-medidas-provisorias-nos-governos-lula-e-dilma" },
+      { title: "Justiça Federal absolve Lula e Gilberto Carvalho na operação Zelotes - Migalhas", url: "https://www.migalhas.com.br/quentes/347371/justica-federal-absolve-lula-e-gilberto-carvalho-na-operacao-zelotes" },
+      { title: "TRF1 absolve três ex-conselheiros do Carf denunciados na Operação Zelotes - JOTA", url: "https://www.jota.info/tributos/trf1-absolve-tres-ex-conselheiros-do-carf-denunciados-na-operacao-zelotes" }
+    ]
+  },
+
+  "esquema_operacao_greenfield": {
+    context: "A Operação Greenfield foi deflagrada pela Polícia Federal e pelo Ministério Público Federal em setembro de 2016 com base em auditorias e investigações da CPI dos Fundos de Pensão. O objetivo foi desarticular esquemas de gestão temerária, superfaturamento de ativos e fraudes em aportes efetuados pelos quatro maiores fundos de previdência de estatais do país: Funcef, Petros, Previ e Postalis.",
+    mechanism: "Diretores e conselheiros de investimentos dos fundos de pensão estatais — indicados politicamente por legendas como PT e PMDB — atuavam em conluio com gestores de Fundos de Investimento em Participações (FIPs) e executivos de grandes conglomerados privados (como o Grupo J&F). O grupo aprovava a compra de quotas de participação e aportes bilionários em ativos sobreavaliados mediante laudos técnicos simulados, recebendo em troca vantagens ilícitas e taxas de intermediação dissimuladas em contratos de consultoria.",
+    impact: "R$ 8.000.000.000 (Montante global inicial de bloqueio de bens decretado pela Justiça Federal em 2016, no âmbito de investigações que apuraram rombos acumulados superiores a R$ 8 bilhões nos fundos e que motivaram a assinatura do acordo de leniência da J&F de R$ 10,3 bilhões em 2017).",
+    legalStatus: "A operação gerou dezenas de ações penais e de improbidade administrativa contra ex-gestores e empresários. A partir de 2020, o TRF-1 trancou procedimentos contra investigados por falta de comprovação de dolo. Em dezembro de 2023, o STF suspendeu o pagamento das multas do acordo de leniência da J&F e, em novembro de 2025, a Justiça Federal do DF reconheceu vícios de coação na celebração da leniência, determinando a repactuação do valor da multa com limitação legal. Situação em novembro de 2026: apurações e execuções judiciais remanescentes seguem sob controvérsia e revisão nas instâncias superiores.",
+    sources: [
+      { title: "PF faz operação em 8 estados e no DF contra fraude em fundos de pensão - G1 DF", url: "https://g1.globo.com/distrito-federal/noticia/2016/09/operacao-contra-fraude-em-fundos-de-pensao-leva-pf-8-estados-e-df.html" },
+      { title: "Operação da PF mira 4 maiores fundos de pensão do Brasil e bloqueia R$ 8 bi - Folha de S.Paulo", url: "https://www1.folha.uol.com.br/mercado/2016/09/1810338-operacao-da-pf-mira-4-maiores-fundos-de-pensao-do-brasil-e-bloqueia-r-8-bi.shtml" },
+      { title: "Operação Greenfield revela fraudes nos fundos de pensão - Senado Notícias", url: "https://www2.senado.leg.br/bdsf/bitstream/handle/id/525541/noticia.html?sequence=1&isAllowed=y" },
+      { title: "Toffoli suspende pagamento de multa de R$ 10 bilhões do acordo de leniência da J&F - G1", url: "https://g1.globo.com/politica/noticia/2023/12/20/toffoli-suspende-pagamento-de-multa-de-r-10-bilhoes-do-acordo-de-leniencia-da-jandf.ghtml" },
+      { title: "Juiz vê coação em acordo de leniência da J&F e reduz multa bilionária - Migalhas", url: "https://www.migalhas.com.br/quentes/443706/juiz-ve-coacao-em-acordo-de-leniencia-da-j-f-e-reduz-multa-bilionaria" },
+      { title: "TRF-1 tranca investigação contra Paulo Guedes em operação sobre fraudes em fundos de pensão - Migalhas", url: "https://www.migalhas.com.br/quentes/334506/trf-1-tranca-investigacao-contra-paulo-guedes-em-operacao-sobre-fraudes-em-fundos-de-pensao" }
+    ]
+  },
+
+  "esquema_jbs_mala_rocha_loures": {
+    context: "O Escândalo da JBS e o episódio da Mala do Rocha Loures vieram a público em maio de 2017 após a homologação das delações premiadas dos executivos do Grupo J&F (Joesley Batista, Wesley Batista e Ricardo Saud) no STF. As apurações da Operação Patmos revelaram gravações de conversas entre Joesley e o presidente Michel Temer no Palácio do Jaburu e ações controladas de entregas de propina efetuadas pela Polícia Federal.",
+    mechanism: "De acordo com a denúncia, o presidente Michel Temer teria indicado o deputado e assessor especial Rodrigo Rocha Loures para atuar em benefício do Grupo J&F perante o CADE em processo relativo ao preço do gás fornecido à termelétrica Âmbar Energia. Para intermediar o pleito, acertou-se o repasse semanal de R$ 500 mil em propina durante 20 anos, tendo a Polícia Federal filmado a entrega da primeira parcela em uma mala carregada por Rocha Loures em São Paulo.",
+    impact: "R$ 10.300.000.000 em multa fixada no acordo de leniência do Grupo J&F com o MPF, além de R$ 500.000 apreendidos na ação controlada da PF e confissão de mais de R$ 1,1 bilhão distribuídos a políticos de diversos partidos.",
+    legalStatus: "A Câmara dos Deputados barrou o prosseguimento das duas denúncias apresentadas pela PGR contra Michel Temer em 2017. Após o término do mandato presidencial, os processos foram remetidos à Justiça Federal do DF, que absolveu Michel Temer e Rodrigo Rocha Loures das acusações de corrupção passiva, obstrução de justiça e irregularidades correlatas por insuficiência probatória. Situação em novembro de 2026: acusações penais encerradas ou julgadas improcedentes.",
+    sources: [
+      { title: "Rocha Loures entrega mala de R$ 500 mil na sede da PF em SP - G1", url: "https://g1.globo.com/sao-paulo/noticia/rocha-loures-entrega-mala-de-r-500-mil-na-sede-da-pf-em-sao-paulo.ghtml" },
+      { title: "Delação da JBS: veja todos os VÍDEOS e os principais pontos - G1", url: "https://g1.globo.com/politica/noticia/delacao-da-jbs-veja-os-videos-dos-depoimentos.ghtml" },
+      { title: "STF libera conteúdo da delação dos donos da JBS - G1", url: "https://g1.globo.com/politica/noticia/stf-libera-conteudo-da-delacao-dos-donos-da-jbs.ghtml" },
+      { title: "Câmara rejeita denúncia e livra Temer de responder a processo no Supremo - G1", url: "https://g1.globo.com/politica/noticia/votacao-denuncia-temer-camara.ghtml" },
+      { title: "Juiz absolve Michel Temer da acusação de obstruir Justiça - G1", url: "https://g1.globo.com/politica/noticia/2019/10/16/tem-que-manter-isso-viu-juiz-absolve-temer-da-acusacao-de-obstruir-a-justica-apos-conversa-com-joesley.ghtml" },
+      { title: "Justiça Federal do DF absolve Temer e mais cinco de suposto esquema em portos - G1", url: "https://g1.globo.com/politica/noticia/2021/03/19/justica-federal-do-df-absolve-temer-e-mais-cinco-de-suposto-esquema-de-corrupcao-em-portos.ghtml" }
+    ]
+  },
+
+  "esquema_operacao_cadeia_velha": {
+    context: "A Operação Cadeia Velha foi deflagrada pela Polícia Federal e pelo Ministério Público Federal em novembro de 2017 como desdobramento da Lava Jato no Rio de Janeiro. A investigação mirou um esquema institucionalizado de propinas na Assembleia Legislativa do Estado do Rio de Janeiro (Alerj) mantido pela cúpula do PMDB fluminense em conluio com empresas de transporte urbano e empreiteiras.",
+    mechanism: "A Federação das Empresas de Transportes de Passageiros (Fetranspor) operava uma caixinha de propinas em dinheiro vivo para garantir a aprovação de leis de isenção fiscal (IPVA e ICMS) e manter tarifas favoráveis. A cúpula da Alerj (composta pelos deputados Jorge Picciani, Paulo Melo e Edson Albertassi) direcionava a pauta legislativa em troca de mesadas ilícitas, cujos valores eram lavados por meio de vendas fictícias de gado superfaturado pela empresa Agrobilara.",
+    impact: "R$ 348.700.000 em movimentações ilícitas operadas pela caixinha de propinas da Fetranspor, com repasses estimados em R$ 69,5 milhões para Jorge Picciani, R$ 55,7 milhões para Paulo Melo e R$ 1,7 milhão para Edson Albertassi.",
+    legalStatus: "Em 2019, o TRF-2 condenou os parlamentares por corrupção e lavagem de dinheiro. O STF anulou a condenação de Paulo Melo em 2022 por vício processual, e o TRF-2 declinou a competência do caso para a esfera estadual. Em novembro de 2023, a 1ª Vara Criminal Especializada do TJRJ determinou o arquivamento definitivo das acusações penais contra Paulo Melo e Edson Albertassi por ausência de conjunto probatório apto.",
+    sources: [
+      { title: "MPF antecipou operação 'Cadeia Velha' após indicação de Albertassi ao TCE - G1", url: "https://g1.globo.com/rio-de-janeiro/noticia/operacao-cadeia-velha-investiga-cupula-da-alerj.ghtml" },
+      { title: "Fetranspor movimentou R$ 348,7 milhões em propinas para abastecer governo Cabral - O Dia", url: "https://odia.ig.com.br/rio-de-janeiro/2017-11-15/fetranspor-movimentou-r-3487-milhoes-em-propinas-para-abastecer-governo-cabral.html" },
+      { title: "TRF2 condena ex-presidente da Alerj e dois ex-deputados por corrupção - Agência Brasil", url: "https://agenciabrasil.ebc.com.br/justica/noticia/2019-03/trf2-condena-ex-presidente-da-alerj-e-dois-ex-deputados-por-corrupcao" },
+      { title: "STF anula condenação do ex-presidente da Alerj Paulo Melo a 12 anos de prisão na Lava Jato - G1", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2022/03/17/por-3-votos-a-2-stf-anula-condenacao-do-ex-presidente-da-alerj-paulo-melo-a-12-anos-de-prisao-na-lava-jato.ghtml" },
+      { title: "Justiça arquiva acusações da operação Cadeia Velha contra Edson Albertassi e Paulo Melo - G1", url: "https://g1.globo.com/rj/sul-do-rio-costa-verde/noticia/2023/11/29/justica-arquiva-acusacoes-da-operacao-cadeia-velha-contra-edson-albertassi-e-paulo-melo.ghtml" }
+    ]
+  },
+
+  "esquema_caso_queiroz_rachadinhas": {
+    context: "O Escândalo das Rachadinhas (Caso Queiroz) veio à tona em dezembro de 2018 a partir da divulgação de um relatório do Coaf produzido no âmbito dos desdobramentos da Lava Jato no Rio de Janeiro. O documento apontou movimentações atípicas de R$ 1,2 milhão na conta bancária de Fabrício Queiroz, ex-assessor do então deputado estadual Flávio Bolsonaro na Alerj.",
+    mechanism: "De acordo com as investigações do MP-RJ, assessores parlamentares nomeados no gabinete do deputado estadual sacavam em dinheiro vivo a maior parte de seus proventos e devolviam as quantias ao ex-PM Fabrício Queiroz. O operador financeiro centralizava os recursos arrecadados para pagar despesas pessoais do parlamentar e lavar os valores mediante aquisições imobiliárias e depósitos em espécie em uma franquia comercial de chocolates.",
+    impact: "R$ 6.100.000 em desvios orçamentários estimados pela denúncia do MP-RJ, com R$ 2,07 milhões arrecadados diretamente por Fabrício Queiroz em 483 depósitos de assessores e R$ 1,6 milhão investigados em injeções de capital na loja de chocolates.",
+    legalStatus: "O MP-RJ denunciou Flávio Bolsonaro, Fabrício Queiroz e outros 15 investigados em 2020. Entre 2021 e 2022, o STF e o STJ decretaram a anulação das quebras de sigilo bancário e reconheceram a incompetência do juízo de primeira instância devido ao foro privilegiado no TJ-RJ. Em maio de 2022, a denúncia criminal contra o parlamentar foi anulada pelo TJ-RJ. Situação em novembro de 2026: acusações criminais anuladas por vícios de instrução probatória.",
+    sources: [
+      { title: "Caso Fabrício Queiroz: o que é, cronologia dos fatos, envolvidos - G1", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2019/01/18/caso-fabricio-queiroz-o-que-e-cronologia-dos-fatos-personagens.ghtml" },
+      { title: "Queiroz recebeu R$ 2 milhões em 483 depósitos de assessores ligados a Flávio, diz MP - G1", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2019/12/18/queiroz-recebeu-r-2-milhoes-em-483-depositos-de-assessores-ligados-a-flavio-bolsonaro-diz-mp.ghtml" },
+      { title: "Ex-PM era suspeito de chefiar grupo que cometeu dezenas de homicídios - G1 JN", url: "https://g1.globo.com/jornal-nacional/noticia/2020/02/10/ex-pm-era-suspeito-de-chefiar-grupo-que-cometeu-dezenas-de-homicidios.ghtml" },
+      { title: "STJ anula todas as decisões de juiz contra Flávio Bolsonaro no caso das rachadinhas - G1", url: "https://g1.globo.com/politica/noticia/2021/11/09/stj-anula-todas-as-decisoes-de-juiz-contra-flavio-bolsonaro-nas-rachadinhas.ghtml" },
+      { title: "STF mantém foro privilegiado de Flávio Bolsonaro e anula provas - G1 JN", url: "https://g1.globo.com/jornal-nacional/noticia/2021/11/30/stf-mantem-foro-privilegiado-de-flavio-bolsonaro-e-anula-provas-no-caso-das-rachadinhas.ghtml" },
+      { title: "MPRJ pede anulação da denúncia contra Flávio Bolsonaro no caso das rachadinhas - G1", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2022/05/11/mp-pede-anulacao-da-denuncia-contra-flavio-bolsonaro-no-caso-das-rachadinhas-sem-prejuizo-do-reinicio-das-investigacoes.ghtml" }
+    ]
+  },
+
+  "esquema_laranjas_do_psl": {
+    context: "O Escândalo dos Laranjas do PSL veio à tona em fevereiro de 2019 em reportagens investigativas da Folha de S.Paulo. As matérias apontaram que o Partido Social Liberal (PSL) lançou candidaturas femininas fictícias nas eleições de 2018 para simular o cumprimento da cota compulsória de 30% de mulheres fixada pelo TSE e desviar verbas públicas do Fundo Especial de Financiamento de Campanha.",
+    mechanism: "Dirigentes estaduais do PSL registravam mulheres como candidatas sem que houvesse atos efetivos de campanha. Repasses expressivos do fundo eleitoral eram feitos a essas candidatas e rapidamente transferidos para gráficas de fachada ou empresas vinculadas a assessores de lideranças partidárias em Minas Gerais e Pernambuco, retornando para o caixa dois de campanhas masculinas ou enriquecimento ilícito.",
+    impact: "R$ 9.000.000 em repasses eleitorais sob auditoria da Polícia Federal e do Ministério Público Eleitoral, destacando-se repasses individuais de R$ 400.000 em Pernambuco e R$ 279.000 em Minas Gerais para candidatas com votações inexpressivas.",
+    legalStatus: "O escândalo causou a demissão do ministro Gustavo Bebianno em fevereiro de 2019. O Ministério Público e a Polícia Federal denunciaram e indiciaram o ex-ministro do Turismo Marcelo Álvaro Antônio e o presidente nacional do PSL Luciano Bivar por falsidade ideológica e crimes eleitorais. O TSE pacificou o entendimento de que candidaturas laranjas geram a cassação integral da chapa proporcional. Situação em novembro de 2026: acusações criminais eleitorais seguem sob tramitação nas instâncias estaduais sem condenação definitiva.",
+    sources: [
+      { title: "Entenda as investigações sobre candidaturas laranjas do PSL - G1", url: "https://g1.globo.com/politica/noticia/2019/04/29/entenda-as-investigacoes-sobre-candidatos-laranja.ghtml" },
+      { title: "Ministro do Turismo é denunciado pelo MP-MG por candidaturas-laranja do PSL - G1", url: "https://g1.globo.com/mg/minas-gerais/noticia/2019/10/04/ministro-do-turismo-e-denunciado-pelo-ministerio-publico-de-mg-por-candidaturas-laranja-do-psl-1.ghtml" },
+      { title: "PF indicia Luciano Bivar e mais 3 por suspeita no caso de candidatura laranja - Poder360", url: "https://www.poder360.com.br/justica/pf-indicia-luciano-bivar-e-mais-3-por-suspeita-no-caso-de-candidatura-laranja/" },
+      { title: "PF prende assessor e dois ex-auxiliares do ministro do Turismo - Senado Notícias", url: "https://www2.senado.leg.br/bdsf/bitstream/handle/id/563676/noticia.html?sequence=1&isAllowed=y" },
+      { title: "TSE decide que candidatura laranja de mulheres gera cassação integral da chapa - Congresso em Foco", url: "https://www.congressoemfoco.com.br/noticia/32161/tse-decide-que-candidatura-laranja-de-mulheres-gera-cassacao-integral-da-chapa" },
+      { title: "Laranja do PSL do primeiro escândalo do governo Bolsonaro ainda deve R$ 380 mil - Brasil de Fato", url: "https://www.brasildefato.com.br/2021/09/17/laranja-do-psl-ainda-deve-r-380-mil-a-justica-do-primeiro-escandalo-do-governo-bolsonaro/" }
+    ]
+  },
+
+  "esquema_operacao_placebo": {
+    context: "A Operação Placebo foi deflagrada pela Polícia Federal em maio de 2020 por ordem do Superior Tribunal de Justiça. As investigações apuraram esquemas de corrupção, fraudes em compras emergenciais sem licitação e loteamento de cargos na Secretaria de Estado de Saúde do Rio de Janeiro durante a pandemia de Covid-19.",
+    mechanism: "A Secretaria de Saúde do RJ dispensou concorrências públicas e efetuou contratos milionários com dispensa de licitação para a construção de hospitais de campanha e aquisição de respiradores superfaturados. Paralelamente, uma rede de operadores e agentes públicos centralizava o recolhimento de propinas junto a Organizações Sociais (como o IABAS) e fornecedores privados, maquiando os repasses ilícitos por meio de contratos simulados de serviços advocatícios.",
+    impact: "R$ 835.700.000 em contrato emergencial firmado com a OS IABAS para a construção de hospitais de campanha sob suspeita, inserido em denúncias do MPF que mapearam R$ 53 milhões em propinas exigidas pelo grupo e solicitaram reparações de R$ 106,7 milhões aos cofres públicos.",
+    legalStatus: "O escândalo resultou no afastamento cautelar de Wilson Witzel pelo STJ em agosto de 2020 e no seu impeachment definitivo por unanimidade no Tribunal Especial Misto em abril de 2021, tornando-o inabilitado para funções públicas. Os réus foram denunciados por corrupção e organização criminosa. Situação em novembro de 2026: acusações criminais e ações de improbidade tramitam no Poder Judiciário, com pedidos de trancamento pendentes de análise nas instâncias superiores.",
+    sources: [
+      { title: "PF faz buscas contra governador do RJ, Wilson Witzel - G1", url: "https://g1.globo.com/politica/noticia/2020/05/26/bolsonaro-ri-ao-ser-questionado-sobre-operacao-contra-witzel-e-da-parabens-a-pf.ghtml" },
+      { title: "Operação Placebo aprofunda investigações sobre corrupção na saúde - Agência Brasil", url: "https://agenciabrasil.ebc.com.br/geral/noticia/2020-05/operacao-placebo-aprofunda-investigacoes-sobre-corrupcao-na-saude" },
+      { title: "Pastor Everaldo é preso em operação que afastou Witzel do governo de RJ - G1", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2020/08/28/pastor-everaldo-e-preso-em-operacao-que-afastou-witzel-do-governo-de-rj.ghtml" },
+      { title: "Witzel, pastor Everaldo e mais 11 são denunciados pelo MPF por corrupção e lavagem de dinheiro - G1", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2020/12/15/wilson-witzel-pastor-everaldo-e-mais-11-sao-denunciados-pelo-mpf-por-corrupcao-e-lavagem-de-dinheiro.ghtml" },
+      { title: "Entenda o processo de impeachment que resultou na cassação de Wilson Witzel - CNN Brasil", url: "https://www.cnnbrasil.com.br/politica/entenda-o-processo-de-impeachment-que-resultou-na-cassacao-de-wilson-witzel/" },
+      { title: "Com ação por organização criminosa de volta ao STJ, Witzel aciona STF para trancá-la - PlatôBR", url: "https://platobr.com.br/com-acao-por-organizacao-criminosa-de-volta-ao-stj-witzel-aciona-stf-para-tranca-la" }
+    ]
+  },
+
+  "esquema_orcamento_secreto_rp9": {
+    context: "O Escândalo do Orçamento Secreto consistiu no uso intensivo das emendas do relator-geral do Orçamento da União (rubrica RP9) entre os anos de 2020 e 2022, durante a gestão do ex-presidente Jair Bolsonaro. O mecanismo permitia a distribuição de bilhões de reais do orçamento federal a parlamentares aliados do Congresso Nacional sem a obrigatoriedade de identificação do deputado ou senador que solicitava o repasse.",
+    mechanism: "Ao contrário das emendas individuais e de bancada, a indicação formal dos recursos RP9 era assinada genericamente pelo Relator-Geral da Comissão Mista de Orçamento (CMO). A cúpula do Congresso e do Governo Federal utilizava as cotas orçamentárias como barganha política para garantir maiorias em votações parlamentares. Verbas expressivas foram canalizadas para estatais (como a Codevasf) e fundos municipais de saúde (SUS), gerando investigações policiais sobre fraudes em exames médicos e superfaturamento em obras de pavimentação.",
+    impact: "R$ 53.000.000.000 em autorizações orçamentárias totais de RP9 entre 2020 e 2022, somando mais de R$ 28 bilhões efetivamente pagos, além de investigações policiais que apuram desvios de R$ 69 milhões na saúde maranhense e R$ 1,4 bilhão em contratos de pavimentação.",
+    legalStatus: "Em 19 de dezembro de 2022, o Plenário do Supremo Tribunal Federal (STF) julgou procedentes as ADPFs 850, 851, 854 e 1014, declarando a inconstitucionalidade do Orçamento Secreto por afronta aos princípios da publicidade, transparência e impessoalidade. A partir de 2023, os valores foram divididos entre emendas individuais e programação ordinária dos ministérios. A Polícia Federal, CGU e TCU mantêm investigações e auditorias sobre os contratos locais derivados do esquema.",
+    sources: [
+      { title: "Entenda a decisão do Supremo que considerou o orçamento secreto inconstitucional - G1", url: "https://g1.globo.com/politica/noticia/2022/12/19/entenda-a-decisao-do-supremo-que-considerou-o-orcamento-secreto-inconstitucional.ghtml" },
+      { title: "Ministra Rosa Weber suspende execução de emendas do 'orçamento secreto' - G1", url: "https://g1.globo.com/politica/noticia/2021/11/05/rosa-weber-suspende-execucao-de-emendas-do-orcamento-secreto.ghtml" },
+      { title: "Resumo de Julgamento: ADPFs 850, 851, 854 e 1014 — Orçamento Secreto - STF", url: "https://www.stf.jus.br/arquivo/cms/publicacaoBOInternet/anexo/link_download/casos_relevantes/pt/ADPF_850_ADPF_851_ADPF_854_ADPF_1014.pdf" },
+      { title: "Em quase 3 anos, 'orçamento secreto' pago supera emendas individuais - CNN Brasil", url: "https://www.cnnbrasil.com.br/politica/em-quase-3-anos-orcamento-secreto-pago-supera-emendas-individuais-e-e-mais-que-o-dobro-das-de-bancada/" },
+      { title: "PF prende dois em operação sobre suposto desvio de verbas do orçamento secreto no Maranhão - G1", url: "https://g1.globo.com/pi/piaui/noticia/2022/10/14/pf-cumpre-mandados-em-parnaiba-e-teresina-em-investigacoes-da-operacao-quebra-ossos.ghtml" },
+      { title: "PF faz operação para investigar suspeita de desvios na Codevasf - G1 JN", url: "https://g1.globo.com/jornal-nacional/noticia/2022/07/20/pf-faz-operacao-para-investigar-suspeita-de-desvios-na-codevasf.ghtml" },
+      { title: "O que é este tal Orçamento Secreto - Jornal Extra Classe", url: "https://www.extraclasse.org.br/politica/2022/10/o-que-e-este-tal-orcamento-secreto/" }
+    ]
   }
 
 };
