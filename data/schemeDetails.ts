@@ -218,6 +218,22 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Ministro do STJ anula condenação de Delúbio na Lava Jato e remete caso à Justiça Eleitoral", url: "https://www.cnnbrasil.com.br/politica/ministro-do-stj-anula-condenacao-de-delubio-na-lava-jato-e-remete-caso-a-justica-eleitoral/" }
     ]
   },
+  "esquema_dolares_na_cueca": {
+    context: "Em 8 de julho de 2005, a Polícia Federal prendeu no Aeroporto de Congonhas, em São Paulo, José Adalberto Vieira da Silva, assessor parlamentar na Assembleia do Ceará e dirigente do PT cearense, com R$ 209 mil e US$ 100.559 sem origem comprovada. O Ministério Público Federal sustentou que o dinheiro era propina ligada a um financiamento do Banco do Nordeste ao consórcio Sistema de Transmissão Nordeste. Adalberto alegou que o dinheiro veio de um amigo não identificado, para abrir dois negócios, e que nada tinha a ver com o financiamento.",
+    mechanism: "Segundo o MPF, o consórcio STN, que tem a Alusa como acionista majoritária, obteve do BNB, com recursos do FNE, um financiamento aprovado em 25 de junho de 2004, após alteração de regras internas. O assessor especial da Presidência do banco, Kennedy Moura Ramos, teria articulado o contrato por indicação do então deputado estadual José Guimarães, e a consultora Enphase teria recebido cerca de R$ 1,97 milhão contra R$ 20 mil previstos. As defesas negam, e o TCU atestou em dezembro de 2005 a regularidade da operação.",
+    impact: "R$ 447 mil foi o valor apreendido em Congonhas (R$ 209 mil em espécie e US$ 100.559 convertidos pela PTAX de R$ 2,3675 de 8 de julho de 2005), enquanto o financiamento investigado somou R$ 299.995.032,33 segundo a petição do MPF, valor que não corresponde à suposta propina. As fontes lidas divergem sobre a conversão do dinheiro apreendido: cerca de R$ 252 mil para US$ 100 mil no Congresso em Foco e cerca de R$ 600 mil em valores corrigidos na decisão de 2019. Não foi localizado prejuízo apurado nem valor recuperado; a sentença de 2012 fixou multas civis de R$ 10 mil a Roberto Smith e de R$ 300 mil ao STN.",
+    legalStatus: "Em 2012, o STJ tirou José Guimarães da ação de improbidade, e a sentença de 14 de dezembro de 2012 reconheceu violação da impessoalidade, sem provar pagamento de propina, e multou Roberto Smith e o STN. Segundo o Aos Fatos e o O Povo, o TRF-5 aplicou multas a Adalberto, Smith e Kennedy Moura em 2014, e o desfecho final desses recursos não foi localizado. No inquérito penal, a Justiça Federal rejeitou o arquivamento em 2019 e, em agosto de 2021, declarou extinta a punibilidade por prescrição, sem julgamento de mérito. Situação em 5 de novembro de 2026: esfera penal encerrada por prescrição e desfecho definitivo da ação de improbidade não localizado.",
+    sources: [
+      { title: "Dólares na cueca: MP denuncia irmão de Genoino", url: "https://www.congressoemfoco.com.br/noticia/101576/dolares-na-cueca-mp-denuncia-irmao-de-genoino" },
+      { title: "BNB conclui sindicância sobre Kennedy Moura", url: "https://diariodonordeste.verdesmares.com.br/politica/bnb-conclui-sindicancia-sobre-kennedy-moura-1.312211" },
+      { title: "STJ livra deputado no caso \"dólares na cueca\"", url: "https://www.gazetadopovo.com.br/vida-publica/stj-livra-deputado-no-caso-dolares-na-cueca-3ig6sji2bm99fzob05hqbwea6/" },
+      { title: "A sentença do caso do escândalo dos dólares na cueca", url: "https://www.blogdolauriberto.com/2013/01/a-sentenca-do-caso-do-escandalo-dos.html" },
+      { title: "Deputado José Guimarães não foi flagrado com dólares na cueca nem preso", url: "https://www.aosfatos.org/noticias/deputado-jose-guimaraes-nao-foi-flagrado-com-dolares-na-cueca-nem-preso/" },
+      { title: "Juiz nega arquivar caso de assessor flagrado com dólares", url: "https://conjur.com.br/2019-out-22/juiz-nega-arquivamento-assessor-flagrado-dolares/" },
+      { title: "'Dólares na cueca': sentença exime deputado federal cearense José Guimarães após 16 anos do caso", url: "https://diariodonordeste.verdesmares.com.br/pontopoder/dolares-na-cueca-sentenca-exime-deputado-federal-cearense-jose-guimaraes-apos-16-anos-do-caso-1.3125857" },
+      { title: "Após 16 anos, caso dos dólares na cueca de assessor do PT cearense prescreve", url: "https://www.opovo.com.br/noticias/politica/2021/08/20/apos-16-anos-caso-dos-dolares-na-cueca-de-assessor-do-pt-prescreve-na-justica.html" }
+    ]
+  },
 
 
 };
