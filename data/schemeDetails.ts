@@ -269,23 +269,6 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
     ]
   },
 
-  "esquema_sanguessugas": {
-    context: "Em maio de 2006 a Polícia Federal deflagrou a Operação Sanguessuga, que investigou fraudes na compra de ambulâncias e equipamentos de saúde por prefeituras e entidades com recursos de emendas parlamentares ao Orçamento da União. A colaboração premiada de Luiz Antônio Vedoin, sócio da Planam, levou à criação de uma CPI, cujo relatório final foi aprovado em dezembro de 2006.",
-    mechanism: "Segundo o MPF e a PF, a Planam, empresa da família Vedoin em Mato Grosso, vencia licitações direcionadas e pagava propina a parlamentares em troca de emendas. Os pedidos de liberação seguiam ao Ministério da Saúde, onde, segundo a CPI, uma assessora aprovava convênios e facilitava a liberação dos recursos; ela nega ter sido indicada pelos Vedoin e diz que foi usada pela família. Os parlamentares citados que se manifestaram negam as acusações ou afirmam que os valores eram ajuda de campanha.",
-    impact: "R$ 110 milhões é a estimativa feita à época da operação para o total movimentado pelo grupo Planam, e não um valor de prejuízo comprovado. A CGU e o Denasus apuraram prejuízo mínimo de R$ 15,5 milhões, o relatório parcial da CPI contabilizou R$ 9,46 milhões em propinas e o relatório final da CPI fala em mais de R$ 100 milhões desviados. As cifras medem grandezas diferentes e não foram unificadas; o valor recuperado não foi localizado.",
-    legalStatus: "Luiz Antônio Vedoin foi condenado na ação principal, mas o TRF-1 declarou extinta sua punibilidade por prescrição em 2021; Darci Vedoin, segundo o FolhaMax, teve a prescrição da lavagem reconhecida pelo STF em 2022. O STF condenou os ex-deputados Paulo Feijó (2017) e Nilton Capixaba (2018), com trânsito em julgado, e absolveu Jefferson Campos em 2014; no Senado, Serys Slhessarenko e Magno Malta foram absolvidos e Ney Suassuna recebeu apenas advertência em 2006. Os desfechos de Lino Rossi, Ney Suassuna (denúncia de 2008) e Magno Malta (indiciamento de 2007) não foram localizados. Situação em novembro de 2026: última atualização verificada em 24 de setembro de 2022 (FolhaMax); sem informação posterior localizada.",
-    sources: [
-      { title: "Entenda o caso: o que foi a Operação Sanguessuga", url: "https://www.congressoemfoco.com.br/noticia/71007/entenda-o-caso-o-que-foi-a-operacao-sanguessuga" },
-      { title: "Aprovado relatório final da CPI dos Sanguessugas", url: "https://www.congressoemfoco.com.br/noticia/87457/aprovado-relatorio-final-da-cpi-dos-sanguessugas" },
-      { title: "STF condena deputado Paulo Feijó por corrupção e lavagem de dinheiro", url: "https://www.congressoemfoco.com.br/noticia/40533/stf-condena-deputado-paulo-feijo-por-corrupcao-e-lavagem-de-dinheiro" },
-      { title: "STF determina execução de pena de deputado condenado à prisão na Máfia das Ambulâncias", url: "https://www.congressoemfoco.com.br/noticia/33009/stf-determina-execucao-de-pena-de-deputado-condenado-a-prisao-na-mafia-das-ambulancias" },
-      { title: "TRF-1 vê prescrição na ação principal da Máfia dos Sanguessugas", url: "https://conjur.com.br/2021-fev-17/trf-ve-prescricao-acao-principal-mafia-sanguessugas/" },
-      { title: "STF reconhece prescrição e anula condenação de mentor de Máfia em MT", url: "https://www.folhamax.com/politica/stf-reconhece-prescricao-e-anula-condenacao-de-mentor-de-mafia-em-mt/368253" },
-      { title: "Deputado é absolvido de envolvimento com Máfia dos Sanguessugas", url: "https://www2.oabrs.org.br/jornalDaOrdem/deputado-eacute-absolvido-de-envolvimento-com-maacute-fia-dos-sanguessugas/35634" },
-      { title: "Conselho absolve senadores citados na CPI", url: "https://www.congressoemfoco.com.br/noticia/100560/conselho-absolve-senadores-citados-na-cpi" }
-    ]
-  },
-
   "esquema_operacao_navalha": {
     context: "A Operação Navalha foi deflagrada pela Polícia Federal em maio de 2007 para desarticular uma rede de corrupção voltada a fraudes em licitações, superfaturamento e repasses de propinas em obras públicas federais e estaduais (como no PAC e no programa Luz Para Todos). O centro empresarial do esquema era a Construtora Gautama, pertencente ao empresário Zuleido Soares de Veras.",
     mechanism: "A Construtora Gautama direcionava editais de licitação públicos em governos estaduais (Maranhão, Alagoas, Sergipe, Piauí) e órgãos federais. Executivos da empresa pagavam vantagens indevidas a servidores e assessores públicos (como Ivo Almeida Costa no Ministério de Minas e Energia) para acelerar liberações orçamentárias, aprovar aditivos contratuais e atestar medições irregulares.",
