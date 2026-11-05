@@ -563,7 +563,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                             className="flex items-center space-x-1 text-xs font-semibold text-cyan-400 hover:text-cyan-200 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800/50 px-3 py-1.5 rounded-lg transition-colors"
                           >
                             <span>{isExpanded ? 'Recolher Dossiê' : 'Ver Dossiê Completo'}</span>
-                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            {isExpanded ? <ChevronUp size={16} className="w-4 h-4 shrink-0" /> : <ChevronDown size={16} className="w-4 h-4 shrink-0" />}
                           </button>
                         </div>
 
@@ -572,25 +572,34 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                         </p>
 
                         {/* Quick entity & impact metric metrics bar */}
-                        <div className="flex flex-wrap gap-4 pt-3 border-t border-slate-800 text-xs font-mono text-slate-400">
-                          <div className="flex items-center space-x-1.5">
-                            <Coins className="w-4 h-4 text-emerald-400" />
-                            <span>Impacto: <strong className="text-slate-100">{details?.impact || 'Em Apuração'}</strong></span>
+                        {/* Ícones travados em 16×16 (size + shrink-0): sem o shrink-0
+                            o flexbox encolhia o ícone quando o texto quebrava linha. */}
+                        <div className="pt-3 border-t border-slate-800 space-y-3 text-xs text-slate-400">
+                          {/* Impacto ocupa a linha inteira e o texto flui em várias
+                              linhas; o ícone fica alinhado à primeira linha. */}
+                          <div className="flex items-start gap-2">
+                            <Coins size={16} className="w-4 h-4 shrink-0 mt-px text-emerald-400" aria-hidden="true" />
+                            <p className="min-w-0 leading-relaxed">
+                              <span className="font-mono">Impacto:</span>{' '}
+                              <strong className="font-medium text-slate-100">{details?.impact || 'Em Apuração'}</strong>
+                            </p>
                           </div>
-                          <div className="flex items-center space-x-1.5">
-                            <Users className="w-4 h-4 text-blue-400" />
-                            <span>Políticos Vinculados: <strong className="text-slate-100">{politicians.length}</strong></span>
-                          </div>
-                          <div className="flex items-center space-x-1.5">
-                            <Building className="w-4 h-4 text-amber-400" />
-                            <span>Empresas Envolvidas: <strong className="text-slate-100">{companies.length}</strong></span>
-                          </div>
-                          {operators.length > 0 && (
-                            <div className="flex items-center space-x-1.5">
-                              <UserCheck className="w-4 h-4 text-purple-400" />
-                              <span>Operadores Financeiros: <strong className="text-slate-100">{operators.length}</strong></span>
+                          <div className="flex flex-wrap gap-x-4 gap-y-2 font-mono">
+                            <div className="flex items-center gap-1.5">
+                              <Users size={16} className="w-4 h-4 shrink-0 text-blue-400" aria-hidden="true" />
+                              <span>Políticos Vinculados: <strong className="text-slate-100">{politicians.length}</strong></span>
                             </div>
-                          )}
+                            <div className="flex items-center gap-1.5">
+                              <Building size={16} className="w-4 h-4 shrink-0 text-amber-400" aria-hidden="true" />
+                              <span>Empresas Envolvidas: <strong className="text-slate-100">{companies.length}</strong></span>
+                            </div>
+                            {operators.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <UserCheck size={16} className="w-4 h-4 shrink-0 text-purple-400" aria-hidden="true" />
+                                <span>Operadores Financeiros: <strong className="text-slate-100">{operators.length}</strong></span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -671,7 +680,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                                       className="inline-flex items-center text-xs text-cyan-400 hover:text-cyan-200 hover:underline gap-1.5"
                                     >
                                       <span>{src.title}</span>
-                                      <ExternalLink className="w-3 h-3" />
+                                      <ExternalLink size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
                                     </a>
                                   </li>
                                 ))}
