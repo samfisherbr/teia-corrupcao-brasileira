@@ -87,7 +87,10 @@ export default function Page() {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/graph', { signal: controller.signal });
+        // cache: 'no-store' → o navegador nunca usa uma cópia guardada da API
+        // (complementa o Cache-Control: no-store da rota). Sem isso, um celular
+        // podia continuar mostrando dados antigos depois de novos INSERTs.
+        const res = await fetch('/api/graph', { signal: controller.signal, cache: 'no-store' });
         if (!res.ok) {
           // A API devolve { code, error, detail } explicando a causa (ver
           // app/api/graph/route.ts). Sem corpo legível, cai no status HTTP.
@@ -256,8 +259,8 @@ export default function Page() {
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center pointer-events-none">
               <span className="text-cyan-400 font-mono text-sm mb-2">Banco conectado, ainda sem dados</span>
               <p className="text-slate-400 text-xs max-w-md leading-relaxed">
-                Insira o SQL da Fase 2 de um dossiê aprovado (nodes antes de links). Os dados aparecem aqui em até
-                ~5 minutos, por causa do cache da API.
+                Insira o SQL da Fase 2 de um dossiê aprovado (nodes antes de links). Os dados aparecem aqui assim
+                que a página for recarregada.
               </p>
             </div>
           )}
