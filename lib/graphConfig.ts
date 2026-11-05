@@ -22,16 +22,31 @@ import type { GraphLink, GraphNode, LinkStatus, LinkType, NodeType } from '@/typ
  *  - labelPx    tamanho do rótulo em PIXELS DE TELA (não muda com o zoom)
  *  - minZoom    zoom mínimo para o rótulo aparecer (0 = sempre). Valores menores
  *               mostram o rótulo mais cedo ao afastar a câmera.
+ *  - plural     título das seções de conexões no painel de detalhes
+ *
+ * As mesmas cores pintam etiquetas, ícones e chips do resto da interface
+ * (glossário, painel de detalhes, barra lateral) via entityChipStyle().
  */
 export const NODE_STYLE: Record<
   NodeType,
-  { label: string; color: string; radius: number; labelColor: string; labelPx: number; minZoom: number }
+  { label: string; plural: string; color: string; radius: number; labelColor: string; labelPx: number; minZoom: number }
 > = {
-  scheme:     { label: 'Esquema de Corrupção', color: '#ff00c8', radius: 100, labelColor: '#ff5ce0', labelPx: 13, minZoom: 0 },
-  party:      { label: 'Partido',              color: '#3b38ff', radius: 70,  labelColor: '#a5a3ff', labelPx: 12, minZoom: 0.12 },
-  company:    { label: 'Empresa',              color: '#878787', radius: 70,  labelColor: '#c4c4c4', labelPx: 11, minZoom: 0.3 },
-  politician: { label: 'Político',             color: '#00eeff', radius: 40,  labelColor: '#a5f3fc', labelPx: 11, minZoom: 0.45 },
-  operator:   { label: 'Operador',             color: '#ffffff', radius: 40,  labelColor: '#e2e8f0', labelPx: 11, minZoom: 0.45 },
+  scheme:     { label: 'Esquema de Corrupção', plural: 'Esquemas de Corrupção', color: '#ff00c8', radius: 100, labelColor: '#ff5ce0', labelPx: 13, minZoom: 0 },
+  party:      { label: 'Partido',              plural: 'Partidos',              color: '#3b38ff', radius: 70,  labelColor: '#a5a3ff', labelPx: 12, minZoom: 0.12 },
+  company:    { label: 'Empresa',              plural: 'Empresas',              color: '#878787', radius: 70,  labelColor: '#c4c4c4', labelPx: 11, minZoom: 0.3 },
+  politician: { label: 'Político',             plural: 'Políticos',             color: '#00eeff', radius: 40,  labelColor: '#a5f3fc', labelPx: 11, minZoom: 0.45 },
+  operator:   { label: 'Operador',             plural: 'Operadores',            color: '#ffffff', radius: 40,  labelColor: '#e2e8f0', labelPx: 11, minZoom: 0.45 },
+};
+
+/**
+ * Estilo de "chip"/etiqueta de uma entidade, na mesma cor do círculo do grafo:
+ * fundo translúcido, borda semitransparente e texto na cor do rótulo.
+ * Uso: <span style={entityChipStyle(node.type)}>…</span>
+ */
+export const entityChipStyle = (type: string | undefined): { backgroundColor: string; borderColor: string; color: string } => {
+  const st = NODE_STYLE[type as NodeType];
+  const color = st?.color ?? FALLBACK_COLOR;
+  return { backgroundColor: `${color}1f`, borderColor: `${color}66`, color: st?.labelColor ?? '#cbd5e1' };
 };
 
 /** Raio usado se aparecer um `type` desconhecido vindo do banco. */
