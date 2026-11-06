@@ -23,7 +23,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp } from 'lucide-react';
 import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
-import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey } from '@/lib/graphConfig';
+import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, getLinkEnds } from '@/lib/graphConfig';
 import { computeLayoutTargets, seedPositions, applyLayoutForces } from '@/lib/layout';
 
 // A biblioteca usa `window`, então só carrega no navegador (ssr: false).
@@ -88,6 +88,22 @@ function useIsDesktopPointer() {
 const LINK_WIDTH = 4;
 const LINK_WIDTH_SELECTED = 8;
 
+/**
+ * FOCO + CONTEXTO: ao passar o mouse num nó (ou selecionar um nó ou uma
+ * linha), ele, seus vizinhos diretos e as linhas entre eles ficam em destaque;
+ * o resto do grafo fica quase transparente, mas continua visível como
+ * contexto. Os vizinhos ganham rótulo mesmo com a câmera afastada.
+ *   FADED_ALPHA ↓ = fundo mais apagado; ↑ = mais contexto visível.
+ */
+const FADED_ALPHA = 0.1;
+const FADED_LINK_ALPHA = 0.05;
+/** Enquadramento do foco ao selecionar: duração, margem (px) e zoom máximo. */
+const FOCUS_FIT_MS = 600;
+const FOCUS_FIT_PADDING = 90;
+const FOCUS_MAX_ZOOM = 2;
+/** Largura do painel de detalhes no desktop (md:w-96 = 384px em InspectorDrawer). */
+const DRAWER_WIDTH_PX = 384;
+
 /** Cor de fundo do canvas; também usada como "contorno" atrás dos rótulos. */
 const BG_COLOR = '#080d16';
 
@@ -125,6 +141,52 @@ export default function NetworkGraph({
     graphRef.current = instance;
     setGraphReady(!!instance);
   }, [graphRef]);
+
+  /* -------------------------------------------------------------------------
+   * 0. FOCO + CONTEXTO — quem está em destaque (ver FADED_ALPHA)
+   *    Prioridade: nó sob o mouse > nó selecionado > linha selecionada.
+   * ----------------------------------------------------------------------- */
+  const [hoverNodeId, setHoverNodeId] = useState<string | null>(null);
+
+  const adjacency = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const l of graphData.links) {
+      const { sourceId, targetId } = getLinkEnds(l);
+      if (!map.has(sourceId)) map.set(sourceId, new Set());
+      if (!map.has(targetId)) map.set(targetId, new Set());
+      map.get(sourceId)!.add(targetId);
+      map.get(targetId)!.add(sourceId);
+    }
+    return map;
+  }, [graphData.links]);
+
+  // focusIds = nós centrais do foco; litIds = centrais + vizinhos (em destaque).
+  const { focusIds, litIds } = useMemo(() => {
+    let centre: string[] = [];
+    if (hoverNodeId) centre = [hoverNodeId];
+    else if (selectedNode) centre = [selectedNode.id];
+    else if (selectedLink) {
+      const { sourceId, targetId } = getLinkEnds(selectedLink);
+      centre = [sourceId, targetId];
+    }
+    const focus = new Set(centre);
+    const lit = new Set(centre);
+    // Com uma linha selecionada, destaca só as duas pontas (não os vizinhos delas).
+    if (hoverNodeId || selectedNode) centre.forEach((id) => adjacency.get(id)?.forEach((n) => lit.add(n)));
+    return { focusIds: focus, litIds: lit };
+  }, [hoverNodeId, selectedNode, selectedLink, adjacency]);
+
+  const hasFocus = focusIds.size > 0;
+  const isNodeLit = useCallback((id: string) => !hasFocus || litIds.has(id), [hasFocus, litIds]);
+  const isLinkLit = useCallback(
+    (link: any) => {
+      if (!hasFocus) return true;
+      const { sourceId, targetId } = getLinkEnds(link);
+      if (!hoverNodeId && !selectedNode && selectedLink) return getLinkKey(link) === getLinkKey(selectedLink);
+      return focusIds.has(sourceId) || focusIds.has(targetId);
+    },
+    [hasFocus, focusIds, hoverNodeId, selectedNode, selectedLink]
+  );
 
   /* -------------------------------------------------------------------------
    * 1. TAMANHO DO CANVAS — acompanha o contêiner (inclusive ao girar o celular)
@@ -200,6 +262,44 @@ export default function NetworkGraph({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphReady, graphData.nodes.length]);
 
+  /* 4b. ENQUADRAR O FOCO — ao selecionar um nó ou uma linha, a câmera mostra
+   *     o nó e TODOS os vizinhos em destaque, na área que o painel de detalhes
+   *     não cobre (no desktop o painel ocupa DRAWER_WIDTH_PX à direita; no
+   *     celular ele cobre a tela toda, então só enquadramos). Passar o mouse
+   *     não mexe na câmera. */
+  const selectionKey = selectedNode ? `n:${selectedNode.id}` : selectedLink ? `l:${getLinkKey(selectedLink)}` : '';
+  useEffect(() => {
+    const fg = graphRef.current;
+    if (!fg || !selectionKey) return;
+    userMovedCameraRef.current = true; // não reenquadrar a teia inteira depois
+    const lit = new Set<string>();
+    if (selectedNode) {
+      lit.add(selectedNode.id);
+      adjacency.get(selectedNode.id)?.forEach((id) => lit.add(id));
+    } else if (selectedLink) {
+      const { sourceId, targetId } = getLinkEnds(selectedLink);
+      lit.add(sourceId);
+      lit.add(targetId);
+    }
+    const t1 = setTimeout(() => {
+      graphRef.current?.zoomToFit(FOCUS_FIT_MS, FOCUS_FIT_PADDING, (n: any) => lit.has(n.id));
+    }, 50);
+    // Desloca o centro para a esquerda, metade da largura do painel.
+    const t2 = setTimeout(() => {
+      const g = graphRef.current;
+      if (!g || isMobile) return;
+      const z = g.zoom();
+      if (z > FOCUS_MAX_ZOOM) g.zoom(FOCUS_MAX_ZOOM, 300);
+      const c = g.centerAt();
+      if (c) g.centerAt(c.x + DRAWER_WIDTH_PX / 2 / Math.min(z, FOCUS_MAX_ZOOM), c.y, 300);
+    }, FOCUS_FIT_MS + 80);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectionKey, graphReady]);
+
   const handleEngineStop = useCallback(() => {
     if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
   }, [graphRef, fitPadding]);
@@ -232,13 +332,16 @@ export default function NetworkGraph({
     const isSelected = selectedNode?.id === node.id;
     const color = NODE_STYLE[node.type as NodeType]?.color ?? '#00f0ff';
     const size = getNodeRadius(node.type);
+    const lit = isNodeLit(node.id);
+    const isFocusCentre = focusIds.has(node.id);
 
     ctx.save();
+    ctx.globalAlpha = lit ? 1 : FADED_ALPHA;
 
     // Brilho externo. Sufixo hex = opacidade: '44' ≈ 27% (selecionado), '18' ≈ 9%.
     ctx.beginPath();
     ctx.arc(node.x, node.y, size + 8, 0, 2 * Math.PI);
-    ctx.fillStyle = `${color}${isSelected ? '44' : '18'}`;
+    ctx.fillStyle = `${color}${isSelected || isFocusCentre ? '44' : '18'}`;
     ctx.fill();
 
     // Disco interno escuro (fundo da foto).
@@ -265,7 +368,7 @@ export default function NetworkGraph({
     ctx.stroke();
 
     ctx.restore();
-  }, [selectedNode]);
+  }, [selectedNode, isNodeLit, focusIds]);
 
   // Área de clique = raio desenhado + folga (antes era menor que o círculo).
   const paintPointerArea = useCallback((node: any, color: string, ctx: CanvasRenderingContext2D) => {
@@ -296,6 +399,7 @@ export default function NetworkGraph({
     const safeScale = globalScale > 0 ? globalScale : 1;
 
     ctx.save();
+    ctx.globalAlpha = isLinkLit(link) ? 1 : FADED_LINK_ALPHA;
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(end.x, end.y);
@@ -311,7 +415,7 @@ export default function NetworkGraph({
     ctx.setLineDash(style?.dashed ? [12, 10] : []);
     ctx.stroke();
     ctx.restore();
-  }, [isLinkSelected]);
+  }, [isLinkSelected, isLinkLit]);
 
   /* -------------------------------------------------------------------------
    * 8. RÓTULOS — desenhados DEPOIS de tudo (onRenderFramePost), então ficam
@@ -382,22 +486,38 @@ export default function NetworkGraph({
   const drawLabels = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     const scale = globalScale > 0 ? globalScale : 1;
 
-    // O selecionado é desenhado por último → fica por cima até de outros rótulos.
-    const ordered = selectedNode
-      ? [...graphData.nodes.filter((n) => n.id !== selectedNode.id), ...graphData.nodes.filter((n) => n.id === selectedNode.id)]
-      : graphData.nodes;
+    // Ordem de desenho: apagados, depois vizinhos, e o centro do foco por
+    // último → fica por cima até de outros rótulos.
+    const rank = (n: GraphNode) => (focusIds.has(n.id) ? 2 : litIds.has(n.id) ? 1 : 0);
+    const ordered = hasFocus ? [...graphData.nodes].sort((a, b) => rank(a) - rank(b)) : graphData.nodes;
+
+    // Anticolisão: rótulos são desenhados do MAIS importante para o menos
+    // (centro do foco, vizinhos em destaque, esquemas, partidos, o resto) e um
+    // rótulo que encostaria num já desenhado é pulado — aparece ao aproximar.
+    const importance = (n: any) =>
+      (focusIds.has(n.id) || selectedNode?.id === n.id ? 4e6 : 0) +
+      (hasFocus && litIds.has(n.id) ? 2e6 : 0) +
+      (n.type === 'scheme' ? 3e5 : n.type === 'party' ? 2e5 : n.type === 'company' ? 1e5 : 0) +
+      (adjacency.get(n.id)?.size ?? 0);
+    const byImportance = [...(ordered as any[])].sort((a, b) => importance(b) - importance(a));
+    const placed: { x0: number; x1: number; y0: number; y1: number }[] = [];
+    const pad = 3 / scale;
+    const toDraw: { node: any; lines: string[]; y: number; fontSize: number; px: number; weight: number }[] = [];
 
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.lineJoin = 'round';
 
-    for (const node of ordered as any[]) {
+    for (const node of byImportance) {
       if (typeof node.x !== 'number') continue;
       const style = NODE_STYLE[node.type as NodeType];
       const isSelected = selectedNode?.id === node.id;
-      // Nível de detalhe: com a câmera afastada só aparecem esquemas/partidos.
-      if (!isSelected && scale < (style?.minZoom ?? 0.5)) continue;
+      // Com foco: só os nós em destaque têm rótulo — todos eles, mesmo com a
+      // câmera afastada. Sem foco: nível de detalhe por tipo (minZoom).
+      if (hasFocus) {
+        if (!litIds.has(node.id)) continue;
+      } else if (!isSelected && scale < (style?.minZoom ?? 0.5)) continue;
 
       // Tamanho em px de tela convertido para unidades do grafo.
       const px = style?.labelPx ?? 11;
@@ -408,7 +528,7 @@ export default function NetworkGraph({
       if (node.type === 'scheme') text = text.toUpperCase();
 
       // Quebra medida na fonte em px de tela (independe do zoom → cacheável).
-      const maxLines = isSelected ? Infinity : LABEL_MAX_LINES;
+      const maxLines = isSelected || focusIds.has(node.id) ? Infinity : LABEL_MAX_LINES;
       const cacheKey = `${weight}|${px}|${maxLines}|${text}`;
       let lines = labelLinesCache.current.get(cacheKey);
       if (!lines) {
@@ -419,17 +539,37 @@ export default function NetworkGraph({
 
       const y = node.y + getNodeRadius(node.type) + 6 / scale;
       const lineStep = fontSize * LABEL_LINE_HEIGHT;
+      ctx.font = `${weight} ${px}px Inter, system-ui, sans-serif`;
+      const widthPx = Math.max(...lines.map((l) => ctx.measureText(l).width));
+      const extraLine = node.type === 'politician' && node.party && (scale >= 1 || isSelected || (hasFocus && litIds.has(node.id))) ? 1 : 0;
+      const box = {
+        x0: node.x - widthPx / 2 / scale - pad,
+        x1: node.x + widthPx / 2 / scale + pad,
+        y0: y - pad,
+        y1: y + (lines.length + extraLine) * lineStep + pad,
+      };
+      const mustShow = isSelected || focusIds.has(node.id);
+      if (!mustShow && placed.some((b) => box.x0 < b.x1 && box.x1 > b.x0 && box.y0 < b.y1 && box.y1 > b.y0)) continue;
+      placed.push(box);
+      toDraw.push({ node, lines, y, fontSize, px, weight });
+    }
+
+    // Desenha do menos para o mais importante (o centro do foco fica por cima).
+    for (const { node, lines, y, fontSize, px, weight } of toDraw.reverse()) {
+      const style = NODE_STYLE[node.type as NodeType];
+      const isSelected = selectedNode?.id === node.id;
+      const lineStep = fontSize * LABEL_LINE_HEIGHT;
       ctx.font = `${weight} ${fontSize}px Inter, system-ui, sans-serif`;
       ctx.lineWidth = HALO_PX / scale;
       ctx.strokeStyle = BG_COLOR;
-      ctx.fillStyle = isSelected ? '#ffffff' : style?.labelColor ?? '#cbd5e1';
+      ctx.fillStyle = isSelected || focusIds.has(node.id) ? '#ffffff' : style?.labelColor ?? '#cbd5e1';
       lines.forEach((line, i) => {
         ctx.strokeText(line, node.x, y + i * lineStep);
         ctx.fillText(line, node.x, y + i * lineStep);
       });
 
       // Linha extra com a sigla do partido (políticos, com zoom próximo).
-      if (node.type === 'politician' && node.party && (scale >= 1 || isSelected)) {
+      if (node.type === 'politician' && node.party && (scale >= 1 || isSelected || (hasFocus && litIds.has(node.id)))) {
         const subSize = (px - 1) / scale;
         ctx.font = `400 ${subSize}px Inter, system-ui, sans-serif`;
         const y2 = y + (lines.length - 1) * lineStep + fontSize + 2 / scale;
@@ -439,7 +579,7 @@ export default function NetworkGraph({
       }
     }
     ctx.restore();
-  }, [graphData.nodes, selectedNode, wrapLabel]);
+  }, [graphData.nodes, selectedNode, wrapLabel, hasFocus, focusIds, litIds, adjacency]);
 
   /* -------------------------------------------------------------------------
    * 9. TELA CHEIA — protegido para iOS Safari (sem API) e promessas rejeitadas
@@ -477,12 +617,14 @@ export default function NetworkGraph({
         // define a área de clique da linha, por isso acompanha a espessura.
         linkWidth={(link: any) => (isLinkSelected(link) ? LINK_WIDTH_SELECTED : LINK_WIDTH)}
         // Partículas animadas (quantidade por status em STATUS_STYLE.particles)
-        linkDirectionalParticles={(link: any) => statusStyle(link.status)?.particles ?? 0}
+        linkDirectionalParticles={(link: any) => (isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0)}
         linkDirectionalParticleSpeed={0.005}
         linkDirectionalParticleWidth={5}
         linkDirectionalParticleColor={(link: any) => statusColor(link.status)}
         // Interação
         onNodeClick={(node: any) => onSelectNode(node)}
+        // Foco + contexto ao passar o mouse (no celular, o toque seleciona).
+        onNodeHover={(node: any) => setHoverNodeId(node ? node.id : null)}
         onLinkClick={(link: any) => onSelectLink(link)}
         // Arrastar: a biblioteca já faz o comportamento desejado sozinha —
         //   • esquema (fixo antes do arraste) → continua fixo onde foi solto;

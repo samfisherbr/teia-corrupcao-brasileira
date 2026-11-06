@@ -279,34 +279,15 @@ export default function Page() {
 
   // Clique no "Índice de Esquemas" da barra lateral: seleciona e voa até o nó.
   // 2.5 = nível de zoom; 600 = duração da animação em ms.
-  // Na visão por esquemas, quem centraliza é o próprio SchemeOverview.
-  const centerOnFullGraph = useCallback((schemeNode: GraphNode) => {
-    const fg = graphRef.current;
-    if (fg && typeof schemeNode.x === 'number' && typeof schemeNode.y === 'number') {
-      fg.centerAt(schemeNode.x, schemeNode.y, 600);
-      fg.zoom(2.5, 600);
-    }
-  }, []);
-
+  // Selecionar já basta: nas duas visões o próprio grafo enquadra o que foi
+  // selecionado (na teia completa, o nó e todos os vizinhos em destaque).
   const handleSelectSchemeFromIndex = useCallback((schemeNode: GraphNode) => {
     selectNode(schemeNode);
-    if (viewMode === 'full') centerOnFullGraph(schemeNode);
-  }, [selectNode, viewMode, centerOnFullGraph]);
+  }, [selectNode]);
 
-  // "Ver na teia completa": troca de visão e, quando a teia completa já tiver
-  // posicionado os nós, voa até o esquema selecionado.
-  const pendingCenterRef = useRef<GraphNode | null>(null);
-  const openFullGraph = useCallback(() => {
-    pendingCenterRef.current = selectedNode;
-    setViewMode('full');
-  }, [selectedNode]);
-  useEffect(() => {
-    if (viewMode !== 'full' || !pendingCenterRef.current) return;
-    const target = pendingCenterRef.current;
-    pendingCenterRef.current = null;
-    const t = setTimeout(() => centerOnFullGraph(target), 700);
-    return () => clearTimeout(t);
-  }, [viewMode, centerOnFullGraph]);
+  // "Ver na teia completa": troca de visão mantendo a seleção; a teia completa
+  // enquadra o esquema e seus vizinhos ao abrir.
+  const openFullGraph = useCallback(() => setViewMode('full'), []);
 
   // Anúncio só aparece se as duas variáveis de ambiente existirem (ver README).
   const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
