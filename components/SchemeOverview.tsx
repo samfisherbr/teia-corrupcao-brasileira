@@ -60,18 +60,20 @@ const AUTO_MAX_LINKS_PER_NODE = 2.5;
 const FIT_MAX_ZOOM = 1.2;
 
 const LABEL_PX = 12;
+const LABEL_PX_MOBILE = 10;
 const LABEL_MAX_WIDTH_PX = 150;
+const LABEL_MAX_WIDTH_PX_MOBILE = 110;
 const LABEL_MAX_LINES = 3;
 
 const endId = (e: string | OverviewNode) => (typeof e === 'object' ? e.id : e);
 
-function wrap(ctx: CanvasRenderingContext2D, text: string, maxLines: number): string[] {
+function wrap(ctx: CanvasRenderingContext2D, text: string, maxLines: number, maxWidth: number): string[] {
   const words = text.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let cur = '';
   for (const w of words) {
     const cand = cur ? `${cur} ${w}` : w;
-    if (!cur || ctx.measureText(cand).width <= LABEL_MAX_WIDTH_PX) cur = cand;
+    if (!cur || ctx.measureText(cand).width <= maxWidth) cur = cand;
     else {
       lines.push(cur);
       cur = w;
@@ -165,6 +167,8 @@ export default function SchemeOverview({
     setSelectedPair(still ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [overview]);
+
+  const maxWeight = useMemo(() => Math.max(1, ...overview.links.map((l) => l.weight)), [overview.links]);
 
   /* FOCO — esquema sob o mouse (ou o selecionado) e seus vizinhos. */
   const focusId = hoverId ?? (selectedNode?.type === 'scheme' ? selectedNode.id : null);
@@ -288,9 +292,12 @@ export default function SchemeOverview({
         ((endId(selectedPair.source) === s.id && endId(selectedPair.target) === t.id) ||
           (endId(selectedPair.source) === t.id && endId(selectedPair.target) === s.id));
       const touchesFocus = !!focusId && (s.id === focusId || t.id === focusId);
-      // Contraste por peso: 1 em comum = quase transparente; muitos = forte.
-      const base = Math.min(0.75, 0.06 + 0.11 * (link.weight - 1) + (link.weight > 1 ? 0.12 : 0));
-      const alpha = isPair ? 0.95 : focusId ? (touchesFocus ? 0.85 : 0.04) : Math.max(0.08, base);
+      // Contraste RELATIVO ao link mais forte visível: com dados esparsos
+      // (quase tudo com 1 em comum, como no banco real) as linhas continuam
+      // bem visíveis; com dados densos, as fracas recuam.
+      const rel = maxWeight > 1 ? (link.weight - 1) / (maxWeight - 1) : 1;
+      const base = 0.3 + 0.5 * rel;
+      const alpha = isPair ? 0.95 : focusId ? (touchesFocus ? 0.9 : 0.05) : base;
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(s.x, s.y!);
@@ -301,7 +308,7 @@ export default function SchemeOverview({
       ctx.stroke();
       ctx.restore();
     },
-    [selectedPair, focusId]
+    [selectedPair, focusId, maxWeight]
   );
 
   /* RÓTULOS — desenhados por ordem de importância (selecionado, em foco e
@@ -314,8 +321,14 @@ export default function SchemeOverview({
       const priority = (n: OverviewNode) =>
         (selectedNode?.id === n.id ? 3e6 : 0) + (n.id === focusId ? 2e6 : 0) + (neighbours.has(n.id) ? 1e6 : 0) + n.entityCount;
       const ordered = overview.nodes.filter((n) => typeof n.x === 'number').sort((a, b) => priority(b) - priority(a));
-      const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
       const gap = 4 / scale;
+      const labelPx = isMobile ? LABEL_PX_MOBILE : LABEL_PX;
+      const maxW = isMobile ? LABEL_MAX_WIDTH_PX_MOBILE : LABEL_MAX_WIDTH_PX;
+      // Os próprios círculos já contam como ocupados: um rótulo não cobre outro esquema.
+      const placed: { x0: number; y0: number; x1: number; y1: number; owner?: string }[] = ordered.map((n) => {
+        const r = nodeRadius(n) + 2 / scale;
+        return { x0: n.x! - r, x1: n.x! + r, y0: n.y! - r, y1: n.y! + r, owner: n.id };
+      });
 
       ctx.save();
       ctx.textAlign = 'center';
@@ -324,15 +337,15 @@ export default function SchemeOverview({
       for (const node of ordered) {
         const selected = selectedNode?.id === node.id;
         const text = node.scheme.label.toUpperCase();
-        const key = `${selected}|${text}`;
-        ctx.font = `600 ${LABEL_PX}px Inter, system-ui, sans-serif`;
+        const key = `${selected}|${labelPx}|${text}`;
+        ctx.font = `600 ${labelPx}px Inter, system-ui, sans-serif`;
         let lines = labelCache.current.get(key);
         if (!lines) {
-          lines = wrap(ctx, text, selected ? 99 : LABEL_MAX_LINES);
+          lines = wrap(ctx, text, selected ? 99 : LABEL_MAX_LINES, maxW);
           labelCache.current.set(key, lines);
         }
         const widthPx = Math.max(...lines.map((l) => ctx.measureText(l).width));
-        const fs = LABEL_PX / scale;
+        const fs = labelPx / scale;
         const y = node.y! + nodeRadius(node) + 8 / scale;
         const box = {
           x0: node.x! - widthPx / 2 / scale - gap,
@@ -340,7 +353,9 @@ export default function SchemeOverview({
           y0: y - gap,
           y1: y + lines.length * fs * 1.2 + gap,
         };
-        const collides = placed.some((b) => box.x0 < b.x1 && box.x1 > b.x0 && box.y0 < b.y1 && box.y1 > b.y0);
+        const collides = placed.some(
+          (b) => b.owner !== node.id && box.x0 < b.x1 && box.x1 > b.x0 && box.y0 < b.y1 && box.y1 > b.y0
+        );
         if (collides && !selected) continue;
         placed.push(box);
 
@@ -357,7 +372,7 @@ export default function SchemeOverview({
       ctx.restore();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [overview.nodes, selectedNode, focusId, neighbours]
+    [overview.nodes, selectedNode, focusId, neighbours, isMobile]
   );
 
   const pairA = selectedPair ? (selectedPair.source as OverviewNode) : null;
