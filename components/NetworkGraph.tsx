@@ -71,24 +71,11 @@ const WARMUP_TICKS = 100;
 const COOLDOWN_MS = 4000;
 
 /**
- * Desktop/notebook = mouse ou trackpad (ponteiro fino, com hover). Nesses, a
- * simulação nunca para e a deriva suave mantém a teia "respirando".
- * Celular/tablet (toque) = a teia se acomoda e fica parada, poupando bateria.
- * Para ligar a deriva em todos os aparelhos, troque a expressão por `true`.
+ * Deriva contínua ("teia respirando"): DESLIGADA em todos os aparelhos — a
+ * teia se acomoda em COOLDOWN_MS e fica parada, igual no celular e no
+ * desktop. Para religar (a simulação nunca para), troque por `true`.
  */
-const DESKTOP_POINTER_QUERY = '(hover: hover) and (pointer: fine)';
-
-function useIsDesktopPointer() {
-  const [isDesktop, setIsDesktop] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia(DESKTOP_POINTER_QUERY);
-    const update = () => setIsDesktop(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-  return isDesktop;
-}
+const DRIFT_ENABLED = false;
 
 /** Espessura das linhas em unidades do grafo: normal / selecionada. */
 const LINK_WIDTH = 4;
@@ -129,10 +116,9 @@ const FADED_LINK_ALPHA = 0.05;
 /** Enquadramento do foco ao selecionar: duração, margem (px) e zoom máximo. */
 const FOCUS_FIT_MS = 600;
 const FOCUS_FIT_PADDING = 90;
-const FOCUS_MAX_ZOOM = 2;
-/** No celular: zoom máximo menor e o foco sobe para não ficar sob os controles. */
-const FOCUS_MAX_ZOOM_MOBILE = 1.2;
-const MOBILE_BOTTOM_CONTROLS_PX = 80;
+const FOCUS_MAX_ZOOM = 1.2;
+/** Altura dos controles de câmera na base: o foco sobe para não ficar sob eles. */
+const BOTTOM_CONTROLS_PX = 80;
 /** Largura do painel de detalhes no desktop (md:w-96 = 384px em InspectorDrawer). */
 const DRAWER_WIDTH_PX = 384;
 
@@ -154,8 +140,7 @@ export default function NetworkGraph({
   onOpenDetails,
   paused = false,
 }: NetworkGraphProps) {
-  // Movimento constante só em desktop/notebook (ver DESKTOP_POINTER_QUERY).
-  const driftEnabled = useIsDesktopPointer();
+  const driftEnabled = DRIFT_ENABLED;
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const isMobile = dimensions.width < MOBILE_BREAKPOINT;
@@ -179,11 +164,9 @@ export default function NetworkGraph({
 
   /* -------------------------------------------------------------------------
    * 0. FOCO + CONTEXTO — quem está em destaque (ver FADED_ALPHA)
-   *    Prioridade: nó sob o mouse > nó selecionado > linha selecionada.
+   *    Vem só da seleção (toque/clique), igual no celular e no desktop:
+   *    nó selecionado > linha selecionada. Passar o mouse não destaca.
    * ----------------------------------------------------------------------- */
-  const [hoverNodeId, setHoverNodeId] = useState<string | null>(null);
-  // Até quando ignorar o hover (a câmera está se movendo sozinha).
-  const suppressHoverUntilRef = useRef(0);
 
   const adjacency = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -200,8 +183,7 @@ export default function NetworkGraph({
   // focusIds = nós centrais do foco; litIds = centrais + vizinhos (em destaque).
   const { focusIds, litIds } = useMemo(() => {
     let centre: string[] = [];
-    if (hoverNodeId) centre = [hoverNodeId];
-    else if (selectedNode) centre = [selectedNode.id];
+    if (selectedNode) centre = [selectedNode.id];
     else if (selectedLink) {
       const { sourceId, targetId } = getLinkEnds(selectedLink);
       centre = [sourceId, targetId];
@@ -209,9 +191,9 @@ export default function NetworkGraph({
     const focus = new Set(centre);
     const lit = new Set(centre);
     // Com uma linha selecionada, destaca só as duas pontas (não os vizinhos delas).
-    if (hoverNodeId || selectedNode) centre.forEach((id) => adjacency.get(id)?.forEach((n) => lit.add(n)));
+    if (selectedNode) centre.forEach((id) => adjacency.get(id)?.forEach((n) => lit.add(n)));
     return { focusIds: focus, litIds: lit };
-  }, [hoverNodeId, selectedNode, selectedLink, adjacency]);
+  }, [selectedNode, selectedLink, adjacency]);
 
   const hasFocus = focusIds.size > 0;
   const isNodeLit = useCallback((id: string) => !hasFocus || litIds.has(id), [hasFocus, litIds]);
@@ -219,10 +201,10 @@ export default function NetworkGraph({
     (link: any) => {
       if (!hasFocus) return true;
       const { sourceId, targetId } = getLinkEnds(link);
-      if (!hoverNodeId && !selectedNode && selectedLink) return getLinkKey(link) === getLinkKey(selectedLink);
+      if (!selectedNode && selectedLink) return getLinkKey(link) === getLinkKey(selectedLink);
       return focusIds.has(sourceId) || focusIds.has(targetId);
     },
-    [hasFocus, focusIds, hoverNodeId, selectedNode, selectedLink]
+    [hasFocus, focusIds, selectedNode, selectedLink]
   );
 
   /* -------------------------------------------------------------------------
@@ -300,8 +282,8 @@ export default function NetworkGraph({
   }, [graphReady, graphData.nodes.length]);
 
   /* 4b. ENQUADRAR O FOCO — ao selecionar um nó ou uma linha, a câmera mostra
-   *     o nó e TODOS os vizinhos em destaque. No celular o zoom é limitado e o
-   *     foco sobe acima dos controles. Passar o mouse não mexe na câmera.
+   *     o nó e TODOS os vizinhos em destaque, com zoom limitado e o foco
+   *     acima dos controles de câmera (igual no celular e no desktop).
    *     Quando o painel de detalhes abre no desktop (ocupa DRAWER_WIDTH_PX à
    *     direita), a câmera desliza para a esquerda; ao fechar, volta. */
   const selectionKey = selectedNode ? `n:${selectedNode.id}` : selectedLink ? `l:${getLinkKey(selectedLink)}` : '';
@@ -309,10 +291,6 @@ export default function NetworkGraph({
     const fg = graphRef.current;
     if (!fg || !selectionKey) return;
     userMovedCameraRef.current = true; // não reenquadrar a teia inteira depois
-    // Durante o enquadramento, os nós passam sob o ponteiro parado: ignora o
-    // hover e solta o que estava, para o destaque ficar no item selecionado.
-    suppressHoverUntilRef.current = Date.now() + FOCUS_FIT_MS + 700;
-    setHoverNodeId(null);
     const lit = new Set<string>();
     if (selectedNode) {
       lit.add(selectedNode.id);
@@ -322,19 +300,26 @@ export default function NetworkGraph({
       lit.add(sourceId);
       lit.add(targetId);
     }
+    // zoomToFit enquadra os CENTROS dos nós; a margem extra = maior raio do
+    // grupo × zoom máximo, para os círculos inteiros caberem na tela.
+    const biggest = Math.max(0, ...Array.from(lit).map((id) => getNodeRadius((nodeById.get(id) as any)?.type)));
+    // Nunca mais que 30% do menor lado da tela (no celular, uma margem fixa
+    // grande sobraria pouco espaço e o zoom despencaria).
+    const padding = Math.min(FOCUS_FIT_PADDING + biggest * FOCUS_MAX_ZOOM, 0.3 * Math.min(dimensions.width, dimensions.height));
     const t1 = setTimeout(() => {
-      graphRef.current?.zoomToFit(FOCUS_FIT_MS, FOCUS_FIT_PADDING, (n: any) => lit.has(n.id));
+      graphRef.current?.zoomToFit(FOCUS_FIT_MS, padding, (n: any) => lit.has(n.id));
     }, 50);
     const t2 = setTimeout(() => {
       const g = graphRef.current;
       if (!g) return;
-      const maxZoom = isMobile ? FOCUS_MAX_ZOOM_MOBILE : FOCUS_MAX_ZOOM;
-      const z = Math.min(g.zoom(), maxZoom);
-      if (g.zoom() > maxZoom) g.zoom(maxZoom, 300);
+      const z = Math.min(g.zoom(), FOCUS_MAX_ZOOM);
+      if (g.zoom() > FOCUS_MAX_ZOOM) g.zoom(FOCUS_MAX_ZOOM, 300);
       const c = g.centerAt();
       if (!c) return;
-      if (isMobile) g.centerAt(c.x, c.y + MOBILE_BOTTOM_CONTROLS_PX / 2 / z, 300);
-      else if (detailsOpenRef.current) g.centerAt(c.x + DRAWER_WIDTH_PX / 2 / z, c.y, 300);
+      // Sobe o foco acima dos controles; no desktop, com o painel aberto,
+      // desloca também para a esquerda (o painel ocupa a direita).
+      const dx = !isMobile && detailsOpenRef.current ? DRAWER_WIDTH_PX / 2 / z : 0;
+      g.centerAt(c.x + dx, c.y + BOTTOM_CONTROLS_PX / 2 / z, 300);
     }, FOCUS_FIT_MS + 80);
     return () => {
       clearTimeout(t1);
@@ -350,7 +335,6 @@ export default function NetworkGraph({
     detailsOpenRef.current = detailsOpen;
     const g = graphRef.current;
     if (!g || isMobile || was === detailsOpen) return;
-    suppressHoverUntilRef.current = Date.now() + 700;
     const c = g.centerAt();
     if (!c) return;
     const dx = DRAWER_WIDTH_PX / 2 / g.zoom();
@@ -752,15 +736,6 @@ export default function NetworkGraph({
         // Interação
         onNodeClick={(node: any) => onSelectNode(node)}
         // Foco + contexto ao passar o mouse (no celular, o toque seleciona).
-        onNodeHover={(node: any) => {
-          // Telas de toque não têm hover: a biblioteca usa a posição do último
-          // toque, e quando a câmera se move os nós deslizam por baixo dela e
-          // o destaque "pulava" para um vizinho. Por isso, hover só com mouse
-          // (driftEnabled = ponteiro fino com hover) e nunca durante o
-          // enquadramento automático da câmera.
-          if (!driftEnabled || Date.now() < suppressHoverUntilRef.current) return;
-          setHoverNodeId(node ? node.id : null);
-        }}
         onLinkClick={(link: any) => onSelectLink(link)}
         // Toque/clique no fundo limpa a seleção (e o botão "Exibir detalhes").
         onBackgroundClick={() => onClearSelection()}
@@ -772,8 +747,8 @@ export default function NetworkGraph({
         onEngineStop={handleEngineStop}
         // Física: ver constantes no topo do arquivo e lib/layout.ts
         warmupTicks={WARMUP_TICKS}
-        // Desktop: Infinity = a simulação nunca para (deriva contínua).
-        // Celular: para depois de COOLDOWN_MS e a teia fica em repouso.
+        // Com DRIFT_ENABLED = false (padrão), a simulação para depois de
+        // COOLDOWN_MS e a teia fica em repouso em todos os aparelhos.
         cooldownTime={driftEnabled ? Infinity : COOLDOWN_MS}
         d3AlphaDecay={0.03}   // ↑ assenta mais rápido (e mais "duro"); ↓ mais lento e suave
         d3VelocityDecay={0.35} // "atrito": ↑ nós param mais cedo, menos tremedeira
