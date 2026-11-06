@@ -102,6 +102,20 @@ export default function Page() {
     return { min, max: Math.max(min, max) };
   }, [graphData.links, schemeStartYear]);
 
+  // Celular (< 768px, mesmo limite do `md` do Tailwind): na primeira carga, o
+  // slider começa no ano atual — ou no ano mais próximo dele que os dados
+  // permitem (o máximo do slider é o início do esquema mais recente). No
+  // desktop continua começando no ano mais antigo. Roda uma vez só: recarregar
+  // os dados ou girar a tela não desfaz a escolha do usuário.
+  const mobileYearInitDone = useRef(false);
+  useEffect(() => {
+    if (mobileYearInitDone.current || graphData.links.length === 0) return;
+    mobileYearInitDone.current = true;
+    if (!window.matchMedia('(max-width: 767px)').matches) return;
+    const now = new Date().getFullYear();
+    setStartYearFilter(Math.max(yearRange.min, Math.min(now, yearRange.max)));
+  }, [graphData.links.length, yearRange]);
+
   // --- Carregamento dos dados ----------------------------------------------
   // AbortController cancela a requisição se o componente desmontar no meio.
   useEffect(() => {

@@ -9,6 +9,8 @@
  *
  * A área de toque do slider tem 32px de altura (h-8), embora a trilha
  * desenhada seja fina, para ser fácil de arrastar com o dedo.
+ * Visual da trilha e do brilho pulsante do seletor: `.timeline-range` em
+ * app/globals.css (a parte preenchida vem da variável --pct definida aqui).
  */
 import React from 'react';
 import { Calendar } from 'lucide-react';
@@ -28,6 +30,9 @@ export default function MobileTimeline({
   maxYear,
   nodeCount,
 }: MobileTimelineProps) {
+  const span = maxYear - minYear;
+  const pct = span > 0 ? ((startYearFilter - minYear) / span) * 100 : 100;
+
   return (
     <div className="md:hidden z-30 shrink-0 w-full px-3 py-2 bg-[#090f1b] border-b border-slate-800/80 flex items-center gap-3">
       <label
@@ -51,7 +56,8 @@ export default function MobileTimeline({
         onChange={(e) => setStartYearFilter(Number(e.target.value))}
         aria-label="Ano de início"
         aria-valuetext={`A partir de ${startYearFilter}, ${nodeCount} nós visíveis`}
-        className="min-w-0 flex-1 h-8 accent-cyan-400 cursor-pointer bg-transparent"
+        className="timeline-range min-w-0 flex-1 h-8"
+        style={{ '--pct': `${pct}%` } as React.CSSProperties}
       />
       <span className="shrink-0 text-[10px] font-mono text-slate-500" aria-hidden="true">
         {maxYear}

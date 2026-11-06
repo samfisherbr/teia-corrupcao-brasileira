@@ -55,3 +55,95 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 240, 255, 0.4);
 }
+/* ---------------------------------------------------------------------------
+   Slider da linha do tempo no celular (components/MobileTimeline.tsx).
+   Trilha e seletor desenhados à mão (o seletor nativo não aceita brilho).
+   A parte preenchida usa a variável --pct (0%–100%), que o componente define.
+   O seletor "pulsa" um brilho ciano (timeline-hum); com "reduzir movimento"
+   ativado no aparelho, o brilho fica fixo.
+   Ajustes: cor → --timeline-cyan; ritmo → duração da animation (2.4s);
+   intensidade → os dois box-shadow de @keyframes timeline-hum.
+   --------------------------------------------------------------------------- */
+.timeline-range {
+  --timeline-cyan: 34, 211, 238; /* #22d3ee (cyan-400) em RGB */
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.timeline-range:focus {
+  outline: none;
+}
+
+/* Trilha */
+.timeline-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    rgb(var(--timeline-cyan)) var(--pct, 0%),
+    #334155 var(--pct, 0%)
+  );
+}
+.timeline-range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: #334155;
+}
+.timeline-range::-moz-range-progress {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgb(var(--timeline-cyan));
+}
+
+/* Seletor */
+.timeline-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px; /* centraliza na trilha de 6px: (6 − 18) / 2 */
+  border-radius: 9999px;
+  background: rgb(var(--timeline-cyan));
+  border: 2px solid #ecfeff;
+  animation: timeline-hum 2.4s ease-in-out infinite;
+}
+.timeline-range::-moz-range-thumb {
+  width: 14px; /* + 2px de borda de cada lado = 18px */
+  height: 14px;
+  border-radius: 9999px;
+  background: rgb(var(--timeline-cyan));
+  border: 2px solid #ecfeff;
+  animation: timeline-hum 2.4s ease-in-out infinite;
+}
+
+/* Contorno de foco para teclado, sem apagar o brilho */
+.timeline-range:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #ecfeff;
+  outline-offset: 3px;
+}
+.timeline-range:focus-visible::-moz-range-thumb {
+  outline: 2px solid #ecfeff;
+  outline-offset: 3px;
+}
+
+@keyframes timeline-hum {
+  0%,
+  100% {
+    box-shadow: 0 0 4px 1px rgba(var(--timeline-cyan), 0.45);
+  }
+  50% {
+    box-shadow: 0 0 12px 5px rgba(var(--timeline-cyan), 0.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-range::-webkit-slider-thumb {
+    animation: none;
+    box-shadow: 0 0 8px 3px rgba(var(--timeline-cyan), 0.6);
+  }
+  .timeline-range::-moz-range-thumb {
+    animation: none;
+    box-shadow: 0 0 8px 3px rgba(var(--timeline-cyan), 0.6);
+  }
+}
