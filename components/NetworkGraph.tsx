@@ -77,6 +77,26 @@ const COOLDOWN_MS = 4000;
  */
 const DRIFT_ENABLED = false;
 
+/**
+ * Mouse/trackpad (ponteiro fino, com hover)? Só nesses aparelhos o hover
+ * destaca nós e linhas. Em telas de toque a biblioteca trata a posição do
+ * último toque como "hover", e o destaque pulava para vizinhos quando a
+ * câmera se movia — por isso lá o destaque vem só do toque (seleção).
+ */
+const HOVER_POINTER_QUERY = '(hover: hover) and (pointer: fine)';
+
+function useHoverPointer() {
+  const [canHover, setCanHover] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(HOVER_POINTER_QUERY);
+    const update = () => setCanHover(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return canHover;
+}
+
 /** Espessura das linhas em unidades do grafo: normal / selecionada. */
 const LINK_WIDTH = 4;
 const LINK_WIDTH_SELECTED = 8;
@@ -141,6 +161,7 @@ export default function NetworkGraph({
   paused = false,
 }: NetworkGraphProps) {
   const driftEnabled = DRIFT_ENABLED;
+  const canHover = useHoverPointer();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const isMobile = dimensions.width < MOBILE_BREAKPOINT;
@@ -180,31 +201,52 @@ export default function NetworkGraph({
     return map;
   }, [graphData.links]);
 
+  // Hover (só com mouse): nó ou linha sob o cursor. Tem prioridade sobre a
+  // seleção enquanto o cursor estiver em cima; ao sair, volta o destaque da
+  // seleção. Não move a câmera nem abre nada.
+  const [hoverNodeId, setHoverNodeId] = useState<string | null>(null);
+  const [hoverLink, setHoverLink] = useState<GraphLink | null>(null);
+  // Até quando ignorar o hover (a câmera está se movendo sozinha: os nós
+  // passam sob o cursor parado e o destaque "pularia" para eles).
+  const suppressHoverUntilRef = useRef(0);
+  const clearHover = useCallback(() => {
+    setHoverNodeId(null);
+    setHoverLink(null);
+  }, []);
+
+  // O que está em foco: nó (com vizinhos) ou linha (só as duas pontas).
+  // Prioridade: nó sob o mouse > linha sob o mouse > nó selecionado > linha selecionada.
+  const focus = useMemo<{ nodeId: string } | { link: GraphLink } | null>(() => {
+    if (hoverNodeId) return { nodeId: hoverNodeId };
+    if (hoverLink) return { link: hoverLink };
+    if (selectedNode) return { nodeId: selectedNode.id };
+    if (selectedLink) return { link: selectedLink };
+    return null;
+  }, [hoverNodeId, hoverLink, selectedNode, selectedLink]);
+
   // focusIds = nós centrais do foco; litIds = centrais + vizinhos (em destaque).
   const { focusIds, litIds } = useMemo(() => {
-    let centre: string[] = [];
-    if (selectedNode) centre = [selectedNode.id];
-    else if (selectedLink) {
-      const { sourceId, targetId } = getLinkEnds(selectedLink);
-      centre = [sourceId, targetId];
+    if (!focus) return { focusIds: new Set<string>(), litIds: new Set<string>() };
+    if ('nodeId' in focus) {
+      const lit = new Set([focus.nodeId]);
+      adjacency.get(focus.nodeId)?.forEach((n) => lit.add(n));
+      return { focusIds: new Set([focus.nodeId]), litIds: lit };
     }
-    const focus = new Set(centre);
-    const lit = new Set(centre);
-    // Com uma linha selecionada, destaca só as duas pontas (não os vizinhos delas).
-    if (selectedNode) centre.forEach((id) => adjacency.get(id)?.forEach((n) => lit.add(n)));
-    return { focusIds: focus, litIds: lit };
-  }, [selectedNode, selectedLink, adjacency]);
+    const { sourceId, targetId } = getLinkEnds(focus.link);
+    return { focusIds: new Set([sourceId, targetId]), litIds: new Set([sourceId, targetId]) };
+  }, [focus, adjacency]);
 
   const hasFocus = focusIds.size > 0;
   const isNodeLit = useCallback((id: string) => !hasFocus || litIds.has(id), [hasFocus, litIds]);
+  const focusLinkKey = focus && 'link' in focus ? getLinkKey(focus.link) : null;
   const isLinkLit = useCallback(
     (link: any) => {
       if (!hasFocus) return true;
+      if (focusLinkKey !== null) return getLinkKey(link) === focusLinkKey;
       const { sourceId, targetId } = getLinkEnds(link);
-      if (!selectedNode && selectedLink) return getLinkKey(link) === getLinkKey(selectedLink);
       return focusIds.has(sourceId) || focusIds.has(targetId);
     },
-    [hasFocus, focusIds, selectedNode, selectedLink]
+    [hasFocus, focusIds, focusLinkKey]
   );
 
   /* -------------------------------------------------------------------------
@@ -291,6 +333,10 @@ export default function NetworkGraph({
     const fg = graphRef.current;
     if (!fg || !selectionKey) return;
     userMovedCameraRef.current = true; // não reenquadrar a teia inteira depois
+    // Durante o enquadramento, ignora o hover e solta o que estava, para o
+    // destaque ficar no item selecionado.
+    suppressHoverUntilRef.current = Date.now() + FOCUS_FIT_MS + 700;
+    clearHover();
     const lit = new Set<string>();
     if (selectedNode) {
       lit.add(selectedNode.id);
@@ -335,6 +381,7 @@ export default function NetworkGraph({
     detailsOpenRef.current = detailsOpen;
     const g = graphRef.current;
     if (!g || isMobile || was === detailsOpen) return;
+    suppressHoverUntilRef.current = Date.now() + 700;
     const c = g.centerAt();
     if (!c) return;
     const dx = DRAWER_WIDTH_PX / 2 / g.zoom();
@@ -712,6 +759,8 @@ export default function NetworkGraph({
       // Qualquer interação manual cancela o reenquadramento automático.
       onWheel={() => { userMovedCameraRef.current = true; }}
       onPointerDown={() => { userMovedCameraRef.current = true; }}
+      // Cursor saiu do grafo: some o destaque de hover.
+      onMouseLeave={clearHover}
     >
       <ForceGraph2D
         // A tipagem da biblioteca só aceita objeto de ref, mas ref-callback funciona.
@@ -737,6 +786,15 @@ export default function NetworkGraph({
         onNodeClick={(node: any) => onSelectNode(node)}
         // Foco + contexto ao passar o mouse (no celular, o toque seleciona).
         onLinkClick={(link: any) => onSelectLink(link)}
+        // Hover (só com mouse; ver HOVER_POINTER_QUERY e suppressHoverUntilRef).
+        onNodeHover={(node: any) => {
+          if (!canHover || Date.now() < suppressHoverUntilRef.current) return;
+          setHoverNodeId(node ? node.id : null);
+        }}
+        onLinkHover={(link: any) => {
+          if (!canHover || Date.now() < suppressHoverUntilRef.current) return;
+          setHoverLink(link ?? null);
+        }}
         // Toque/clique no fundo limpa a seleção (e o botão "Exibir detalhes").
         onBackgroundClick={() => onClearSelection()}
         // Arrastar: a biblioteca já faz o comportamento desejado sozinha —
