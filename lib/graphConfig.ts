@@ -67,7 +67,7 @@ export const STATUS_STYLE: Record<LinkStatus, { label: string; color: string; da
   under_investigation: { label: 'Sob investigação',                color: '#f59e0b', dashed: true,  particles: 2 },
   convicted_appealing: { label: 'Condenados (cabe recurso)',        color: '#f97316', dashed: true,  particles: 0 },
   convicted_final:     { label: 'Condenados (trânsito em julgado)', color: '#e11d48', dashed: false, particles: 0 },
-  annulled:            { label: 'Condenações anuladas',              color: '#a78bfa', dashed: false, particles: 0 },
+  annulled:            { label: 'Condenações anuladas',              color: '#9333ea', dashed: false, particles: 0 },
   acquitted:           { label: 'Absolvidos',                       color: '#10b981', dashed: false, particles: 0 },
 };
 
