@@ -21,7 +21,7 @@
 import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp } from 'lucide-react';
+import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, PanelRightOpen } from 'lucide-react';
 import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, getLinkEnds } from '@/lib/graphConfig';
 import { computeLayoutTargets, seedPositions, applyLayoutForces } from '@/lib/layout';
@@ -36,6 +36,12 @@ interface NetworkGraphProps {
   selectedLink: GraphLink | null;
   onSelectNode: (node: GraphNode) => void;
   onSelectLink: (link: GraphLink) => void;
+  /** Toque/clique no fundo: limpa a seleção. */
+  onClearSelection: () => void;
+  /** Painel de detalhes aberto? (o botão "Exibir detalhes" some enquanto estiver). */
+  detailsOpen: boolean;
+  /** Botão flutuante "Exibir detalhes": abre o painel do item selecionado. */
+  onOpenDetails: () => void;
   /** true quando um painel (Infográficos/Glossário) cobre o grafo: a animação pausa. */
   paused?: boolean;
 }
@@ -96,11 +102,24 @@ const LINK_WIDTH_SELECTED = 8;
  *   FADED_ALPHA ↓ = fundo mais apagado; ↑ = mais contexto visível.
  */
 const FADED_ALPHA = 0.1;
+/**
+ * BRILHO POR ZOOM (entidades que não são esquemas): com a câmera afastada,
+ * elas ficam apagadas (DIM_ALPHA) e acendem ao aproximar. O ponto em que
+ * acendem por completo = zoom mínimo do rótulo do tipo (NODE_STYLE.minZoom)
+ * + BRIGHT_ZOOM_OFFSET. A transição é gradual ao longo de BRIGHT_ZOOM_RAMP.
+ * Esquemas ficam sempre acesos; com algo em foco, vale a regra do foco.
+ */
+const DIM_ALPHA = 0.35;
+const BRIGHT_ZOOM_OFFSET = 0.15;
+const BRIGHT_ZOOM_RAMP = 0.1;
 const FADED_LINK_ALPHA = 0.05;
 /** Enquadramento do foco ao selecionar: duração, margem (px) e zoom máximo. */
 const FOCUS_FIT_MS = 600;
 const FOCUS_FIT_PADDING = 90;
 const FOCUS_MAX_ZOOM = 2;
+/** No celular: zoom máximo menor e o foco sobe para não ficar sob os controles. */
+const FOCUS_MAX_ZOOM_MOBILE = 1.2;
+const MOBILE_BOTTOM_CONTROLS_PX = 80;
 /** Largura do painel de detalhes no desktop (md:w-96 = 384px em InspectorDrawer). */
 const DRAWER_WIDTH_PX = 384;
 
@@ -117,6 +136,9 @@ export default function NetworkGraph({
   selectedLink,
   onSelectNode,
   onSelectLink,
+  onClearSelection,
+  detailsOpen,
+  onOpenDetails,
   paused = false,
 }: NetworkGraphProps) {
   // Movimento constante só em desktop/notebook (ver DESKTOP_POINTER_QUERY).
@@ -263,10 +285,10 @@ export default function NetworkGraph({
   }, [graphReady, graphData.nodes.length]);
 
   /* 4b. ENQUADRAR O FOCO — ao selecionar um nó ou uma linha, a câmera mostra
-   *     o nó e TODOS os vizinhos em destaque, na área que o painel de detalhes
-   *     não cobre (no desktop o painel ocupa DRAWER_WIDTH_PX à direita; no
-   *     celular ele cobre a tela toda, então só enquadramos). Passar o mouse
-   *     não mexe na câmera. */
+   *     o nó e TODOS os vizinhos em destaque. No celular o zoom é limitado e o
+   *     foco sobe acima dos controles. Passar o mouse não mexe na câmera.
+   *     Quando o painel de detalhes abre no desktop (ocupa DRAWER_WIDTH_PX à
+   *     direita), a câmera desliza para a esquerda; ao fechar, volta. */
   const selectionKey = selectedNode ? `n:${selectedNode.id}` : selectedLink ? `l:${getLinkKey(selectedLink)}` : '';
   useEffect(() => {
     const fg = graphRef.current;
@@ -284,14 +306,16 @@ export default function NetworkGraph({
     const t1 = setTimeout(() => {
       graphRef.current?.zoomToFit(FOCUS_FIT_MS, FOCUS_FIT_PADDING, (n: any) => lit.has(n.id));
     }, 50);
-    // Desloca o centro para a esquerda, metade da largura do painel.
     const t2 = setTimeout(() => {
       const g = graphRef.current;
-      if (!g || isMobile) return;
-      const z = g.zoom();
-      if (z > FOCUS_MAX_ZOOM) g.zoom(FOCUS_MAX_ZOOM, 300);
+      if (!g) return;
+      const maxZoom = isMobile ? FOCUS_MAX_ZOOM_MOBILE : FOCUS_MAX_ZOOM;
+      const z = Math.min(g.zoom(), maxZoom);
+      if (g.zoom() > maxZoom) g.zoom(maxZoom, 300);
       const c = g.centerAt();
-      if (c) g.centerAt(c.x + DRAWER_WIDTH_PX / 2 / Math.min(z, FOCUS_MAX_ZOOM), c.y, 300);
+      if (!c) return;
+      if (isMobile) g.centerAt(c.x, c.y + MOBILE_BOTTOM_CONTROLS_PX / 2 / z, 300);
+      else if (detailsOpenRef.current) g.centerAt(c.x + DRAWER_WIDTH_PX / 2 / z, c.y, 300);
     }, FOCUS_FIT_MS + 80);
     return () => {
       clearTimeout(t1);
@@ -299,6 +323,20 @@ export default function NetworkGraph({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectionKey, graphReady]);
+
+  // Painel abre/fecha no desktop → desliza a câmera metade da largura dele.
+  const detailsOpenRef = useRef(detailsOpen);
+  useEffect(() => {
+    const was = detailsOpenRef.current;
+    detailsOpenRef.current = detailsOpen;
+    const g = graphRef.current;
+    if (!g || isMobile || was === detailsOpen) return;
+    const c = g.centerAt();
+    if (!c) return;
+    const dx = DRAWER_WIDTH_PX / 2 / g.zoom();
+    g.centerAt(c.x + (detailsOpen ? dx : -dx), c.y, 400);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailsOpen]);
 
   const handleEngineStop = useCallback(() => {
     if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
@@ -334,9 +372,19 @@ export default function NetworkGraph({
     const size = getNodeRadius(node.type);
     const lit = isNodeLit(node.id);
     const isFocusCentre = focusIds.has(node.id);
+    const isScheme = node.type === 'scheme';
+
+    // Opacidade: fora do foco → FADED_ALPHA; sem foco, entidades comuns acendem
+    // conforme o zoom (ver BRIGHT_ZOOM_OFFSET).
+    let alpha = lit ? 1 : FADED_ALPHA;
+    if (lit && !hasFocus && !isScheme) {
+      const full = (NODE_STYLE[node.type as NodeType]?.minZoom ?? 0.45) + BRIGHT_ZOOM_OFFSET;
+      const t = Math.min(1, Math.max(0, (globalScale - (full - BRIGHT_ZOOM_RAMP)) / BRIGHT_ZOOM_RAMP));
+      alpha = DIM_ALPHA + (1 - DIM_ALPHA) * t;
+    }
 
     ctx.save();
-    ctx.globalAlpha = lit ? 1 : FADED_ALPHA;
+    ctx.globalAlpha = alpha;
 
     // Brilho externo. Sufixo hex = opacidade: '44' ≈ 27% (selecionado), '18' ≈ 9%.
     ctx.beginPath();
@@ -344,14 +392,15 @@ export default function NetworkGraph({
     ctx.fillStyle = `${color}${isSelected || isFocusCentre ? '44' : '18'}`;
     ctx.fill();
 
-    // Disco interno escuro (fundo da foto).
+    // Disco interno: esquemas são círculos SÓLIDOS na cor do tipo (sem foto);
+    // as demais entidades têm fundo escuro para a foto.
     ctx.beginPath();
     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
-    ctx.fillStyle = BG_COLOR;
+    ctx.fillStyle = isScheme ? color : BG_COLOR;
     ctx.fill();
 
-    // Foto recortada em círculo, se já carregou.
-    if (node.image_url) {
+    // Foto recortada em círculo, se já carregou (não vale para esquemas).
+    if (node.image_url && !isScheme) {
       const img = imgCacheRef.current.get(node.image_url);
       if (img && img.naturalWidth > 0) {
         ctx.save();
@@ -363,12 +412,12 @@ export default function NetworkGraph({
 
     // Borda colorida por cima da foto. Dividir por globalScale mantém a
     // espessura constante na tela, independentemente do zoom.
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = isSelected && isScheme ? '#ffffff' : color;
     ctx.lineWidth = (isSelected ? 3 : 1.8) / globalScale;
     ctx.stroke();
 
     ctx.restore();
-  }, [selectedNode, isNodeLit, focusIds]);
+  }, [selectedNode, isNodeLit, focusIds, hasFocus]);
 
   // Área de clique = raio desenhado + folga (antes era menor que o círculo).
   const paintPointerArea = useCallback((node: any, color: string, ctx: CanvasRenderingContext2D) => {
@@ -439,6 +488,7 @@ export default function NetworkGraph({
   const LABEL_MAX_LINES = 3;
   const LABEL_LINE_HEIGHT = 1.2;
   const labelLinesCache = useRef(new Map<string, string[]>());
+  const positionDetailsButtonRef = useRef<(scale: number) => void>(() => {});
   // Se a fonte Inter terminar de carregar depois do 1º desenho, as medidas
   // feitas com a fonte reserva ficariam erradas: limpa o cache.
   useEffect(() => {
@@ -579,7 +629,65 @@ export default function NetworkGraph({
       }
     }
     ctx.restore();
+    positionDetailsButtonRef.current(scale);
   }, [graphData.nodes, selectedNode, wrapLabel, hasFocus, focusIds, litIds, adjacency]);
+
+  /* -------------------------------------------------------------------------
+   * 8b. BOTÃO FLUTUANTE "Exibir detalhes" — aparece acima do item selecionado
+   *     (nó, ou meio da linha). A posição é atualizada a cada quadro
+   *     desenhado, direto no estilo do elemento (sem re-render do React), para
+   *     acompanhar zoom, arrasto e o movimento da simulação.
+   * ----------------------------------------------------------------------- */
+  const detailsBtnRef = useRef<HTMLButtonElement>(null);
+  const nodeById = useMemo(() => new Map(graphData.nodes.map((n: any) => [n.id, n])), [graphData.nodes]);
+  const showDetailsButton = !detailsOpen && (!!selectedNode || !!selectedLink);
+
+  function positionDetailsButton(scale: number) {
+    const btn = detailsBtnRef.current;
+    const fg = graphRef.current;
+    if (!btn) return;
+    if (!fg || !showDetailsButton) {
+      btn.style.visibility = 'hidden';
+      return;
+    }
+    let gx: number | undefined;
+    let gy: number | undefined;
+    let r = 0;
+    if (selectedNode) {
+      const n: any = nodeById.get(selectedNode.id);
+      gx = n?.x;
+      gy = n?.y;
+      r = getNodeRadius(n?.type);
+    } else if (selectedLink) {
+      const s: any = typeof selectedLink.source === 'object' ? selectedLink.source : nodeById.get(selectedLink.source as string);
+      const t: any = typeof selectedLink.target === 'object' ? selectedLink.target : nodeById.get(selectedLink.target as string);
+      if (s && t) {
+        gx = (s.x + t.x) / 2;
+        gy = (s.y + t.y) / 2;
+      }
+    }
+    if (typeof gx !== 'number' || typeof gy !== 'number') {
+      btn.style.visibility = 'hidden';
+      return;
+    }
+    const p = fg.graph2ScreenCoords(gx, gy);
+    const top = p.y - r * scale - 14; // logo acima do círculo
+    const halfW = btn.offsetWidth / 2;
+    const x = Math.min(Math.max(p.x, halfW + 8), dimensions.width - halfW - 8);
+    const y = Math.min(Math.max(top, btn.offsetHeight + 8), dimensions.height - 8);
+    btn.style.transform = `translate(${x - halfW}px, ${y - btn.offsetHeight}px)`;
+    btn.style.visibility = 'visible';
+  }
+
+  // drawLabels é memorizado; o ref garante que ele chame sempre a versão
+  // atual (com a seleção e o tamanho da tela de agora).
+  positionDetailsButtonRef.current = positionDetailsButton;
+
+  // Sem novo quadro (ex.: simulação parada), o botão precisa aparecer/sumir já.
+  useEffect(() => {
+    positionDetailsButton(graphRef.current?.zoom?.() ?? 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDetailsButton, selectedNode, selectedLink]);
 
   /* -------------------------------------------------------------------------
    * 9. TELA CHEIA — protegido para iOS Safari (sem API) e promessas rejeitadas
@@ -626,6 +734,8 @@ export default function NetworkGraph({
         // Foco + contexto ao passar o mouse (no celular, o toque seleciona).
         onNodeHover={(node: any) => setHoverNodeId(node ? node.id : null)}
         onLinkClick={(link: any) => onSelectLink(link)}
+        // Toque/clique no fundo limpa a seleção (e o botão "Exibir detalhes").
+        onBackgroundClick={() => onClearSelection()}
         // Arrastar: a biblioteca já faz o comportamento desejado sozinha —
         //   • esquema (fixo antes do arraste) → continua fixo onde foi solto;
         //   • demais nós (livres) → são soltos e voltam a se acomodar na teia.
@@ -641,6 +751,18 @@ export default function NetworkGraph({
         d3VelocityDecay={0.35} // "atrito": ↑ nós param mais cedo, menos tremedeira
         backgroundColor={BG_COLOR}
       />
+
+      {/* Botão "Exibir detalhes" (posição definida em positionDetailsButton) */}
+      <button
+        ref={detailsBtnRef}
+        type="button"
+        onClick={onOpenDetails}
+        style={{ visibility: 'hidden' }}
+        className="absolute left-0 top-0 z-30 inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-semibold text-cyan-200 bg-[#0e1726]/95 backdrop-blur-md border border-cyan-500/60 shadow-[0_0_16px_rgba(34,211,238,0.35)] hover:bg-cyan-950 active:scale-95 transition-colors"
+      >
+        <PanelRightOpen size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
+        Exibir detalhes
+      </button>
 
       {/* LEGENDAS — geradas de lib/graphConfig.ts; escondidas em telas pequenas */}
       <div className="absolute top-4 right-6 hidden sm:block space-y-3 z-20 select-none">
@@ -667,7 +789,12 @@ export default function NetworkGraph({
             <div key={key} className="flex items-center space-x-2.5">
               <span
                 className="w-2.5 h-2.5 inline-block rounded-full border"
-                style={{ borderColor: NODE_STYLE[key].color, boxShadow: `0 0 8px ${NODE_STYLE[key].color}` }}
+                style={{
+                  borderColor: NODE_STYLE[key].color,
+                  // Esquemas são círculos sólidos no grafo; os demais, anéis.
+                  backgroundColor: key === 'scheme' ? NODE_STYLE[key].color : undefined,
+                  boxShadow: `0 0 8px ${NODE_STYLE[key].color}`,
+                }}
               />
               <span className="text-slate-200">{NODE_STYLE[key].label}</span>
             </div>

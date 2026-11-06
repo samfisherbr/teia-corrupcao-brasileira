@@ -20,7 +20,6 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import HeaderBar, { ActivePage } from '@/components/HeaderBar';
 import HeaderOverlay from '@/components/HeaderOverlay';
 import MobileTimeline from '@/components/MobileTimeline';
-import SchemeOverview from '@/components/SchemeOverview';
 import NetworkGraph from '@/components/NetworkGraph';
 import SidebarControls from '@/components/SidebarControls';
 import InspectorDrawer from '@/components/InspectorDrawer';
@@ -48,10 +47,7 @@ const INITIAL_STATUS_FILTERS = Object.fromEntries(
 export default function Page() {
   // Instância do grafo (zoom, centerAt…). Preenchida pelo NetworkGraph.
   const graphRef = useRef<any>(null);
-  // Instância do grafo da "Visão por esquemas" (separada da teia completa).
-  const overviewRef = useRef<any>(null);
-  // Qual grafo aparece: a visão por esquemas (padrão) ou a teia completa.
-  const [viewMode, setViewMode] = useState<'overview' | 'full'>('overview');
+
 
   // --- Estado de navegação e dados ---------------------------------------
   const [activePage, setActivePage] = useState<ActivePage>('graph');
@@ -67,6 +63,9 @@ export default function Page() {
 
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [selectedLink, setSelectedLink] = useState<GraphLink | null>(null);
+  // Selecionar (toque/clique no grafo) só destaca o item e mostra o botão
+  // flutuante "Exibir detalhes"; o painel de detalhes abre por esse botão.
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [startYearFilter, setStartYearFilter] = useState(FALLBACK_YEAR_RANGE.min);
@@ -267,27 +266,44 @@ export default function Page() {
     setStatusFilters((prev) => ({ ...prev, [status]: !prev[status] }));
   }, []);
 
+  // No grafo (e no Índice de Esquemas): seleciona sem abrir o painel.
   const selectNode = useCallback((node: GraphNode) => {
     setSelectedNode(node);
     setSelectedLink(null);
+    setDetailsOpen(false);
   }, []);
 
   const selectLink = useCallback((link: GraphLink) => {
     setSelectedLink(link);
     setSelectedNode(null);
+    setDetailsOpen(false);
+  }, []);
+
+  // Dentro do painel de detalhes: navegar entre itens mantém o painel aberto.
+  const selectNodeInDrawer = useCallback((node: GraphNode) => {
+    setSelectedNode(node);
+    setSelectedLink(null);
+    setDetailsOpen(true);
+  }, []);
+
+  const selectLinkInDrawer = useCallback((link: GraphLink) => {
+    setSelectedLink(link);
+    setSelectedNode(null);
+    setDetailsOpen(true);
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedNode(null);
+    setSelectedLink(null);
+    setDetailsOpen(false);
   }, []);
 
   // Clique no "Índice de Esquemas" da barra lateral: seleciona e voa até o nó.
   // 2.5 = nível de zoom; 600 = duração da animação em ms.
-  // Selecionar já basta: nas duas visões o próprio grafo enquadra o que foi
-  // selecionado (na teia completa, o nó e todos os vizinhos em destaque).
+  // Selecionar já basta: o grafo enquadra o esquema e seus vizinhos.
   const handleSelectSchemeFromIndex = useCallback((schemeNode: GraphNode) => {
     selectNode(schemeNode);
   }, [selectNode]);
-
-  // "Ver na teia completa": troca de visão mantendo a seleção; a teia completa
-  // enquadra o esquema e seus vizinhos ao abrir.
-  const openFullGraph = useCallback(() => setViewMode('full'), []);
 
   // Anúncio só aparece se as duas variáveis de ambiente existirem (ver README).
   const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
@@ -365,7 +381,7 @@ export default function Page() {
             </div>
           )}
 
-          {!error && !isLoading && viewMode === 'full' && (
+          {!error && !isLoading && (
             <NetworkGraph
               graphRef={graphRef}
               graphData={filteredData}
@@ -373,64 +389,27 @@ export default function Page() {
               selectedLink={selectedLink}
               onSelectNode={selectNode}
               onSelectLink={selectLink}
+              onClearSelection={clearSelection}
+              detailsOpen={detailsOpen}
+              onOpenDetails={() => setDetailsOpen(true)}
               // Pausa a animação enquanto Infográficos/Glossário cobrem o grafo.
               paused={activePage !== 'graph'}
             />
           )}
 
-          {!error && !isLoading && viewMode === 'overview' && (
-            <SchemeOverview
-              graphRef={overviewRef}
-              data={filteredData}
-              selectedNode={selectedNode}
-              onSelectNode={selectNode}
-              onOpenFullGraph={openFullGraph}
-              paused={activePage !== 'graph'}
-            />
-          )}
-
-          {/* Troca de visão: esquemas (resumo) ↔ teia completa */}
-          {!error && !isLoading && graphData.nodes.length > 0 && (
-            <div
-              role="group"
-              aria-label="Visão do grafo"
-              className="absolute top-3 left-3 md:top-4 md:left-6 z-20 flex bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1 text-xs font-mono shadow-xl select-none"
-            >
-              {([
-                ['overview', 'Esquemas'],
-                ['full', 'Teia completa'],
-              ] as const).map(([mode, label]) => (
-                <button
-                  key={mode}
-                  type="button"
-                  aria-pressed={viewMode === mode}
-                  onClick={() => setViewMode(mode)}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
-                    viewMode === mode
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50'
-                      : 'text-slate-400 hover:text-slate-200 border border-transparent'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-
           {adClient && adSlot && <AdBanner adClient={adClient} adSlot={adSlot} />}
         </main>
 
+        {/* Painel de detalhes: só abre pelo botão "Exibir detalhes". Fechar
+            mantém o item destacado no grafo (tocar no fundo limpa a seleção). */}
         <InspectorDrawer
-          selectedNode={selectedNode}
-          selectedLink={selectedLink}
-          onClose={() => {
-            setSelectedNode(null);
-            setSelectedLink(null);
-          }}
+          selectedNode={detailsOpen ? selectedNode : null}
+          selectedLink={detailsOpen ? selectedLink : null}
+          onClose={() => setDetailsOpen(false)}
           filteredData={filteredData}
           fullNodes={graphData.nodes}
-          onSelectLink={selectLink}
-          onSelectNode={selectNode}
+          onSelectLink={selectLinkInDrawer}
+          onSelectNode={selectNodeInDrawer}
         />
       </div>
     </div>
