@@ -20,6 +20,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import HeaderBar, { ActivePage } from '@/components/HeaderBar';
 import HeaderOverlay from '@/components/HeaderOverlay';
 import MobileTimeline from '@/components/MobileTimeline';
+import SchemeOverview from '@/components/SchemeOverview';
 import NetworkGraph from '@/components/NetworkGraph';
 import SidebarControls from '@/components/SidebarControls';
 import InspectorDrawer from '@/components/InspectorDrawer';
@@ -47,6 +48,10 @@ const INITIAL_STATUS_FILTERS = Object.fromEntries(
 export default function Page() {
   // Instância do grafo (zoom, centerAt…). Preenchida pelo NetworkGraph.
   const graphRef = useRef<any>(null);
+  // Instância do grafo da "Visão por esquemas" (separada da teia completa).
+  const overviewRef = useRef<any>(null);
+  // Qual grafo aparece: a visão por esquemas (padrão) ou a teia completa.
+  const [viewMode, setViewMode] = useState<'overview' | 'full'>('overview');
 
   // --- Estado de navegação e dados ---------------------------------------
   const [activePage, setActivePage] = useState<ActivePage>('graph');
@@ -274,14 +279,34 @@ export default function Page() {
 
   // Clique no "Índice de Esquemas" da barra lateral: seleciona e voa até o nó.
   // 2.5 = nível de zoom; 600 = duração da animação em ms.
-  const handleSelectSchemeFromIndex = useCallback((schemeNode: GraphNode) => {
-    selectNode(schemeNode);
+  // Na visão por esquemas, quem centraliza é o próprio SchemeOverview.
+  const centerOnFullGraph = useCallback((schemeNode: GraphNode) => {
     const fg = graphRef.current;
     if (fg && typeof schemeNode.x === 'number' && typeof schemeNode.y === 'number') {
       fg.centerAt(schemeNode.x, schemeNode.y, 600);
       fg.zoom(2.5, 600);
     }
-  }, [selectNode]);
+  }, []);
+
+  const handleSelectSchemeFromIndex = useCallback((schemeNode: GraphNode) => {
+    selectNode(schemeNode);
+    if (viewMode === 'full') centerOnFullGraph(schemeNode);
+  }, [selectNode, viewMode, centerOnFullGraph]);
+
+  // "Ver na teia completa": troca de visão e, quando a teia completa já tiver
+  // posicionado os nós, voa até o esquema selecionado.
+  const pendingCenterRef = useRef<GraphNode | null>(null);
+  const openFullGraph = useCallback(() => {
+    pendingCenterRef.current = selectedNode;
+    setViewMode('full');
+  }, [selectedNode]);
+  useEffect(() => {
+    if (viewMode !== 'full' || !pendingCenterRef.current) return;
+    const target = pendingCenterRef.current;
+    pendingCenterRef.current = null;
+    const t = setTimeout(() => centerOnFullGraph(target), 700);
+    return () => clearTimeout(t);
+  }, [viewMode, centerOnFullGraph]);
 
   // Anúncio só aparece se as duas variáveis de ambiente existirem (ver README).
   const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
@@ -359,7 +384,7 @@ export default function Page() {
             </div>
           )}
 
-          {!error && !isLoading && (
+          {!error && !isLoading && viewMode === 'full' && (
             <NetworkGraph
               graphRef={graphRef}
               graphData={filteredData}
@@ -370,6 +395,45 @@ export default function Page() {
               // Pausa a animação enquanto Infográficos/Glossário cobrem o grafo.
               paused={activePage !== 'graph'}
             />
+          )}
+
+          {!error && !isLoading && viewMode === 'overview' && (
+            <SchemeOverview
+              graphRef={overviewRef}
+              data={filteredData}
+              selectedNode={selectedNode}
+              onSelectNode={selectNode}
+              onOpenFullGraph={openFullGraph}
+              paused={activePage !== 'graph'}
+            />
+          )}
+
+          {/* Troca de visão: esquemas (resumo) ↔ teia completa */}
+          {!error && !isLoading && graphData.nodes.length > 0 && (
+            <div
+              role="group"
+              aria-label="Visão do grafo"
+              className="absolute top-3 left-3 md:top-4 md:left-6 z-20 flex bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1 text-xs font-mono shadow-xl select-none"
+            >
+              {([
+                ['overview', 'Esquemas'],
+                ['full', 'Teia completa'],
+              ] as const).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={viewMode === mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${
+                    viewMode === mode
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50'
+                      : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           )}
 
           {adClient && adSlot && <AdBanner adClient={adClient} adSlot={adSlot} />}
