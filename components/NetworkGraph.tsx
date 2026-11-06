@@ -103,15 +103,28 @@ const LINK_WIDTH_SELECTED = 8;
  */
 const FADED_ALPHA = 0.1;
 /**
- * BRILHO POR ZOOM (entidades que não são esquemas): com a câmera afastada,
- * elas ficam apagadas (DIM_ALPHA) e acendem ao aproximar. O ponto em que
- * acendem por completo = zoom mínimo do rótulo do tipo (NODE_STYLE.minZoom)
- * + BRIGHT_ZOOM_OFFSET. A transição é gradual ao longo de BRIGHT_ZOOM_RAMP.
+ * BRILHO POR ZOOM: com a câmera afastada, entidades que não são esquemas e as
+ * linhas ficam apagadas (DIM_ALPHA) e acendem ao aproximar. BRIGHT_ZOOM diz o
+ * zoom em que cada tipo acende por completo; a transição é gradual ao longo
+ * de BRIGHT_ZOOM_RAMP antes desse ponto. Partidos, empresas e linhas acendem
+ * juntos; políticos e operadores, um pouco depois (≈ rótulo + 0,15).
  * Esquemas ficam sempre acesos; com algo em foco, vale a regra do foco.
  */
 const DIM_ALPHA = 0.35;
-const BRIGHT_ZOOM_OFFSET = 0.15;
+const BRIGHT_ZOOM: Record<Exclude<NodeType, 'scheme'>, number> = {
+  party: 0.45,
+  company: 0.45,
+  politician: 0.6,
+  operator: 0.6,
+};
+const LINK_BRIGHT_ZOOM = 0.45;
 const BRIGHT_ZOOM_RAMP = 0.1;
+
+/** Opacidade (DIM_ALPHA → 1) para um zoom, acendendo por completo em `full`. */
+const zoomBrightness = (scale: number, full: number) => {
+  const t = Math.min(1, Math.max(0, (scale - (full - BRIGHT_ZOOM_RAMP)) / BRIGHT_ZOOM_RAMP));
+  return DIM_ALPHA + (1 - DIM_ALPHA) * t;
+};
 const FADED_LINK_ALPHA = 0.05;
 /** Enquadramento do foco ao selecionar: duração, margem (px) e zoom máximo. */
 const FOCUS_FIT_MS = 600;
@@ -169,6 +182,8 @@ export default function NetworkGraph({
    *    Prioridade: nó sob o mouse > nó selecionado > linha selecionada.
    * ----------------------------------------------------------------------- */
   const [hoverNodeId, setHoverNodeId] = useState<string | null>(null);
+  // Até quando ignorar o hover (a câmera está se movendo sozinha).
+  const suppressHoverUntilRef = useRef(0);
 
   const adjacency = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -294,6 +309,10 @@ export default function NetworkGraph({
     const fg = graphRef.current;
     if (!fg || !selectionKey) return;
     userMovedCameraRef.current = true; // não reenquadrar a teia inteira depois
+    // Durante o enquadramento, os nós passam sob o ponteiro parado: ignora o
+    // hover e solta o que estava, para o destaque ficar no item selecionado.
+    suppressHoverUntilRef.current = Date.now() + FOCUS_FIT_MS + 700;
+    setHoverNodeId(null);
     const lit = new Set<string>();
     if (selectedNode) {
       lit.add(selectedNode.id);
@@ -331,6 +350,7 @@ export default function NetworkGraph({
     detailsOpenRef.current = detailsOpen;
     const g = graphRef.current;
     if (!g || isMobile || was === detailsOpen) return;
+    suppressHoverUntilRef.current = Date.now() + 700;
     const c = g.centerAt();
     if (!c) return;
     const dx = DRAWER_WIDTH_PX / 2 / g.zoom();
@@ -375,12 +395,10 @@ export default function NetworkGraph({
     const isScheme = node.type === 'scheme';
 
     // Opacidade: fora do foco → FADED_ALPHA; sem foco, entidades comuns acendem
-    // conforme o zoom (ver BRIGHT_ZOOM_OFFSET).
+    // conforme o zoom (ver BRIGHT_ZOOM).
     let alpha = lit ? 1 : FADED_ALPHA;
     if (lit && !hasFocus && !isScheme) {
-      const full = (NODE_STYLE[node.type as NodeType]?.minZoom ?? 0.45) + BRIGHT_ZOOM_OFFSET;
-      const t = Math.min(1, Math.max(0, (globalScale - (full - BRIGHT_ZOOM_RAMP)) / BRIGHT_ZOOM_RAMP));
-      alpha = DIM_ALPHA + (1 - DIM_ALPHA) * t;
+      alpha = zoomBrightness(globalScale, BRIGHT_ZOOM[node.type as keyof typeof BRIGHT_ZOOM] ?? 0.6);
     }
 
     ctx.save();
@@ -448,7 +466,9 @@ export default function NetworkGraph({
     const safeScale = globalScale > 0 ? globalScale : 1;
 
     ctx.save();
-    ctx.globalAlpha = isLinkLit(link) ? 1 : FADED_LINK_ALPHA;
+    // Fora do foco → quase transparente; sem foco → acende com o zoom, junto
+    // com partidos e empresas (LINK_BRIGHT_ZOOM).
+    ctx.globalAlpha = !isLinkLit(link) ? FADED_LINK_ALPHA : hasFocus ? 1 : zoomBrightness(safeScale, LINK_BRIGHT_ZOOM);
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(end.x, end.y);
@@ -464,7 +484,7 @@ export default function NetworkGraph({
     ctx.setLineDash(style?.dashed ? [12, 10] : []);
     ctx.stroke();
     ctx.restore();
-  }, [isLinkSelected, isLinkLit]);
+  }, [isLinkSelected, isLinkLit, hasFocus]);
 
   /* -------------------------------------------------------------------------
    * 8. RÓTULOS — desenhados DEPOIS de tudo (onRenderFramePost), então ficam
@@ -732,7 +752,15 @@ export default function NetworkGraph({
         // Interação
         onNodeClick={(node: any) => onSelectNode(node)}
         // Foco + contexto ao passar o mouse (no celular, o toque seleciona).
-        onNodeHover={(node: any) => setHoverNodeId(node ? node.id : null)}
+        onNodeHover={(node: any) => {
+          // Telas de toque não têm hover: a biblioteca usa a posição do último
+          // toque, e quando a câmera se move os nós deslizam por baixo dela e
+          // o destaque "pulava" para um vizinho. Por isso, hover só com mouse
+          // (driftEnabled = ponteiro fino com hover) e nunca durante o
+          // enquadramento automático da câmera.
+          if (!driftEnabled || Date.now() < suppressHoverUntilRef.current) return;
+          setHoverNodeId(node ? node.id : null);
+        }}
         onLinkClick={(link: any) => onSelectLink(link)}
         // Toque/clique no fundo limpa a seleção (e o botão "Exibir detalhes").
         onBackgroundClick={() => onClearSelection()}
