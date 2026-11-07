@@ -143,11 +143,10 @@ const BOTTOM_CONTROLS_PX = 80;
 const DRAWER_WIDTH_PX = 384;
 
 /**
- * VIDRO FOSCO (entidades que não são esquemas). Um desfoque real do que está
- * atrás de cada círculo, a cada quadro, pesaria demais (centenas de nós,
- * celular). O efeito é montado em camadas baratas:
- *   1. "fosco": camada escura semitransparente (FROST_ALPHA) que abafa as
- *      linhas que passam por trás — elas continuam visíveis, só suavizadas;
+ * VIDRO FOSCO (entidades sem foto que não são esquemas), desenhado sobre um
+ * fundo preto sólido — as linhas terminam na borda do círculo e não passam
+ * por trás. O efeito é montado em camadas baratas:
+ *   1. "fosco": camada escura (FROST_ALPHA) que dá profundidade ao vidro;
  *   2. tinta: gradiente radial na cor do tipo, mais clara no centro
  *      (GLASS_TINT_CENTER) e mais transparente na borda (GLASS_TINT_EDGE);
  *   3. reflexo: brilho branco suave no alto à esquerda (GLASS_SHEEN) e um
@@ -159,7 +158,7 @@ const GLASS_TINT_CENTER = '59'; // ≈ 35%
 const GLASS_TINT_EDGE = '1f'; // ≈ 12%
 const GLASS_SHEEN = 0.22;
 const GLASS_RIM = 0.18;
-/** Foto: raio relativo ao círculo (o restante é o anel de vidro em volta). */
+/** Foto: raio relativo ao círculo (o restante é um anel preto em volta). */
 const IMAGE_INSET = 0.84;
 
 function drawFrostedGlass(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
@@ -494,19 +493,21 @@ export default function NetworkGraph({
     ctx.fill();
 
     // Disco interno. Esquemas: círculo SÓLIDO na cor do tipo.
-    // Demais entidades: VIDRO FOSCO translúcido no tom do tipo (ver
-    // drawFrostedGlass); com foto, a foto fica na frente, um pouco recuada,
-    // deixando um anel de vidro visível em volta (e por trás de logos com
-    // fundo transparente).
+    // Demais entidades: fundo PRETO sólido e, por cima,
+    //   - com foto: a foto, um pouco recuada (anel preto em volta);
+    //   - sem foto: o vidro fosco no tom do tipo (ver drawFrostedGlass).
     ctx.beginPath();
     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
     if (isScheme) {
       ctx.fillStyle = color;
       ctx.fill();
     } else {
-      drawFrostedGlass(ctx, node.x, node.y, size, color);
+      ctx.fillStyle = '#000000';
+      ctx.fill();
       const img = node.image_url ? imgCacheRef.current.get(node.image_url) : undefined;
-      if (img && img.naturalWidth > 0) {
+      const hasImage = !!img && img.naturalWidth > 0;
+      if (!hasImage) drawFrostedGlass(ctx, node.x, node.y, size, color);
+      if (img && hasImage) {
         const r = size * IMAGE_INSET;
         ctx.save();
         ctx.beginPath();
@@ -556,13 +557,25 @@ export default function NetworkGraph({
     const baseWidth = isLinkSelected(link) ? LINK_WIDTH_SELECTED : LINK_WIDTH;
     const safeScale = globalScale > 0 ? globalScale : 1;
 
+    // A linha vai só até a BORDA de cada círculo (não entra nem atravessa o
+    // círculo): encurta cada ponta pelo raio do nó + metade da borda.
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const len = Math.hypot(dx, dy);
+    const border = 1 / safeScale;
+    const r0 = getNodeRadius(start.type) + border;
+    const r1 = getNodeRadius(end.type) + border;
+    if (len <= r0 + r1) return; // círculos encostados/sobrepostos: nada visível entre eles
+    const ux = dx / len;
+    const uy = dy / len;
+
     ctx.save();
     // Fora do foco → quase transparente; sem foco → acende com o zoom, junto
     // com partidos e empresas (LINK_BRIGHT_ZOOM).
     ctx.globalAlpha = !isLinkLit(link) ? FADED_LINK_ALPHA : hasFocus ? 1 : zoomBrightness(safeScale, LINK_BRIGHT_ZOOM);
     ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    ctx.lineTo(end.x, end.y);
+    ctx.moveTo(start.x + ux * r0, start.y + uy * r0);
+    ctx.lineTo(end.x - ux * r1, end.y - uy * r1);
 
     // Passada 1: aura translúcida mais larga.
     ctx.strokeStyle = `${color}44`;
