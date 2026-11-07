@@ -142,6 +142,58 @@ const BOTTOM_CONTROLS_PX = 80;
 /** Largura do painel de detalhes no desktop (md:w-96 = 384px em InspectorDrawer). */
 const DRAWER_WIDTH_PX = 384;
 
+/**
+ * VIDRO FOSCO (entidades que não são esquemas). Um desfoque real do que está
+ * atrás de cada círculo, a cada quadro, pesaria demais (centenas de nós,
+ * celular). O efeito é montado em camadas baratas:
+ *   1. "fosco": camada escura semitransparente (FROST_ALPHA) que abafa as
+ *      linhas que passam por trás — elas continuam visíveis, só suavizadas;
+ *   2. tinta: gradiente radial na cor do tipo, mais clara no centro
+ *      (GLASS_TINT_CENTER) e mais transparente na borda (GLASS_TINT_EDGE);
+ *   3. reflexo: brilho branco suave no alto à esquerda (GLASS_SHEEN) e um
+ *      fio de luz na borda interna (GLASS_RIM), que dão a leitura de vidro.
+ * Opacidades em hex de 2 dígitos (00–ff), somadas à cor #rrggbb do tipo.
+ */
+const FROST_ALPHA = 0.55;
+const GLASS_TINT_CENTER = '59'; // ≈ 35%
+const GLASS_TINT_EDGE = '1f'; // ≈ 12%
+const GLASS_SHEEN = 0.22;
+const GLASS_RIM = 0.18;
+/** Foto: raio relativo ao círculo (o restante é o anel de vidro em volta). */
+const IMAGE_INSET = 0.84;
+
+function drawFrostedGlass(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, 2 * Math.PI);
+  ctx.clip();
+
+  // 1. fosco
+  ctx.fillStyle = `rgba(8, 13, 22, ${FROST_ALPHA})`;
+  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+
+  // 2. tinta na cor do tipo
+  const tint = ctx.createRadialGradient(x, y, r * 0.1, x, y, r);
+  tint.addColorStop(0, `${color}${GLASS_TINT_CENTER}`);
+  tint.addColorStop(1, `${color}${GLASS_TINT_EDGE}`);
+  ctx.fillStyle = tint;
+  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+
+  // 3. reflexo no alto à esquerda + fio de luz na borda interna
+  const sheen = ctx.createRadialGradient(x - r * 0.45, y - r * 0.5, 0, x - r * 0.45, y - r * 0.5, r * 0.9);
+  sheen.addColorStop(0, `rgba(255, 255, 255, ${GLASS_SHEEN})`);
+  sheen.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = sheen;
+  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.93, 0, 2 * Math.PI);
+  ctx.strokeStyle = `rgba(255, 255, 255, ${GLASS_RIM})`;
+  ctx.lineWidth = r * 0.05;
+  ctx.stroke();
+  ctx.restore();
+}
+
 /** Cor de fundo do canvas; também usada como "contorno" atrás dos rótulos. */
 const BG_COLOR = '#080d16';
 
@@ -441,26 +493,34 @@ export default function NetworkGraph({
     ctx.fillStyle = `${color}${isSelected || isFocusCentre ? '44' : '18'}`;
     ctx.fill();
 
-    // Disco interno: esquemas são círculos SÓLIDOS na cor do tipo (sem foto);
-    // as demais entidades têm fundo escuro para a foto.
+    // Disco interno. Esquemas: círculo SÓLIDO na cor do tipo.
+    // Demais entidades: VIDRO FOSCO translúcido no tom do tipo (ver
+    // drawFrostedGlass); com foto, a foto fica na frente, um pouco recuada,
+    // deixando um anel de vidro visível em volta (e por trás de logos com
+    // fundo transparente).
     ctx.beginPath();
     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
-    ctx.fillStyle = isScheme ? color : BG_COLOR;
-    ctx.fill();
-
-    // Foto recortada em círculo, se já carregou (não vale para esquemas).
-    if (node.image_url && !isScheme) {
-      const img = imgCacheRef.current.get(node.image_url);
+    if (isScheme) {
+      ctx.fillStyle = color;
+      ctx.fill();
+    } else {
+      drawFrostedGlass(ctx, node.x, node.y, size, color);
+      const img = node.image_url ? imgCacheRef.current.get(node.image_url) : undefined;
       if (img && img.naturalWidth > 0) {
+        const r = size * IMAGE_INSET;
         ctx.save();
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
         ctx.clip();
-        ctx.drawImage(img, node.x - size, node.y - size, size * 2, size * 2);
+        ctx.drawImage(img, node.x - r, node.y - r, r * 2, r * 2);
         ctx.restore();
       }
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
     }
 
-    // Borda colorida por cima da foto. Dividir por globalScale mantém a
-    // espessura constante na tela, independentemente do zoom.
+    // Borda colorida por cima. Dividir por globalScale mantém a espessura
+    // constante na tela, independentemente do zoom.
     ctx.strokeStyle = isSelected && isScheme ? '#ffffff' : color;
     ctx.lineWidth = (isSelected ? 3 : 1.8) / globalScale;
     ctx.stroke();
