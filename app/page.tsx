@@ -30,18 +30,22 @@ import { getLinkEnds, normalizeText, STATUS_STYLE } from '@/lib/graphConfig';
 /** Intervalo do controle de ano enquanto os dados não chegam (ou se nenhum link tiver ano). */
 const FALLBACK_YEAR_RANGE = { min: 1989, max: new Date().getFullYear() };
 
-/** Todos os tipos de entidade começam visíveis. Troque `true` por `false` para esconder um tipo por padrão. */
-const INITIAL_TYPE_FILTERS: Record<NodeType, boolean> = {
-  politician: true,
-  party: true,
-  scheme: true,
-  company: true,
-  operator: true,
+/**
+ * Filtros de "Tipos de Entidade" e "Status Jurídico" funcionam por SELEÇÃO:
+ * começam todos desmarcados (= tudo visível no grafo). Marcar um ou mais
+ * mostra SÓ os marcados; "Limpar filtros" volta a mostrar tudo.
+ */
+const NO_TYPE_SELECTED: Record<NodeType, boolean> = {
+  politician: false,
+  party: false,
+  scheme: false,
+  company: false,
+  operator: false,
 };
 
-/** Todos os status começam visíveis (as chaves vêm de STATUS_STYLE em lib/graphConfig.ts). */
-const INITIAL_STATUS_FILTERS = Object.fromEntries(
-  Object.keys(STATUS_STYLE).map((k) => [k, true])
+/** As chaves vêm de STATUS_STYLE em lib/graphConfig.ts. */
+const NO_STATUS_SELECTED = Object.fromEntries(
+  Object.keys(STATUS_STYLE).map((k) => [k, false])
 ) as Record<LinkStatus, boolean>;
 
 export default function Page() {
@@ -69,8 +73,9 @@ export default function Page() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [startYearFilter, setStartYearFilter] = useState(FALLBACK_YEAR_RANGE.min);
-  const [typeFilters, setTypeFilters] = useState<Record<NodeType, boolean>>(INITIAL_TYPE_FILTERS);
-  const [statusFilters, setStatusFilters] = useState<Record<LinkStatus, boolean>>(INITIAL_STATUS_FILTERS);
+  // true = marcado. Nenhum marcado = sem filtro (tudo visível).
+  const [typeFilters, setTypeFilters] = useState<Record<NodeType, boolean>>(NO_TYPE_SELECTED);
+  const [statusFilters, setStatusFilters] = useState<Record<LinkStatus, boolean>>(NO_STATUS_SELECTED);
 
   // Ano de início de cada esquema = ano do seu vínculo datado mais antigo.
   // É ele que o slider "Ano de Início" compara: um esquema de 1993 some por
@@ -190,8 +195,9 @@ export default function Page() {
       return start === undefined || start >= startYearFilter;
     };
 
+    const anyStatusSelected = Object.values(statusFilters).some(Boolean);
     const validLinks = graphData.links.filter((link) => {
-      const matchStatus = statusFilters[link.status] ?? true;
+      const matchStatus = !anyStatusSelected || (statusFilters[link.status] ?? false);
       if (!matchStatus) return false;
       const { sourceId, targetId } = getLinkEnds(link);
       const touchesScheme = nodeTypeById.get(sourceId) === 'scheme' || nodeTypeById.get(targetId) === 'scheme';
@@ -203,7 +209,8 @@ export default function Page() {
       return link.year == null || link.year >= startYearFilter;
     });
 
-    const typeOk = (n: GraphNode) => typeFilters[n.type] ?? true;
+    const anyTypeSelected = Object.values(typeFilters).some(Boolean);
+    const typeOk = (n: GraphNode) => !anyTypeSelected || (typeFilters[n.type] ?? false);
 
     let visibleIds: Set<string>;
     if (!query) {
@@ -231,9 +238,13 @@ export default function Page() {
       return visibleIds.has(sourceId) && visibleIds.has(targetId);
     });
 
-    // Passo 4: uma passada basta — tirar um nó sem links não remove outros links.
+    // Passo 4: "conectado" = tem pelo menos um vínculo que passa nos filtros
+    // de ano e status (validLinks), MESMO que a outra ponta esteja oculta pelo
+    // filtro de tipo. Antes contavam só os vínculos visíveis — e como não há
+    // vínculos esquema–esquema nem partido–partido no banco, marcar só
+    // "Esquemas" ou só "Partidos" esvaziava o grafo.
     const connected = new Set<string>();
-    for (const l of links) {
+    for (const l of validLinks) {
       const { sourceId, targetId } = getLinkEnds(l);
       connected.add(sourceId);
       connected.add(targetId);
@@ -265,6 +276,9 @@ export default function Page() {
   const toggleStatusFilter = useCallback((status: LinkStatus) => {
     setStatusFilters((prev) => ({ ...prev, [status]: !prev[status] }));
   }, []);
+
+  const clearTypeFilters = useCallback(() => setTypeFilters(NO_TYPE_SELECTED), []);
+  const clearStatusFilters = useCallback(() => setStatusFilters(NO_STATUS_SELECTED), []);
 
   // No grafo (e no Índice de Esquemas): seleciona sem abrir o painel.
   const selectNode = useCallback((node: GraphNode) => {
@@ -337,8 +351,10 @@ export default function Page() {
           maxYear={yearRange.max}
           typeFilters={typeFilters}
           toggleTypeFilter={toggleTypeFilter}
+          clearTypeFilters={clearTypeFilters}
           statusFilters={statusFilters}
           toggleStatusFilter={toggleStatusFilter}
+          clearStatusFilters={clearStatusFilters}
           nodeCount={filteredData.nodes.length}
           linkCount={filteredData.links.length}
           nodes={filteredData.nodes}

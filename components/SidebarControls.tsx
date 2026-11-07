@@ -27,15 +27,32 @@ interface SidebarControlsProps {
   setStartYearFilter: (year: number) => void;
   minYear: number;
   maxYear: number;
+  /** true = marcado. Nenhum marcado = sem filtro (tudo visível no grafo). */
   typeFilters: Record<NodeType, boolean>;
   toggleTypeFilter: (type: NodeType) => void;
+  clearTypeFilters: () => void;
   statusFilters: Record<LinkStatus, boolean>;
   toggleStatusFilter: (status: LinkStatus) => void;
+  clearStatusFilters: () => void;
   nodeCount: number;
   linkCount: number;
   nodes: GraphNode[];
   selectedNode: GraphNode | null;
   onSelectScheme: (node: GraphNode) => void;
+}
+
+/** "Limpar filtros" ao lado do título de cada grupo de filtros. */
+function ClearFiltersButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="text-[10px] font-mono text-cyan-400 hover:text-cyan-200 hover:underline disabled:text-slate-600 disabled:no-underline disabled:cursor-default"
+    >
+      Limpar filtros
+    </button>
+  );
 }
 
 export default function SidebarControls({
@@ -47,8 +64,10 @@ export default function SidebarControls({
   maxYear,
   typeFilters,
   toggleTypeFilter,
+  clearTypeFilters,
   statusFilters,
   toggleStatusFilter,
+  clearStatusFilters,
   nodeCount,
   linkCount,
   nodes,
@@ -58,6 +77,8 @@ export default function SidebarControls({
   // Filtra apenas as entidades do tipo "Esquema de Corrupção"
   // Só os nós de esquema VISÍVEIS (já filtrados) entram no índice.
   const schemeNodes = React.useMemo(() => nodes.filter((node) => node.type === 'scheme'), [nodes]);
+  const anyTypeSelected = Object.values(typeFilters).some(Boolean);
+  const anyStatusSelected = Object.values(statusFilters).some(Boolean);
 
   return (
     <aside className="hidden md:flex w-80 bg-[#090f1b] border-r border-slate-800/80 flex-col z-20 shadow-xl h-full">
@@ -116,10 +137,13 @@ export default function SidebarControls({
 
         {/* Tipos de Entidade */}
         <div>
-          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-            <Filter className="w-3.5 h-3.5 text-cyan-400" />
-            Tipos de Entidade
-          </label>
+          <div className="mb-2.5 flex items-center justify-between gap-2">
+            <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-cyan-400" />
+              Tipos de Entidade
+            </label>
+            <ClearFiltersButton onClick={clearTypeFilters} disabled={!anyTypeSelected} />
+          </div>
           <div className="space-y-1.5">
             {(Object.keys(NODE_STYLE) as NodeType[]).map((typeKey) => {
               const cfg = NODE_STYLE[typeKey];
@@ -132,8 +156,8 @@ export default function SidebarControls({
                   aria-pressed={active}
                   className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg border text-xs transition-all ${
                     active
-                      ? 'bg-slate-800/80 border-slate-700 text-slate-200'
-                      : 'bg-slate-950/40 border-slate-900 text-slate-600 opacity-60'
+                      ? 'bg-slate-800/80 border-cyan-500/60 text-slate-100 shadow-[0_0_10px_rgba(34,211,238,0.15)]'
+                      : 'bg-slate-950/40 border-slate-900 text-slate-500 hover:text-slate-300 hover:border-slate-700'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5">
@@ -149,10 +173,13 @@ export default function SidebarControls({
 
         {/* Status Jurídico */}
         <div>
-          <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-            <Scale className="w-3.5 h-3.5 text-cyan-400" />
-            Status Jurídico
-          </label>
+          <div className="mb-2.5 flex items-center justify-between gap-2">
+            <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Scale className="w-3.5 h-3.5 text-cyan-400" />
+              Status Jurídico
+            </label>
+            <ClearFiltersButton onClick={clearStatusFilters} disabled={!anyStatusSelected} />
+          </div>
           <div className="space-y-1.5">
             {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => ({ key, ...STATUS_STYLE[key] })).map((st) => (
               <button
@@ -161,8 +188,8 @@ export default function SidebarControls({
                 aria-pressed={statusFilters[st.key]}
                 className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg border text-xs transition-all ${
                   statusFilters[st.key]
-                    ? 'bg-slate-800/50 border-slate-700 text-slate-300'
-                    : 'bg-slate-950 border-slate-900 text-slate-600'
+                    ? 'bg-slate-800/80 border-cyan-500/60 text-slate-100 shadow-[0_0_10px_rgba(34,211,238,0.15)]'
+                    : 'bg-slate-950 border-slate-900 text-slate-500 hover:text-slate-300 hover:border-slate-700'
                 }`}
               >
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: st.color }} />
