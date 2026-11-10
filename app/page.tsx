@@ -26,6 +26,7 @@ import InspectorDrawer from '@/components/InspectorDrawer';
 import AdBanner from '@/components/AdBanner';
 import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/graph';
 import { getLinkEnds, normalizeText, STATUS_STYLE } from '@/lib/graphConfig';
+import { ADSENSE_CLIENT, ADSENSE_SLOTS } from '@/lib/site';
 
 /** Intervalo do controle de ano enquanto os dados não chegam (ou se nenhum link tiver ano). */
 const FALLBACK_YEAR_RANGE = { min: 1989, max: new Date().getFullYear() };
@@ -319,9 +320,6 @@ export default function Page() {
     selectNode(schemeNode);
   }, [selectNode]);
 
-  // Anúncio só aparece se as duas variáveis de ambiente existirem (ver README).
-  const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
-  const adSlot = process.env.NEXT_PUBLIC_ADSENSE_SLOT;
 
   return (
     <div className="relative h-[100dvh] w-full bg-[#080d16] text-slate-100 font-sans overflow-hidden flex flex-col">
@@ -413,7 +411,7 @@ export default function Page() {
             />
           )}
 
-          {adClient && adSlot && <AdBanner adClient={adClient} adSlot={adSlot} />}
+          <AdBanner adClient={ADSENSE_CLIENT} adSlot={ADSENSE_SLOTS.banner} />
         </main>
 
         {/* Painel de detalhes: só abre pelo botão "Exibir detalhes". Fechar
