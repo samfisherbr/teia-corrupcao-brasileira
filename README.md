@@ -20,7 +20,7 @@ O binding do D1 no Cloudflare Pages deve se chamar `DB`. O schema segue o Master
 ### Variáveis de ambiente (opcionais)
 | Variável | Uso |
 |---|---|
-| `NEXT_PUBLIC_ADSENSE_CLIENT` | Substitui o ID de editor do AdSense (padrão `ca-pub-5667235064220150`, em `lib/site.ts`). O script, a meta tag de verificação e o `/ads.txt` já saem com o ID padrão; só defina para trocar de conta. |
+| `NEXT_PUBLIC_ADSENSE_CLIENT` | Substitui o ID de editor do AdSense (padrão `ca-pub-5667235064220150`, em `lib/site.ts`). O script e a meta tag de verificação já saem com o ID padrão; só defina para trocar de conta (e atualize também `public/ads.txt`). |
 | `NEXT_PUBLIC_ADSENSE_SLOT` | Substitui o ID do banner fixo 728×90 sobre o grafo (padrão `2182726962`). O anúncio no artigo dos dossiês usa `1991155274`. Ambos ficam em `ADSENSE_SLOTS`, em `lib/site.ts`. |
 | `NEXT_PUBLIC_SITE_DOMAIN` | Domínio público, sem `https://` (padrão em `lib/site.ts`). Usado nas páginas legais, nos endereços canônicos, no `sitemap.xml` e no `robots.txt`. |
 
@@ -28,7 +28,8 @@ As variáveis `NEXT_PUBLIC_*` são lidas **no build**: depois de mudar uma no Cl
 
 ### Páginas para busca e AdSense
 - `/esquemas` e `/esquemas/<slug>` — um dossiê por esquema, renderizado no servidor a partir do D1 e de `data/schemeDetails.ts` (o grafo é um `<canvas>` e o Glossário só abre com clique, então os robôs não leem nenhum dos dois). O slug é o id sem `esquema_`, com hífens: `esquema_anoes_orcamento` → `/esquemas/anoes-orcamento`.
-- `/sitemap.xml`, `/robots.txt` e `/ads.txt` — gerados no build (`app/sitemap.ts`, `app/robots.ts`, `app/ads.txt/route.ts`).
+- `/sitemap.xml` e `/robots.txt` — gerados no build (`app/sitemap.ts`, `app/robots.ts`).
+- `/ads.txt` — arquivo de texto simples em `public/ads.txt`, servido na raiz do site como o AdSense pede. Trocou de conta do AdSense? Cole ali a linha nova copiada em **Sites → Ads.txt snippet**.
 
 ### Bloqueio de robôs de IA
 - Lista única em `lib/aiBots.ts` (GPTBot, ClaudeBot, PerplexityBot, CCBot, Google-Extended…).
