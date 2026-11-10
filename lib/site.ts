@@ -25,3 +25,15 @@ export const LEGAL_LAST_UPDATED = '3 de novembro de 2026';
  */
 export const ADSENSE_CLIENT =
   process.env.NEXT_PUBLIC_ADSENSE_CLIENT?.trim() || 'ca-pub-5667235064220150';
+
+/**
+ * IDs dos blocos de anúncio criados no AdSense (Anúncios → Por bloco).
+ *  - banner: anúncio de display fixo 728×90 sobre o grafo ("Network graph"),
+ *    em components/AdBanner.tsx. NEXT_PUBLIC_ADSENSE_SLOT tem prioridade.
+ *  - inArticle: anúncio no artigo (fluido) dos dossiês, em
+ *    components/InArticleAd.tsx.
+ */
+export const ADSENSE_SLOTS = {
+  banner: process.env.NEXT_PUBLIC_ADSENSE_SLOT?.trim() || '2182726962',
+  inArticle: '1991155274',
+} as const;
