@@ -20,8 +20,8 @@ O binding do D1 no Cloudflare Pages deve se chamar `DB`. O schema segue o Master
 ### Variáveis de ambiente (opcionais)
 | Variável | Uso |
 |---|---|
-| `NEXT_PUBLIC_ADSENSE_CLIENT` | ID `ca-pub-…` do AdSense. Sozinha, já coloca em todas as páginas a meta tag de verificação e o script do AdSense (o que a análise do Google exige) e gera o `/ads.txt`. |
-| `NEXT_PUBLIC_ADSENSE_SLOT` | ID do bloco de anúncio (só existe depois da aprovação). Com as duas variáveis, aparece o banner fixo sobre o grafo. |
+| `NEXT_PUBLIC_ADSENSE_CLIENT` | Substitui o ID de editor do AdSense (padrão `ca-pub-5667235064220150`, em `lib/site.ts`). O script, a meta tag de verificação e o `/ads.txt` já saem com o ID padrão; só defina para trocar de conta. |
+| `NEXT_PUBLIC_ADSENSE_SLOT` | ID do bloco de anúncio (só existe depois da aprovação). Com ela definida, aparece o banner fixo sobre o grafo. |
 | `NEXT_PUBLIC_SITE_DOMAIN` | Domínio público, sem `https://` (padrão em `lib/site.ts`). Usado nas páginas legais, nos endereços canônicos, no `sitemap.xml` e no `robots.txt`. |
 
 As variáveis `NEXT_PUBLIC_*` são lidas **no build**: depois de mudar uma no Cloudflare Pages, faça um novo deploy.
