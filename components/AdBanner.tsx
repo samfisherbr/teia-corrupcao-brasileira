@@ -4,8 +4,7 @@
  * ADBANNER — bloco de anúncio do Google AdSense (728×90, só em telas ≥ 1024px).
  * O script do AdSense é carregado uma vez para o site todo em app/layout.tsx;
  * este componente só desenha o bloco e pede o anúncio.
- * O ID de editor vem de lib/site.ts (ADSENSE_CLIENT); o do bloco, de
- * NEXT_PUBLIC_ADSENSE_SLOT (ver README).
+ * IDs em lib/site.ts (ADSENSE_CLIENT e ADSENSE_SLOTS.banner, bloco "Network graph").
  * Posição: classes `bottom-3 left-1/2` do contêiner. Para outro formato,
  * troque largura/altura em `w-[728px] h-[90px]` e no `style` do <ins>.
  */
@@ -20,10 +19,9 @@ declare global {
 
 interface AdBannerProps {
   adClient: string; // e.g. "ca-pub-5667235064220150" (ADSENSE_CLIENT em lib/site.ts)
-  adSlot: string;   // e.g. "1234567890"            (NEXT_PUBLIC_ADSENSE_SLOT)
+  adSlot: string;   // e.g. "2182726962"             (ADSENSE_SLOTS.banner em lib/site.ts)
 }
 
-/** Rendered by page.tsx only when NEXT_PUBLIC_ADSENSE_SLOT is set. */
 export default function AdBanner({ adClient, adSlot }: AdBannerProps) {
   const pushedRef = useRef(false);
 

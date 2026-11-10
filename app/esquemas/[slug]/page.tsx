@@ -10,6 +10,9 @@
  * funcionamento, situação jurídica e fontes vêm de data/schemeDetails.ts;
  * entidades ligadas vêm dos links do banco. Sem banco, a página sai só com
  * o dossiê e um título de reserva. Esquema desconhecido → 404.
+ *
+ * Anúncio: um bloco "no artigo" (InArticleAd) dois parágrafos depois do
+ * início — após o resumo e o contexto histórico —, como o Google recomenda.
  */
 import React, { cache } from 'react';
 import Link from 'next/link';
@@ -19,6 +22,7 @@ import { ArrowLeft, Coins, ExternalLink, Network } from 'lucide-react';
 import { SCHEME_DETAILS } from '@/data/schemeDetails';
 import { NODE_STYLE, entityChipStyle } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
+import InArticleAd from '@/components/InArticleAd';
 import { loadScheme } from '@/lib/db';
 import { fallbackSchemeTitle, schemeIdFromSlug, schemePath } from '@/lib/schemes';
 import { SITE_NAME } from '@/lib/site';
@@ -125,6 +129,9 @@ export default async function SchemeDossierPage({ params }: { params: Promise<{ 
             <p className="text-sm text-slate-300 leading-relaxed">{details.context}</p>
           </Section>
         )}
+
+        {/* key: navegar entre dossiês recria o bloco e pede um anúncio novo. */}
+        <InArticleAd key={s.id} />
 
         {details?.mechanism && (
           <Section title="Funcionamento do esquema">

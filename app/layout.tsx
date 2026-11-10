@@ -7,8 +7,8 @@
  *  - Google AdSense: toda página leva a meta tag de verificação
  *    `google-adsense-account` e o script do AdSense no <head>, com o ID de
  *    editor de lib/site.ts (ADSENSE_CLIENT). Isso basta para o Google verificar
- *    o site e para os Anúncios automáticos. Blocos de anúncio fixos (AdBanner)
- *    precisam também de NEXT_PUBLIC_ADSENSE_SLOT.
+ *    o site e para os Anúncios automáticos. Os blocos de anúncio (AdBanner,
+ *    InArticleAd) usam os IDs de ADSENSE_SLOTS, no mesmo arquivo.
  */
 import React from 'react';
 import type { Metadata } from 'next';
