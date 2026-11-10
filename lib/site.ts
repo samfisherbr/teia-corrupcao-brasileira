@@ -20,8 +20,9 @@ export const LEGAL_LAST_UPDATED = '3 de novembro de 2026';
 
 /**
  * ID de editor do Google AdSense (público: aparece no HTML de toda página).
- * Usado no script e na meta tag de verificação (app/layout.tsx), no /ads.txt
- * e no banner (AdBanner). NEXT_PUBLIC_ADSENSE_CLIENT, se definida, tem prioridade.
+ * Usado no script e na meta tag de verificação (app/layout.tsx) e nos blocos
+ * de anúncio. NEXT_PUBLIC_ADSENSE_CLIENT, se definida, tem prioridade.
+ * Ao trocar de ID, atualize também public/ads.txt (arquivo de texto fixo).
  */
 export const ADSENSE_CLIENT =
   process.env.NEXT_PUBLIC_ADSENSE_CLIENT?.trim() || 'ca-pub-5667235064220150';
