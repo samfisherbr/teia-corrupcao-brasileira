@@ -28,12 +28,6 @@ export const AI_BOTS: { name: string; ua: boolean; owner: string }[] = [
   { name: 'GPTBot', ua: true, owner: 'OpenAI (treino)' },
   { name: 'ChatGPT-User', ua: true, owner: 'OpenAI (ChatGPT navegando a pedido)' },
   { name: 'OAI-SearchBot', ua: true, owner: 'OpenAI (busca do ChatGPT)' },
-  // Anthropic
-  { name: 'ClaudeBot', ua: true, owner: 'Anthropic (treino)' },
-  { name: 'Claude-User', ua: true, owner: 'Anthropic (Claude navegando a pedido)' },
-  { name: 'Claude-SearchBot', ua: true, owner: 'Anthropic (busca)' },
-  { name: 'Claude-Web', ua: true, owner: 'Anthropic (antigo)' },
-  { name: 'anthropic-ai', ua: true, owner: 'Anthropic (antigo)' },
   // Google / Apple (só tokens: não bloqueiam a busca)
   { name: 'Google-Extended', ua: false, owner: 'Google (treino do Gemini)' },
   { name: 'GoogleOther', ua: true, owner: 'Google (pesquisa e desenvolvimento, fora da busca)' },
@@ -66,6 +60,19 @@ export const AI_BOTS: { name: string; ua: boolean; owner: string }[] = [
   { name: 'iaskspider', ua: true, owner: 'iAsk' },
   { name: 'img2dataset', ua: true, owner: 'ferramenta de raspagem para datasets' },
   { name: 'FirecrawlAgent', ua: true, owner: 'Firecrawl (raspagem para LLMs)' },
+];
+
+/**
+ * Robôs de IA LIBERADOS (exceção à lista acima): ganham `Allow: /` explícito
+ * no robots.txt e NÃO recebem 403 do middleware. Hoje: os da Anthropic.
+ * Para liberar outra empresa, mova os nomes dela de AI_BOTS para cá.
+ */
+export const ALLOWED_AI_BOTS: { name: string; owner: string }[] = [
+  { name: 'ClaudeBot', owner: 'Anthropic (treino)' },
+  { name: 'Claude-User', owner: 'Anthropic (Claude navegando a pedido)' },
+  { name: 'Claude-SearchBot', owner: 'Anthropic (busca)' },
+  { name: 'Claude-Web', owner: 'Anthropic (antigo)' },
+  { name: 'anthropic-ai', owner: 'Anthropic (antigo)' },
 ];
 
 /** Expressão que acha qualquer nome com `ua: true` no User-Agent (sem diferenciar maiúsculas). */
