@@ -17,3 +17,24 @@ export const CONTACT_EMAIL = 'samfisherbr@gmail.com';
 
 /** Data da última revisão dos textos legais (atualize ao mudá-los). */
 export const LEGAL_LAST_UPDATED = '3 de novembro de 2026';
+
+/**
+ * ID de editor do Google AdSense (público: aparece no HTML de toda página).
+ * Usado no script e na meta tag de verificação (app/layout.tsx) e nos blocos
+ * de anúncio. NEXT_PUBLIC_ADSENSE_CLIENT, se definida, tem prioridade.
+ * Ao trocar de ID, atualize também public/ads.txt (arquivo de texto fixo).
+ */
+export const ADSENSE_CLIENT =
+  process.env.NEXT_PUBLIC_ADSENSE_CLIENT?.trim() || 'ca-pub-5667235064220150';
+
+/**
+ * IDs dos blocos de anúncio criados no AdSense (Anúncios → Por bloco).
+ *  - banner: anúncio de display fixo 728×90 sobre o grafo ("Network graph"),
+ *    em components/AdBanner.tsx. NEXT_PUBLIC_ADSENSE_SLOT tem prioridade.
+ *  - inArticle: anúncio no artigo (fluido) dos dossiês, em
+ *    components/InArticleAd.tsx.
+ */
+export const ADSENSE_SLOTS = {
+  banner: process.env.NEXT_PUBLIC_ADSENSE_SLOT?.trim() || '2182726962',
+  inArticle: '1991155274',
+} as const;
