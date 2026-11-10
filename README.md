@@ -31,7 +31,7 @@ As variáveis `NEXT_PUBLIC_*` são lidas **no build**: depois de mudar uma no Cl
 - `/sitemap.xml`, `/robots.txt` e `/ads.txt` — gerados no build (`app/sitemap.ts`, `app/robots.ts`, `app/ads.txt/route.ts`).
 
 ### Bloqueio de robôs de IA
-- Lista única em `lib/aiBots.ts` (GPTBot, ClaudeBot, PerplexityBot, CCBot, Google-Extended…).
+- Lista única em `lib/aiBots.ts` (GPTBot, PerplexityBot, CCBot, Google-Extended…). Exceção: os robôs da Anthropic (ClaudeBot, Claude-User, Claude-SearchBot…) estão em `ALLOWED_AI_BOTS` e são liberados.
 - `robots.txt` pede a todos eles que não acessem o site; `middleware.ts` responde **403** aos que se identificam, e toda página leva `X-Robots-Tag: noai, noimageai` e `tdm-reservation: 1`.
 - Busca e AdSense (Googlebot, Mediapartners-Google, Bingbot) **não** são bloqueados.
 - Robôs que fingem ser navegadores passam por essas camadas: ative também no Cloudflare **Security → Bots → Block AI bots** (ou **AI Crawl Control**).
