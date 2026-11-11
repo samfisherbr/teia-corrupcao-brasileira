@@ -58,6 +58,35 @@ export async function loadSchemeNodes(): Promise<GraphNode[] | null> {
   }
 }
 
+/**
+ * Ano de início de cada esquema (ano do vínculo datado mais antigo), calculado
+ * pelo banco a cada visita — mesma regra de computeSchemeStartYears em
+ * lib/schemes.ts. Null se o banco não responder.
+ */
+export async function loadSchemeStartYears(): Promise<Map<string, number> | null> {
+  const db = getDB();
+  if (!db) return null;
+  try {
+    const { results } = await db
+      .prepare(
+        `SELECT n.id AS id, MIN(CAST(l.year AS INTEGER)) AS start
+           FROM nodes n
+           JOIN links l ON l.source = n.id OR l.target = n.id
+          WHERE n.type = 'scheme' AND l.year IS NOT NULL AND CAST(l.year AS INTEGER) > 0
+          GROUP BY n.id`
+      )
+      .all<Row>();
+    return new Map(
+      results
+        .map((r) => [String(r.id), Number(r.start)] as [string, number])
+        .filter(([, y]) => Number.isFinite(y) && y > 0)
+    );
+  } catch (e) {
+    console.error('[lib/db] loadSchemeStartYears:', e);
+    return null;
+  }
+}
+
 /** Esquema e as entidades ligadas a ele diretamente, ou null se o banco não responder. */
 export async function loadScheme(
   id: string
