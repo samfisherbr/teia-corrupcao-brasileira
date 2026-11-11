@@ -52,8 +52,15 @@ export const entityChipStyle = (type: string | undefined): { backgroundColor: st
 /** Raio usado se aparecer um `type` desconhecido vindo do banco. */
 export const DEFAULT_NODE_RADIUS = 20;
 
-export const getNodeRadius = (type: string | undefined): number =>
-  NODE_STYLE[type as NodeType]?.radius ?? DEFAULT_NODE_RADIUS;
+/**
+ * Raio de um nó. Com o nó em mãos, usa o raio calculado pelo layout
+ * (`__radius` — esquemas variam de tamanho conforme o nº de conexões, ver
+ * lib/layout.ts); sem ele, o raio fixo do tipo em NODE_STYLE.
+ */
+export const getNodeRadius = (type: string | undefined, node?: { __radius?: number } | null): number =>
+  (node && typeof node.__radius === 'number' ? node.__radius : undefined) ??
+  NODE_STYLE[type as NodeType]?.radius ??
+  DEFAULT_NODE_RADIUS;
 
 /**
  * Aparência de cada status jurídico (linhas do grafo, legenda, filtros).
