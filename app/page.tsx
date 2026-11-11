@@ -393,6 +393,7 @@ export default function Page() {
               onSelectNode={selectNode}
               onSelectLink={selectLink}
               onClearSelection={clearSelection}
+              showPartyLinks={typeFilters.party}
               detailsOpen={detailsOpen}
               onOpenDetails={() => setDetailsOpen(true)}
               // Pausa a animação enquanto Infográficos/Glossário cobrem o grafo.

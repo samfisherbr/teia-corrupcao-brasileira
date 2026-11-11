@@ -24,7 +24,7 @@ import Link from 'next/link';
 import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, PanelRightOpen } from 'lucide-react';
 import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, getLinkEnds } from '@/lib/graphConfig';
-import { computeLayoutTargets, seedPositions, applyLayoutForces } from '@/lib/layout';
+import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink } from '@/lib/layout';
 
 // A biblioteca usa `window`, então só carrega no navegador (ssr: false).
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
@@ -36,6 +36,12 @@ interface NetworkGraphProps {
   selectedLink: GraphLink | null;
   onSelectNode: (node: GraphNode) => void;
   onSelectLink: (link: GraphLink) => void;
+  /**
+   * Mostrar sempre as ligações com partidos? Por padrão elas ficam ocultas
+   * (o núcleo de partidos ligaria tudo a tudo) e só aparecem quando um nó ou
+   * linha ligado a elas está em foco. true quando o filtro "Partido" está marcado.
+   */
+  showPartyLinks?: boolean;
   /** Toque/clique no fundo: limpa a seleção. */
   onClearSelection: () => void;
   /** Painel de detalhes aberto? (o botão "Exibir detalhes" some enquanto estiver). */
@@ -207,6 +213,7 @@ export default function NetworkGraph({
   onSelectNode,
   onSelectLink,
   onClearSelection,
+  showPartyLinks = false,
   detailsOpen,
   onOpenDetails,
   paused = false,
@@ -399,7 +406,7 @@ export default function NetworkGraph({
     }
     // zoomToFit enquadra os CENTROS dos nós; a margem extra = maior raio do
     // grupo × zoom máximo, para os círculos inteiros caberem na tela.
-    const biggest = Math.max(0, ...Array.from(lit).map((id) => getNodeRadius((nodeById.get(id) as any)?.type)));
+    const biggest = Math.max(0, ...Array.from(lit).map((id) => getNodeRadius((nodeById.get(id) as any)?.type, nodeById.get(id) as any)));
     // Nunca mais que 30% do menor lado da tela (no celular, uma margem fixa
     // grande sobraria pouco espaço e o zoom despencaria).
     const padding = Math.min(FOCUS_FIT_PADDING + biggest * FOCUS_MAX_ZOOM, 0.3 * Math.min(dimensions.width, dimensions.height));
@@ -471,7 +478,7 @@ export default function NetworkGraph({
   const drawNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
     const isSelected = selectedNode?.id === node.id;
     const color = NODE_STYLE[node.type as NodeType]?.color ?? '#00f0ff';
-    const size = getNodeRadius(node.type);
+    const size = getNodeRadius(node.type, node);
     const lit = isNodeLit(node.id);
     const isFocusCentre = focusIds.has(node.id);
     const isScheme = node.type === 'scheme';
@@ -533,7 +540,7 @@ export default function NetworkGraph({
   const paintPointerArea = useCallback((node: any, color: string, ctx: CanvasRenderingContext2D) => {
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(node.x, node.y, getNodeRadius(node.type) + CLICK_PADDING, 0, 2 * Math.PI);
+    ctx.arc(node.x, node.y, getNodeRadius(node.type, node) + CLICK_PADDING, 0, 2 * Math.PI);
     ctx.fill();
   }, []);
 
@@ -563,8 +570,8 @@ export default function NetworkGraph({
     const dy = end.y - start.y;
     const len = Math.hypot(dx, dy);
     const border = 1 / safeScale;
-    const r0 = getNodeRadius(start.type) + border;
-    const r1 = getNodeRadius(end.type) + border;
+    const r0 = getNodeRadius(start.type, start) + border;
+    const r1 = getNodeRadius(end.type, end) + border;
     if (len <= r0 + r1) return; // círculos encostados/sobrepostos: nada visível entre eles
     const ux = dx / len;
     const uy = dy / len;
@@ -711,7 +718,7 @@ export default function NetworkGraph({
         labelLinesCache.current.set(cacheKey, lines);
       }
 
-      const y = node.y + getNodeRadius(node.type) + 6 / scale;
+      const y = node.y + getNodeRadius(node.type, node) + 6 / scale;
       const lineStep = fontSize * LABEL_LINE_HEIGHT;
       ctx.font = `${weight} ${px}px Inter, system-ui, sans-serif`;
       const widthPx = Math.max(...lines.map((l) => ctx.measureText(l).width));
@@ -781,7 +788,7 @@ export default function NetworkGraph({
       const n: any = nodeById.get(selectedNode.id);
       gx = n?.x;
       gy = n?.y;
-      r = getNodeRadius(n?.type);
+      r = getNodeRadius(n?.type, n);
     } else if (selectedLink) {
       const s: any = typeof selectedLink.source === 'object' ? selectedLink.source : nodeById.get(selectedLink.source as string);
       const t: any = typeof selectedLink.target === 'object' ? selectedLink.target : nodeById.get(selectedLink.target as string);
@@ -850,6 +857,9 @@ export default function NetworkGraph({
         // No modo 'replace' a cor/tracejado vêm de drawLink; linkWidth ainda
         // define a área de clique da linha, por isso acompanha a espessura.
         linkWidth={(link: any) => (isLinkSelected(link) ? LINK_WIDTH_SELECTED : LINK_WIDTH)}
+        // Ligações com partidos: ocultas (sem desenho nem clique) a não ser que
+        // estejam em foco ou o filtro "Partido" esteja marcado (showPartyLinks).
+        linkVisibility={(link: any) => !isPartyLink(link) || showPartyLinks || (hasFocus && isLinkLit(link))}
         // Partículas animadas (quantidade por status em STATUS_STYLE.particles)
         linkDirectionalParticles={(link: any) => (isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0)}
         linkDirectionalParticleSpeed={0.005}
