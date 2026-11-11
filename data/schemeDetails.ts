@@ -326,18 +326,19 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
   },
 
   "esquema_lava_jato": {
-    context: "A Operação Lava Jato foi deflagrada pela Polícia Federal em março de 2014, inicialmente focada na apuração de redes de lavagem de dinheiro mantidas por doleiros. O avanço das apurações e colaborações premiadas revelou um esquema de corrupção sistêmica e loteamento de diretorias da Petrobras por legendas políticas e empreiteiras.",
-    mechanism: "Um cartel composto pelas maiores construtoras do país combinava resultados e superfaturava contratos de obras da Petrobras. Uma parcela de 1% a 3% do valor dos contratos alimentava propinas a executivos da estatal e a partidos políticos encarregados de indicar diretores, com o suporte de doleiros e contratos de consultoria fictícios.",
-    impact: "R$ 6.200.000.000 de perdas diretas por corrupção reconhecidas pela Petrobras no balanço de 2014, em meio a estimativas globais de movimentações ilícitas superiores a R$ 42 bilhões e acertos de leniência que fixaram ressarcimentos multilaterais.",
-    legalStatus: "A operação promoveu a condenação de executivos, operadores e políticos. A partir de 2021, o STF anulou condenações, incluindo as do ex-presidente Lula, por incompetência de foro e parcialidade do juízo, além de trancar investigações e suspender pagamentos de leniências em virtude de nulidades processuais. Situação em novembro de 2026: processos principais contra os núcleos políticos arquivados ou trancados.",
+    context: "A Operação Lava Jato foi deflagrada pela Polícia Federal em março de 2014, com a prisão do doleiro Alberto Youssef, e expôs um esquema de corrupção em contratos da Petrobras. Em delação homologada pelo STF em setembro de 2014, o ex-diretor de Abastecimento Paulo Roberto Costa, que disse ter sido indicado ao cargo pelo PP, descreveu repasses de contratos da estatal a partidos.",
+    mechanism: "Segundo colaboradores, empreiteiras pagavam percentuais sobre contratos de diretorias da Petrobras distribuídas entre partidos, e o dinheiro chegava a políticos e a caixa dois de campanhas por meio de operadores e doleiros como Alberto Youssef e Fernando Baiano. Em depoimento de 2014, Costa afirmou que o PT recebia 3% de contratos pela Diretoria de Serviços e que PMDB e PP também se beneficiavam; são alegações de colaboradores.",
+    impact: "R$ 6.200.000.000 (perdas com corrupção reconhecidas pela Petrobras no balanço de 2014). Nos acordos de leniência de dezembro de 2016 com Brasil, EUA e Suíça, Odebrecht e Braskem comprometeram-se a pagar cerca de R$ 6,9 bilhões, dos quais R$ 3,828 bilhões cabem à Odebrecht. O MPF pede R$ 2,3 bilhões ao PP em ação civil de improbidade, ainda sem decisão localizada.",
+    legalStatus: "A operação produziu condenações em Curitiba, mas o STF anulou ou extinguiu boa parte delas: as condenações de Lula (2021), as duas de Eduardo Cunha, e os atos contra Marcelo Odebrecht (2024), Léo Pinheiro (2025), Alberto Youssef (2025) e João Vaccari Neto (2025); a pena de José Dirceu por corrupção passiva foi declarada prescrita (2024). Fernando Collor cumpre pena de 8 anos e 10 meses por condenação definitiva do STF, e Renato Duque está preso desde 2024, com recurso pela anulação pendente no STF. Situação em novembro de 2026: delações e acordos de leniência seguem válidos, e não foi localizado desfecho da ação de improbidade contra o PP.",
     sources: [
-      { title: "Doleiro diz que PT, PMDB e PP recebiam propina da Petrobras - G1", url: "https://g1.globo.com/politica/operacao-lava-jato/noticia/2014/10/doleiro-diz-que-pt-pmdb-e-pp-recebiam-propina-da-petrobras.html" },
-      { title: "Paulo Roberto Costa revela que recebeu propina para vazar dados - G1", url: "https://g1.globo.com/politica/operacao-lava-jato/noticia/2014/10/paulo-roberto-costa-revela-que-recebeu-propina-para-vazar-dados.html" },
       { title: "Petrobras reconhece perda de 6,2 bilhões de reais com a corrupção - EL PAÍS Brasil", url: "https://brasil.elpais.com/brasil/2015/04/23/politica/1429744001_078177.html" },
-      { title: "Moro condena Vaccari, Duque e mais 11 réus em ação da Lava Jato - G1", url: "https://g1.globo.com/pr/parana/noticia/2015/09/moro-condena-vaccari-duque-e-mais-11-reus-em-acao-da-lava-jato.html" },
+      { title: "STF homologa delação de ex-diretor da Petrobras - Gazeta do Povo", url: "https://www.gazetadopovo.com.br/vida-publica/stf-homologa-delacao-de-ex-diretor-da-petrobras-eear9mlonu923viiwiygf7xam" },
+      { title: "Partidos receberam propina por contratos na Petrobras - Congresso em Foco", url: "https://www.congressoemfoco.com.br/noticias/partidos-receberam-propina-por-contratos-na-petrobras/" },
       { title: "Odebrecht e Braskem assinam acordos de leniência com EUA e Suíça - G1", url: "https://g1.globo.com/politica/operacao-lava-jato/noticia/odebrecht-e-braskem-fecham-acordo-com-suica.ghtml" },
-      { title: "Eduardo Cunha é condenado a 15 anos e quatro meses de prisão na Lava Jato - G1", url: "https://g1.globo.com/pr/parana/noticia/2017/03/eduardo-cunha-e-condenado-15-anos-e-quatro-meses-de-prisao-na-lava-jato.html" },
-      { title: "Fachin anula condenações de Lula relacionadas à Lava Jato - G1", url: "https://g1.globo.com/politica/noticia/2021/03/08/fachin-anula-condenacoes-de-lula-relacionadas-a-operacao-lava-jato.ghtml" }
+      { title: "STF mantém tramitação de ações penais contra ex-deputado Eduardo Cunha - STF", url: "https://noticias.stf.jus.br/postsnoticias/stf-mantem-tramitacao-de-acoes-penais-contra-ex-deputado-eduardo-cunha/" },
+      { title: "Moraes manda prender ex-presidente Fernando Collor - Agência Brasil", url: "https://agenciabrasil.ebc.com.br/justica/noticia/2025-04/moraes-manda-prender-ex-presidente-fernando-collor" },
+      { title: "STF mantém nulidade de atos da Lava Jato contra Marcelo Odebrecht - STF", url: "https://noticias.stf.jus.br/?p=93703" },
+      { title: "Dias Toffoli anula todos os atos da Lava Jato contra doleiro Alberto Youssef - SBT News", url: "https://sbtnews.sbt.com.br/noticia/politica/dias-toffoli-anula-todos-os-atos-da-lava-jato-contra-doleiro-alberto-youssef" }
     ]
   },
 
@@ -503,6 +504,19 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Auditoria identifica que 93% dos consignados do Banco Master foram feitos sem assinatura dos aposentados - Sintrajufe-RS", url: "https://sintrajufe.org.br/auditoria-identifica-que-93-dos-consignados-do-banco-master/" },
       { title: "Caso Master: PF indicia 15 pessoas; políticos e ministros do STF fora da lista - ND Mais", url: "https://ndmais.com.br/justica/caso-master-pf-indicia-15-pessoas-politicos-ministros-stf-fora-lista-vorcaro/" },
       { title: "CPMI do INSS convoca Daniel Vorcaro, investigado por fraude no Banco Master - Senado Notícias", url: "https://www12.senado.leg.br/noticias/materias/2026/01/29/cpmi-do-inss-convoca-daniel-vorcaro-investigado-por-fraude-no-banco-master" }
+    ]
+  },
+
+  "esquema_inss_sem_desconto": {
+    context: "A Operação Sem Desconto foi deflagrada pela Polícia Federal e pela CGU em 23 de abril de 2025, a partir de investigação iniciada em 2023, contra um esquema nacional de descontos de mensalidades associativas não autorizados em aposentadorias e pensões do INSS. Seis servidores foram afastados, entre eles o então presidente do INSS.",
+    mechanism: "Entidades associativas com Acordos de Cooperação Técnica com o INSS lançavam mensalidades nos benefícios de aposentados e pensionistas; segundo PF e CGU, a grande maioria dos descontos era fraudada, com falsificação de assinaturas e outros artifícios para simular a autorização. A PF afirma que dirigentes do INSS receberam propina para não fiscalizar ou permitir os descontos, o que os investigados negam.",
+    impact: "R$ 6.300.000.000 (cobrados de forma suspeita por entidades entre 2019 e 2024, segundo estimativa da PF e da CGU). O montante reúne descontos sob análise dos investigadores e não equivale a prejuízo já comprovado; onze entidades foram alvo de ações judiciais na primeira fase.",
+    legalStatus: "A operação teve novas fases e, até novembro de 2025, ao menos 18 prisões, entre elas a do ex-presidente do INSS Alessandro Stefanutto e a do empresário Antônio Carlos Camilo Antunes. Em julho de 2026 a PF concluiu o primeiro inquérito com 48 indiciados, incluindo Stefanutto, Antunes e o ex-ministro José Carlos Oliveira, e o relatório seguiu para a PGR decidir sobre denúncia; Oliveira rejeita as acusações e a defesa de Stefanutto afirma que ele provará a inocência. Situação em novembro de 2026: investigação em curso, sem denúncia localizada.",
+    sources: [
+      { title: "'Proteção aos aposentados', diz Lewandowski sobre operação contra fraudes em descontos no INSS - Agência Gov", url: "https://agenciagov.ebc.com.br/noticias/202504/201cprotecao-aos-aposentados201d-diz-lewandowski-sobre-operacao-contra-fraudes-em-descontos-no-inss" },
+      { title: "Ao menos 18 pessoas foram presas em operações da PF sobre fraudes no INSS - CNN Brasil", url: "https://www.cnnbrasil.com.br/politica/prisoes-fraudes-inss-operacoes-pf/" },
+      { title: "INSS: PF indicia ex-presidente, \"Careca\" e mais 46 por corrupção - Metrópoles", url: "https://www.metropoles.com/brasil/inss-pf-indicia-ex-presidente-careca-e-mais" },
+      { title: "PF indicia ex-presidente do INSS por corrupção em desvio de aposentadorias - Viva", url: "https://viva.com.br/noticias/pf-indicia-ex-presidente-do-inss-por-corrupcao-em-desvio-de-aposentadorias.html" }
     ]
   }
 
