@@ -29,7 +29,7 @@ import { NODE_ICONS } from '@/lib/nodeIcons';
 import type { LinkStatus } from '@/types/graph';
 import { parseAmount, formatAmount } from '@/lib/money';
 import { SCHEME_DETAILS } from '@/data/schemeDetails';
-import { schemePath } from '@/lib/schemes';
+import { schemePath, computeSchemeStartYears, compareByYearDesc } from '@/lib/schemes';
 import Link from 'next/link';
 import { 
   ExternalLink, 
@@ -76,7 +76,18 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
   // State for expanding/collapsing individual scheme dossiers in the Glossary
   const [expandedSchemeId, setExpandedSchemeId] = useState<string | null>(null);
 
-  const schemeNodes = useMemo(() => graphData.nodes.filter((node) => node.type === 'scheme'), [graphData.nodes]);
+  // Ano de cada caso (vínculo datado mais antigo), recalculado sempre que os
+  // dados mudam; o Glossário lista do caso mais recente ao mais antigo.
+  const schemeYears = useMemo(() => computeSchemeStartYears(graphData.nodes, graphData.links), [graphData]);
+  const schemeNodes = useMemo(
+    () =>
+      graphData.nodes
+        .filter((node) => node.type === 'scheme')
+        .sort((a, b) =>
+          compareByYearDesc({ year: schemeYears.get(a.id), title: a.label }, { year: schemeYears.get(b.id), title: b.label })
+        ),
+    [graphData.nodes, schemeYears]
+  );
 
   // O(1) lookups instead of graphData.nodes.find() inside every link loop (was O(N·L)).
   const nodeById = useMemo(() => new Map(graphData.nodes.map((n) => [n.id, n])), [graphData.nodes]);
@@ -671,12 +682,20 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                             fica embaixo, com a largura inteira do cartão. */}
                         <div>
                           <div className="flex flex-wrap items-center justify-between gap-3">
-                            <span
-                              className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded border"
-                              style={entityChipStyle('scheme')}
-                            >
-                              {NODE_STYLE.scheme.label}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded border"
+                                style={entityChipStyle('scheme')}
+                              >
+                                {NODE_STYLE.scheme.label}
+                              </span>
+                              {/* Ano do caso (vínculo datado mais antigo; ver computeSchemeStartYears) */}
+                              {schemeYears.has(scheme.id) && (
+                                <span className="text-[11px] font-mono font-bold text-slate-300 tabular-nums">
+                                  {schemeYears.get(scheme.id)}
+                                </span>
+                              )}
+                            </div>
 
                             <button
                               onClick={() => toggleExpand(scheme.id)}

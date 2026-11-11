@@ -12,8 +12,8 @@ import type { Metadata } from 'next';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { SCHEME_DETAILS } from '@/data/schemeDetails';
 import { entityChipStyle } from '@/lib/graphConfig';
-import { loadSchemeNodes } from '@/lib/db';
-import { DOSSIER_SCHEME_IDS, fallbackSchemeTitle, schemePath } from '@/lib/schemes';
+import { loadSchemeNodes, loadSchemeStartYears } from '@/lib/db';
+import { DOSSIER_SCHEME_IDS, compareByYearDesc, fallbackSchemeTitle, schemePath } from '@/lib/schemes';
 import { SITE_NAME } from '@/lib/site';
 
 export const runtime = 'edge';
@@ -26,7 +26,11 @@ export const metadata: Metadata = {
 };
 
 export default async function SchemesIndexPage() {
-  const nodes = (await loadSchemeNodes()) ?? [];
+  // Lista ordenada pelo ano do caso, do mais recente ao mais antigo, com os
+  // anos lidos do banco a cada visita (sem banco: sem anos, ordem alfabética).
+  const [nodesRes, yearsRes] = await Promise.all([loadSchemeNodes(), loadSchemeStartYears()]);
+  const nodes = nodesRes ?? [];
+  const years = yearsRes ?? new Map<string, number>();
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const ids = Array.from(new Set([...nodes.map((n) => n.id), ...DOSSIER_SCHEME_IDS]));
   const items = ids
@@ -34,8 +38,9 @@ export default async function SchemesIndexPage() {
       id,
       title: byId.get(id)?.label ?? fallbackSchemeTitle(id),
       summary: byId.get(id)?.summary ?? SCHEME_DETAILS[id]?.context.split('. ')[0] ?? null,
+      year: years.get(id) ?? null,
     }))
-    .sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
+    .sort(compareByYearDesc);
 
   return (
     <div className="h-[100dvh] w-full bg-[#080d16] text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
@@ -52,7 +57,7 @@ export default async function SchemesIndexPage() {
           </h1>
           <p className="text-sm text-slate-400">
             {items.length} esquemas documentados, com contexto histórico, funcionamento, impacto financeiro,
-            situação jurídica e fontes.
+            situação jurídica e fontes — do caso mais recente ao mais antigo.
           </p>
         </header>
 
@@ -63,12 +68,17 @@ export default async function SchemesIndexPage() {
                 href={schemePath(item.id)}
                 className="block p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-600 transition-colors"
               >
-                <span
-                  className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded border"
-                  style={entityChipStyle('scheme')}
-                >
-                  Dossiê
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded border"
+                    style={entityChipStyle('scheme')}
+                  >
+                    Dossiê
+                  </span>
+                  {item.year && (
+                    <span className="text-[11px] font-mono font-bold text-slate-300 tabular-nums">{item.year}</span>
+                  )}
+                </div>
                 <h2 className="mt-2 text-lg font-bold text-white">{item.title}</h2>
                 {item.summary && <p className="mt-1 text-sm text-slate-400 leading-relaxed line-clamp-2">{item.summary}</p>}
               </Link>

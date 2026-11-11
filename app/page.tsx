@@ -26,6 +26,7 @@ import InspectorDrawer from '@/components/InspectorDrawer';
 import AdBanner from '@/components/AdBanner';
 import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/graph';
 import { getLinkEnds, normalizeText, STATUS_STYLE } from '@/lib/graphConfig';
+import { computeSchemeStartYears } from '@/lib/schemes';
 import { ADSENSE_CLIENT, ADSENSE_SLOTS } from '@/lib/site';
 
 /** Intervalo do controle de ano enquanto os dados não chegam (ou se nenhum link tiver ano). */
@@ -83,19 +84,7 @@ export default function Page() {
   // inteiro ao passar de 1993, mesmo que tenha desdobramentos datados de 2015
   // ou vínculos sem ano. Esquema sem nenhum vínculo datado não tem ano de
   // início e não é afetado pelo slider.
-  const schemeStartYear = useMemo(() => {
-    const schemeIds = new Set(graphData.nodes.filter((n) => n.type === 'scheme').map((n) => n.id));
-    const start = new Map<string, number>();
-    for (const l of graphData.links) {
-      const y = Number(l.year);
-      if (!Number.isFinite(y) || y <= 0) continue;
-      const { sourceId, targetId } = getLinkEnds(l);
-      for (const id of [sourceId, targetId]) {
-        if (schemeIds.has(id) && (!start.has(id) || y < start.get(id)!)) start.set(id, y);
-      }
-    }
-    return start;
-  }, [graphData]);
+  const schemeStartYear = useMemo(() => computeSchemeStartYears(graphData.nodes, graphData.links), [graphData]);
 
   // Limites do slider vêm dos dados. O máximo é o início do esquema mais
   // recente (passar dele esvaziaria o grafo); sem esquemas datados, usa os
