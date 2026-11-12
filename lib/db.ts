@@ -9,7 +9,7 @@
  * o binding, getDB() devolve null.
  */
 import { getRequestContext } from '@cloudflare/next-on-pages';
-import type { GraphNode, NodeType } from '@/types/graph';
+import type { GraphNode, LinkStatus, LinkType, NodeType } from '@/types/graph';
 
 interface D1Result<T> {
   results: T[];
@@ -20,6 +20,7 @@ interface D1Prepared {
 }
 interface D1Database {
   prepare(sql: string): D1Prepared;
+  batch<T = Record<string, unknown>>(stmts: D1Prepared[]): Promise<D1Result<T>[]>;
 }
 
 type Row = Record<string, unknown>;
@@ -34,7 +35,29 @@ const toNode = (r: Row): GraphNode => ({
   party: (clean(r.party) as string | null) ?? null,
   summary: (clean(r.summary) as string | null) ?? null,
   image_url: (clean(r.image_url) as string | null) ?? null,
+  image_credit: (clean(r.image_credit) as string | null) ?? null,
+  image_source_url: (clean(r.image_source_url) as string | null) ?? null,
 });
+
+/** Só aceita http(s): um `javascript:` vindo do banco nunca vira link. */
+export const safeHttpUrl = (v: unknown): string | null => {
+  const s = clean(v);
+  return typeof s === 'string' && /^https?:\/\//i.test(s.trim()) ? s.trim() : null;
+};
+
+/** Vínculo direto de um esquema com outra entidade, como aparece no dossiê. */
+export interface SchemeConnection {
+  key: string;
+  entity: GraphNode;
+  relation: string;
+  type: LinkType | null;
+  status: LinkStatus;
+  year: number | null;
+  amount: string | null;
+  amount_note: string | null;
+  source_url: string | null;
+  reviewed_at: string | null;
+}
 
 export function getDB(): D1Database | null {
   try {
@@ -45,70 +68,85 @@ export function getDB(): D1Database | null {
   }
 }
 
-/** Todos os nós do tipo esquema, ou null se o banco não responder. */
-export async function loadSchemeNodes(): Promise<GraphNode[] | null> {
-  const db = getDB();
-  if (!db) return null;
-  try {
-    const { results } = await db.prepare("SELECT * FROM nodes WHERE type = 'scheme'").all<Row>();
-    return results.map(toNode);
-  } catch (e) {
-    console.error('[lib/db] loadSchemeNodes:', e);
-    return null;
-  }
-}
-
 /**
- * Ano de início de cada esquema (ano do vínculo datado mais antigo), calculado
- * pelo banco a cada visita — mesma regra de computeSchemeStartYears em
- * lib/schemes.ts. Null se o banco não responder.
+ * Índice de dossiês: nós do tipo esquema + ano de início de cada um (ano do
+ * vínculo datado mais antigo — mesma regra de computeSchemeStartYears em
+ * lib/schemes.ts), numa única ida ao banco. Null se o banco não responder.
  */
-export async function loadSchemeStartYears(): Promise<Map<string, number> | null> {
+export async function loadSchemeIndex(): Promise<{ nodes: GraphNode[]; years: Map<string, number> } | null> {
   const db = getDB();
   if (!db) return null;
   try {
-    const { results } = await db
-      .prepare(
+    const [nodesRes, yearsRes] = await db.batch<Row>([
+      db.prepare("SELECT * FROM nodes WHERE type = 'scheme'"),
+      db.prepare(
         `SELECT n.id AS id, MIN(CAST(l.year AS INTEGER)) AS start
            FROM nodes n
            JOIN links l ON l.source = n.id OR l.target = n.id
           WHERE n.type = 'scheme' AND l.year IS NOT NULL AND CAST(l.year AS INTEGER) > 0
           GROUP BY n.id`
-      )
-      .all<Row>();
-    return new Map(
-      results
-        .map((r) => [String(r.id), Number(r.start)] as [string, number])
-        .filter(([, y]) => Number.isFinite(y) && y > 0)
-    );
+      ),
+    ]);
+    return {
+      nodes: nodesRes.results.map(toNode),
+      years: new Map(
+        yearsRes.results
+          .map((r) => [String(r.id), Number(r.start)] as [string, number])
+          .filter(([, y]) => Number.isFinite(y) && y > 0)
+      ),
+    };
   } catch (e) {
-    console.error('[lib/db] loadSchemeStartYears:', e);
+    console.error('[lib/db] loadSchemeIndex:', e);
     return null;
   }
 }
 
-/** Esquema e as entidades ligadas a ele diretamente, ou null se o banco não responder. */
+/**
+ * Esquema e seus vínculos diretos (cada um com a entidade da outra ponta, o
+ * status, o ano e a fonte), numa única ida ao banco. Null se o banco não
+ * responder.
+ *
+ * `SELECT l.*` de propósito: funciona com ou sem as colunas opcionais
+ * (reviewed_at, amount_note…) — as que faltarem viram null.
+ */
 export async function loadScheme(
   id: string
-): Promise<{ scheme: GraphNode | null; entities: GraphNode[] } | null> {
+): Promise<{ scheme: GraphNode | null; connections: SchemeConnection[] } | null> {
   const db = getDB();
   if (!db) return null;
   try {
-    const [self, neighbours] = await Promise.all([
-      db.prepare('SELECT * FROM nodes WHERE id = ?').bind(id).all<Row>(),
+    const [self, linksRes, nodesRes] = await db.batch<Row>([
+      db.prepare('SELECT * FROM nodes WHERE id = ?1').bind(id),
+      db.prepare('SELECT rowid AS _rowid, l.* FROM links l WHERE l.source = ?1 OR l.target = ?1').bind(id),
       db
         .prepare(
-          `SELECT DISTINCT n.* FROM nodes n
-             JOIN links l ON (l.source = ?1 AND l.target = n.id) OR (l.target = ?1 AND l.source = n.id)
-            WHERE n.id <> ?1`
+          `SELECT * FROM nodes WHERE id <> ?1 AND id IN (
+             SELECT target FROM links WHERE source = ?1
+             UNION SELECT source FROM links WHERE target = ?1)`
         )
-        .bind(id)
-        .all<Row>(),
+        .bind(id),
     ]);
-    return {
-      scheme: self.results[0] ? toNode(self.results[0]) : null,
-      entities: neighbours.results.map(toNode),
-    };
+    const byId = new Map(nodesRes.results.map((r) => [String(r.id), toNode(r)]));
+    const connections: SchemeConnection[] = [];
+    for (const r of linksRes.results) {
+      const otherId = String(r.source) === id ? String(r.target) : String(r.source);
+      const entity = byId.get(otherId);
+      if (!entity) continue; // vínculo apontando para id inexistente
+      const year = Number(clean(r.year));
+      connections.push({
+        key: String(r.id ?? r._rowid),
+        entity,
+        relation: String(clean(r.relation) ?? ''),
+        type: (clean(r.type) as LinkType | null) ?? null,
+        status: r.status as LinkStatus,
+        year: clean(r.year) !== null && Number.isFinite(year) && year > 0 ? Math.trunc(year) : null,
+        amount: (clean(r.amount) as string | null) ?? null,
+        amount_note: (clean(r.amount_note) as string | null) ?? null,
+        source_url: safeHttpUrl(r.source_url),
+        reviewed_at: (clean(r.reviewed_at) as string | null) ?? null,
+      });
+    }
+    return { scheme: self.results[0] ? toNode(self.results[0]) : null, connections };
   } catch (e) {
     console.error('[lib/db] loadScheme:', e);
     return null;

@@ -10,6 +10,7 @@ import { SITE_NAME, SITE_DOMAIN, CONTACT_EMAIL, LEGAL_LAST_UPDATED } from '@/lib
 export const metadata = {
   title: `Termos de Uso | ${SITE_NAME}`,
   description: `Termos e condições de uso da ${SITE_NAME}.`,
+  alternates: { canonical: '/terms' },
 };
 
 export default function TermsOfServicePage() {
@@ -106,7 +107,12 @@ export default function TermsOfServicePage() {
               <a href={`mailto:${CONTACT_EMAIL}`} className="text-cyan-400 underline">
                 {CONTACT_EMAIL}
               </a>
-              , indicando o vínculo em questão e a fonte que fundamenta o pedido.
+              , indicando o vínculo em questão e a fonte que fundamenta o pedido. As correções aplicadas ficam
+              registradas, com data e motivo, em{' '}
+              <Link href="/correcoes" className="text-cyan-400 hover:underline">
+                Correções e atualizações
+              </Link>
+              .
             </p>
           </section>
 

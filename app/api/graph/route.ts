@@ -11,8 +11,8 @@
  * isso na tela, para o problema ser identificável sem abrir os logs.
  *
  * Ajustes comuns:
- *   - colunas devolvidas → NODES_SQL / LINKS_SQL
- *   - tempo de cache     → CACHE_CONTROL
+ *   - colunas devolvidas → normalizeNode / normalizeLink
+ *   - tempo de cache     → CACHE_TTL_SECONDS
  */
 import { getRequestContext } from '@cloudflare/next-on-pages';
 
@@ -59,6 +59,8 @@ function normalizeNode(r: Row) {
     party: clean(r.party),
     summary: clean(r.summary),
     image_url: clean(r.image_url),
+    image_credit: clean(r.image_credit), // colunas da migração 0002: ausentes → null
+    image_source_url: clean(r.image_source_url),
   };
 }
 
@@ -75,23 +77,32 @@ function normalizeLink(r: Row) {
     amount_note: clean(r.amount_note), // ausente nas tabelas antigas → null
     year: toInt(r.year),
     source_url: clean(r.source_url),
+    reviewed_at: clean(r.reviewed_at), // migração 0002: ausente → null
   };
 }
 
 /**
- * Cache: NENHUM. Toda visita lê o banco de novo.
+ * CACHE: a resposta fica guardada por CACHE_TTL_SECONDS no cache de borda do
+ * Cloudflare (Cache API) e NUNCA no navegador.
  *
- * Antes era 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400'.
- * O stale-while-revalidate deixava o navegador mostrar uma cópia de até 24 h
- * e só buscar a nova em segundo plano — por isso o celular (aberto com menos
- * frequência) continuava exibindo só o primeiro caso inserido, enquanto o
- * desktop, recarregado toda hora, já via tudo.
+ *  - Borda: durante esse tempo as visitas (do mesmo data center) recebem a
+ *    cópia sem ir ao banco. Depois de um INSERT/UPDATE no D1, o site leva no
+ *    máximo CACHE_TTL_SECONDS para mostrar o dado novo. Para desligar, use 0.
+ *  - Navegador: `max-age=0` — sempre pergunta ao servidor. É o que evita o
+ *    problema antigo (com stale-while-revalidate, o celular mostrava uma cópia
+ *    de até 24 h). Não volte a usar stale-while-revalidate aqui.
  *
- * O custo é baixo: duas consultas simples ao D1 por visita. Se o volume de
- * acessos crescer muito, use um cache CURTO e sem stale-while-revalidate,
- * por exemplo 'public, max-age=0, s-maxage=60' (nunca stale no navegador).
+ * Um cabeçalho s-maxage sozinho não basta: respostas de Functions do
+ * Cloudflare Pages só entram no cache se gravadas à mão com `caches.default`.
+ * Respostas de erro nunca são guardadas.
  */
-const CACHE_CONTROL = 'no-store';
+const CACHE_TTL_SECONDS = 60;
+const CACHE_CONTROL =
+  CACHE_TTL_SECONDS > 0 ? `public, max-age=0, s-maxage=${CACHE_TTL_SECONDS}` : 'no-store';
+
+/** Cache de borda do Cloudflare; undefined fora dele (ex.: `next dev`). */
+const edgeCache = (): Cache | undefined =>
+  CACHE_TTL_SECONDS > 0 ? (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default : undefined;
 
 /** Tipos de falha reconhecidos. O frontend usa `code` para escolher o texto de ajuda. */
 type FailureCode = 'NO_BINDING' | 'NO_TABLES' | 'SCHEMA_MISMATCH' | 'DB_UNAVAILABLE' | 'QUERY_FAILED';
@@ -132,8 +143,24 @@ function diagnose(raw: string) {
   return fail('QUERY_FAILED', 'Falha ao consultar o banco de dados.', raw);
 }
 
-export async function GET() {
-  const { env } = getRequestContext() as unknown as { env: Env };
+export async function GET(request: Request) {
+  // Chave fixa (sem query string): /api/graph?x=1 não cria cópias extras.
+  const cache = edgeCache();
+  const cacheKey = new Request(new URL('/api/graph', request.url).toString(), { method: 'GET' });
+  if (cache) {
+    try {
+      const hit = await cache.match(cacheKey);
+      // Cópia nova: os cabeçalhos da resposta guardada são imutáveis.
+      if (hit) return new Response(hit.body, hit);
+    } catch {
+      // Cache indisponível: segue para o banco.
+    }
+  }
+
+  const { env, ctx } = getRequestContext() as unknown as {
+    env: Env;
+    ctx?: { waitUntil(p: Promise<unknown>): void };
+  };
   const DB = env.DB;
 
   if (!DB) {
@@ -147,10 +174,16 @@ export async function GET() {
     // batch = as duas consultas numa única ida ao banco.
     const [nodesRes, linksRes] = await DB.batch<Row>([DB.prepare(NODES_SQL), DB.prepare(LINKS_SQL)]);
 
-    return Response.json(
+    const response = Response.json(
       { nodes: nodesRes.results.map(normalizeNode), links: linksRes.results.map(normalizeLink) },
       { headers: { 'Cache-Control': CACHE_CONTROL } }
     );
+    if (cache) {
+      // Grava em segundo plano: a visita não espera o cache.
+      const put = cache.put(cacheKey, response.clone()).catch(() => {});
+      if (ctx?.waitUntil) ctx.waitUntil(put);
+    }
+    return response;
   } catch (error) {
     const raw = error instanceof Error ? `${error.message}${error.cause ? ` (${String(error.cause)})` : ''}` : String(error);
     // Aparece em Cloudflare Pages → Deployments → (deploy) → Functions → Real-time logs.

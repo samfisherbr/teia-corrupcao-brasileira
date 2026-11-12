@@ -45,6 +45,10 @@ export interface GraphNode {
   party: string | null;
   summary: string | null;
   image_url: string | null;
+  /** Crédito da foto (autor e licença), ex.: "Fulano / Wikimedia Commons, CC BY-SA 4.0". */
+  image_credit?: string | null;
+  /** Página de origem da foto (onde constam autor e licença). */
+  image_source_url?: string | null;
   // Coordenadas preenchidas pelo layout/d3-force em tempo de execução.
   // (Não existem no banco.)
   x?: number;
@@ -74,6 +78,8 @@ export interface GraphLink {
   amount_note: string | null;
   year: number | null;
   source_url: string | null;
+  /** Data (AAAA-MM-DD) em que o status foi conferido pela última vez. NULL = não registrada. */
+  reviewed_at?: string | null;
 }
 
 /** Formato que a API `/api/graph` devolve e que o grafo consome. */

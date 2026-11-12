@@ -5,8 +5,11 @@
  * "anoes-orcamento". A conversão é reversível, então não é preciso guardar
  * slugs em lugar nenhum. Se o id de um esquema mudar no banco, o endereço da
  * página muda junto (e a chave em data/schemeDetails.ts precisa mudar também).
+ *
+ * Este módulo NÃO importa data/schemeDetails.ts de propósito: ele entra no
+ * JavaScript da página inicial, e os textos dos dossiês (~115 KB) não devem
+ * ir junto. O que depende dos textos fica em lib/dossiers.ts.
  */
-import { SCHEME_DETAILS } from '@/data/schemeDetails';
 import type { GraphLink, GraphNode } from '@/types/graph';
 import { getLinkEnds } from '@/lib/graphConfig';
 
@@ -18,19 +21,6 @@ export const schemeSlug = (id: string): string =>
 export const schemeIdFromSlug = (slug: string): string => `${PREFIX}${slug.replace(/-/g, '_')}`;
 
 export const schemePath = (id: string): string => `/esquemas/${schemeSlug(id)}`;
-
-/** Ids de todos os esquemas com dossiê escrito (usado no sitemap). */
-export const DOSSIER_SCHEME_IDS = Object.keys(SCHEME_DETAILS);
-
-/**
- * Título de reserva, só para quando o banco não responde: derivado do id,
- * sem acentos ("Anoes Orcamento"). Com o banco no ar, o título é o `label`.
- */
-export const fallbackSchemeTitle = (id: string): string =>
-  schemeSlug(id)
-    .split('-')
-    .map((w) => (w.length > 2 ? w[0].toUpperCase() + w.slice(1) : w))
-    .join(' ');
 
 /**
  * ANO DO CASO = ano de início do esquema = ano do seu vínculo datado mais

@@ -11,6 +11,7 @@ import { SITE_NAME, SITE_DOMAIN, CONTACT_EMAIL, LEGAL_LAST_UPDATED } from '@/lib
 export const metadata = {
   title: `Política de Privacidade | ${SITE_NAME}`,
   description: `Política de privacidade e uso de cookies da ${SITE_NAME}.`,
+  alternates: { canonical: '/privacy' },
 };
 
 // Classe reaproveitada nos links externos desta página.

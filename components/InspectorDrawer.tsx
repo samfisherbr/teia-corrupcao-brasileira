@@ -21,12 +21,16 @@ import React from 'react';
 import Link from 'next/link';
 import { FileText, X, ExternalLink, ArrowRight, BookOpen } from 'lucide-react';
 import { schemePath } from '@/lib/schemes';
+import { formatDatePtBR } from '@/lib/format';
 import { GraphNode, GraphLink, GraphData, NodeType, LinkStatus, LinkType } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, LINK_TYPE_STYLE, FALLBACK_COLOR, getLinkEnds, getLinkKey, entityChipStyle } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
 
 /** Ordem das seções de conexões = ordem da legenda do grafo. */
 const SECTION_ORDER = Object.keys(NODE_STYLE) as NodeType[];
+
+/** Só http(s) vira link: um `javascript:` vindo do banco nunca é clicável. */
+const isHttpUrl = (u: string | null | undefined): boolean => !!u && /^https?:\/\//i.test(u);
 
 interface InspectorDrawerProps {
   selectedNode: GraphNode | null;
@@ -106,6 +110,7 @@ export default function InspectorDrawer({
         </span>
         <button
           onClick={onClose}
+          aria-label="Fechar detalhes"
           className="p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
         >
           <X className="w-5 h-5" />
@@ -150,6 +155,25 @@ export default function InspectorDrawer({
               </div>
             </div>
           </div>
+
+          {/* Crédito da foto (autor e licença), quando registrado no banco. */}
+          {selectedNode.image_url && brokenImage !== selectedNode.image_url && selectedNode.image_credit && (
+            <p className="-mt-3 text-[11px] text-slate-500 leading-snug">
+              Foto:{' '}
+              {isHttpUrl(selectedNode.image_source_url) ? (
+                <a
+                  href={selectedNode.image_source_url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-slate-300"
+                >
+                  {selectedNode.image_credit}
+                </a>
+              ) : (
+                selectedNode.image_credit
+              )}
+            </p>
+          )}
 
           <div>
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 font-mono">Resumo Factual</h3>
@@ -283,6 +307,14 @@ export default function InspectorDrawer({
               </span>
             </div>
 
+            {/* Data em que o status foi conferido pela última vez, quando registrada */}
+            {formatDatePtBR(selectedLink.reviewed_at) && (
+              <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
+                <span>Situação conferida em:</span>
+                <span className="font-mono text-slate-300">{formatDatePtBR(selectedLink.reviewed_at)}</span>
+              </div>
+            )}
+
             {/* Ano do Fato */}
             <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
               <span>Ano do Fato:</span>
@@ -312,11 +344,11 @@ export default function InspectorDrawer({
           </div>
 
           {/* Fonte Documental / Evidência */}
-          {selectedLink.source_url && (
+          {isHttpUrl(selectedLink.source_url) && (
             <div>
               <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 font-mono">Fonte Documental</h3>
               <a
-                href={selectedLink.source_url}
+                href={selectedLink.source_url!}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-between p-3 bg-blue-950/30 border border-blue-900/50 rounded-lg text-xs text-blue-400 hover:bg-blue-900/40 transition-colors"

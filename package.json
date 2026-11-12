@@ -8,7 +8,9 @@
     "pages:build": "npx @cloudflare/next-on-pages",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:links": "node scripts/check-links.mjs",
+    "check:data": "npx wrangler d1 execute corruption_graph_db --remote --file=./scripts/verify-data.sql"
   },
   "dependencies": {
     "@cloudflare/next-on-pages": "^1.13.7",
