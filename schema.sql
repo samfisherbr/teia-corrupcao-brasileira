@@ -10,9 +10,13 @@
 --
 -- Pode rodar este arquivo de novo sem risco: tudo usa IF NOT EXISTS.
 --
--- As duas tabelas abaixo são cópia EXATA do schema autoritativo do Master
--- Prompt v2. Se mudar algo aqui, mude também no prompt, em types/graph.ts e
--- em lib/graphConfig.ts (cores/rótulos de status).
+-- Banco criado ANTES de 12/11/2026? As colunas image_credit, image_source_url
+-- e reviewed_at não existem nele (IF NOT EXISTS não altera tabela existente):
+-- rode uma vez migrations/0002_review_dates_and_credits.sql.
+--
+-- Fonte da verdade do formato dos dados. Se mudar algo aqui, mude também em
+-- docs/prompt-dossie.md (prompt de geração), em types/graph.ts e em
+-- lib/graphConfig.ts (cores/rótulos de status).
 -- ============================================================================
 
 -- Entidades do grafo (círculos).
@@ -22,7 +26,11 @@ CREATE TABLE IF NOT EXISTS nodes (
     type       TEXT NOT NULL CHECK(type IN ('politician','party','scheme','company','operator')),
     party      TEXT,
     image_url  TEXT,
-    summary    TEXT NOT NULL
+    summary    TEXT NOT NULL,
+    -- Crédito da foto (autor + licença) e página de origem. Obrigatórios, na
+    -- prática, para fotos sob licença Creative Commons (ex.: Wikimedia Commons).
+    image_credit     TEXT,
+    image_source_url TEXT
 );
 
 -- Vínculos entre entidades (linhas).
@@ -45,6 +53,9 @@ CREATE TABLE IF NOT EXISTS links (
     amount_note TEXT,
     year        INTEGER,
     source_url  TEXT NOT NULL,
+    -- Data (AAAA-MM-DD) em que o status deste vínculo foi conferido pela
+    -- última vez. Atualize junto com o status.
+    reviewed_at TEXT,
     FOREIGN KEY(source) REFERENCES nodes(id),
     FOREIGN KEY(target) REFERENCES nodes(id)
 );

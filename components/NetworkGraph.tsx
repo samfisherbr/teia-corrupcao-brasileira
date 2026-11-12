@@ -21,7 +21,7 @@
 import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, PanelRightOpen } from 'lucide-react';
+import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, PanelRightOpen, History } from 'lucide-react';
 import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, getLinkEnds } from '@/lib/graphConfig';
 import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink } from '@/lib/layout';
@@ -199,6 +199,59 @@ function drawFrostedGlass(ctx: CanvasRenderingContext2D, x: number, y: number, r
   ctx.restore();
 }
 
+/**
+ * SPRITES — o canvas é redesenhado a cada quadro (60×/s enquanto a física
+ * roda ou há partículas nas linhas), então o que é caro de pintar é pintado
+ * UMA vez num canvas auxiliar e depois só carimbado com drawImage:
+ *   - vidro fosco: um sprite por (cor, raio) — na prática, um por tipo de
+ *     entidade. Antes eram 2 gradientes + recorte por nó, por quadro.
+ *   - fotos: cada foto é reduzida e recortada em círculo ao terminar de
+ *     baixar. Antes, a imagem original inteira era recortada e reamostrada
+ *     por nó, por quadro (e ficava na memória em tamanho cheio).
+ * GLASS_SPRITE_SCALE / PHOTO_SPRITE_PX ↑ = mais nitidez com zoom alto, mais memória.
+ */
+const GLASS_SPRITE_SCALE = 3;
+const PHOTO_SPRITE_PX = 192;
+const glassSprites = new Map<string, HTMLCanvasElement>();
+
+function getGlassSprite(r: number, color: string): HTMLCanvasElement | null {
+  const key = `${color}|${r}`;
+  const cached = glassSprites.get(key);
+  if (cached) return cached;
+  // Raios fora do padrão (não deveria haver muitos): desenha direto, sem cache.
+  if (glassSprites.size >= 32) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = Math.ceil(r * 2 * GLASS_SPRITE_SCALE);
+  const g = canvas.getContext('2d');
+  if (!g) return null;
+  g.scale(GLASS_SPRITE_SCALE, GLASS_SPRITE_SCALE);
+  g.beginPath();
+  g.arc(r, r, r, 0, 2 * Math.PI);
+  g.fillStyle = '#000000';
+  g.fill();
+  drawFrostedGlass(g, r, r, r, color);
+  glassSprites.set(key, canvas);
+  return canvas;
+}
+
+/** Foto já reduzida e recortada em círculo (mesmo enquadramento de antes: a imagem inteira no quadrado). */
+function makePhotoSprite(img: HTMLImageElement): HTMLCanvasElement | null {
+  if (!img.naturalWidth || !img.naturalHeight) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = PHOTO_SPRITE_PX;
+  const g = canvas.getContext('2d');
+  if (!g) return null;
+  g.beginPath();
+  g.arc(PHOTO_SPRITE_PX / 2, PHOTO_SPRITE_PX / 2, PHOTO_SPRITE_PX / 2, 0, 2 * Math.PI);
+  g.clip();
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(img, 0, 0, PHOTO_SPRITE_PX, PHOTO_SPRITE_PX);
+  return canvas;
+}
+
+/** Modo de desenho das linhas (função estável: não muda a cada render). */
+const LINK_CANVAS_MODE = () => 'replace' as const;
+
 /** Cor de fundo do canvas; também usada como "contorno" atrás dos rótulos. */
 const BG_COLOR = '#080d16';
 
@@ -224,10 +277,13 @@ export default function NetworkGraph({
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const isMobile = dimensions.width < MOBILE_BREAKPOINT;
 
-  // Cache de imagens já baixadas + conjunto das que estão baixando, para não
-  // pedir a mesma foto de novo a cada mudança de filtro.
-  const imgCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  // Cache de fotos prontas para desenhar (ver makePhotoSprite) + conjuntos das
+  // que estão baixando e das que falharam, para não pedir a mesma foto de
+  // novo a cada mudança de filtro.
+  const imgCacheRef = useRef<Map<string, HTMLCanvasElement>>(new Map());
   const pendingRef = useRef<Set<string>>(new Set());
+  const failedRef = useRef<Set<string>>(new Set());
+  const redrawRafRef = useRef(0);
 
   // Se o usuário já mexeu na câmera (zoom/arrasto), não reenquadramos sozinhos.
   const userMovedCameraRef = useRef(false);
@@ -313,7 +369,13 @@ export default function NetworkGraph({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const updateSize = () => setDimensions({ width: el.clientWidth, height: el.clientHeight });
+    // Mesmo tamanho → mesmo objeto: não re-renderiza o grafo à toa.
+    const updateSize = () =>
+      setDimensions((prev) =>
+        prev.width === el.clientWidth && prev.height === el.clientHeight
+          ? prev
+          : { width: el.clientWidth, height: el.clientHeight }
+      );
     updateSize();
     const observer = new ResizeObserver(updateSize);
     observer.observe(el);
@@ -455,22 +517,46 @@ export default function NetworkGraph({
    * 5. IMAGENS — pré-carrega fotos dos nós (ex.: Wikimedia Commons)
    * ----------------------------------------------------------------------- */
   useEffect(() => {
-    const urls = Array.from(new Set(graphData.nodes.map((n) => n.image_url).filter((u): u is string => !!u)));
+    // Pede UM redesenho no próximo quadro, por mais fotos que cheguem juntas.
+    // zoom(zoom atual) só marca o canvas como "precisa redesenhar": não mexe
+    // na câmera nem na física. (Antes cada foto reaquecia a simulação — com
+    // ~150 fotos, a teia ficava tremendo e gastando CPU enquanto carregavam.)
+    const requestRedraw = () => {
+      if (redrawRafRef.current) return;
+      redrawRafRef.current = requestAnimationFrame(() => {
+        redrawRafRef.current = 0;
+        const fg = graphRef.current;
+        const k = fg?.zoom?.();
+        if (typeof k === 'number') fg.zoom(k);
+      });
+    };
+    const urls = new Set(graphData.nodes.map((n) => n.image_url).filter((u): u is string => !!u));
     urls.forEach((url) => {
-      if (imgCacheRef.current.has(url) || pendingRef.current.has(url)) return;
+      if (imgCacheRef.current.has(url) || pendingRef.current.has(url) || failedRef.current.has(url)) return;
       pendingRef.current.add(url);
       const img = new Image();
       img.crossOrigin = 'anonymous'; // necessário para desenhar no canvas sem "contaminá-lo"
+      img.decoding = 'async';
       img.onload = () => {
         pendingRef.current.delete(url);
-        imgCacheRef.current.set(url, img);
-        // Força um redesenho: o canvas pode estar parado após a física acabar.
-        graphRef.current?.d3ReheatSimulation?.();
+        const sprite = makePhotoSprite(img);
+        if (!sprite) {
+          failedRef.current.add(url);
+          return;
+        }
+        imgCacheRef.current.set(url, sprite);
+        requestRedraw();
       };
-      img.onerror = () => pendingRef.current.delete(url); // fica só o círculo vazio
+      // Falhou: fica só o círculo de vidro, e a foto não é pedida de novo.
+      img.onerror = () => {
+        pendingRef.current.delete(url);
+        failedRef.current.add(url);
+      };
       img.src = url;
     });
   }, [graphData.nodes, graphRef]);
+
+  useEffect(() => () => cancelAnimationFrame(redrawRafRef.current), []);
 
   /* -------------------------------------------------------------------------
    * 6. DESENHO DOS CÍRCULOS (sem texto — o texto vem no passo 8)
@@ -503,25 +589,28 @@ export default function NetworkGraph({
     // Demais entidades: fundo PRETO sólido e, por cima,
     //   - com foto: a foto, um pouco recuada (anel preto em volta);
     //   - sem foto: o vidro fosco no tom do tipo (ver drawFrostedGlass).
+    // Foto e vidro são sprites prontos (ver SPRITES no topo do arquivo).
     ctx.beginPath();
     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
     if (isScheme) {
       ctx.fillStyle = color;
       ctx.fill();
     } else {
-      ctx.fillStyle = '#000000';
-      ctx.fill();
-      const img = node.image_url ? imgCacheRef.current.get(node.image_url) : undefined;
-      const hasImage = !!img && img.naturalWidth > 0;
-      if (!hasImage) drawFrostedGlass(ctx, node.x, node.y, size, color);
-      if (img && hasImage) {
+      const photo = node.image_url ? imgCacheRef.current.get(node.image_url) : undefined;
+      if (photo) {
+        ctx.fillStyle = '#000000';
+        ctx.fill();
         const r = size * IMAGE_INSET;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
-        ctx.clip();
-        ctx.drawImage(img, node.x - r, node.y - r, r * 2, r * 2);
-        ctx.restore();
+        ctx.drawImage(photo, node.x - r, node.y - r, r * 2, r * 2);
+      } else {
+        const glass = getGlassSprite(size, color);
+        if (glass) {
+          ctx.drawImage(glass, node.x - size, node.y - size, size * 2, size * 2);
+        } else {
+          ctx.fillStyle = '#000000';
+          ctx.fill();
+          drawFrostedGlass(ctx, node.x, node.y, size, color);
+        }
       }
       ctx.beginPath();
       ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
@@ -618,7 +707,9 @@ export default function NetworkGraph({
   const LABEL_MAX_WIDTH_PX = 170;
   const LABEL_MAX_LINES = 3;
   const LABEL_LINE_HEIGHT = 1.2;
-  const labelLinesCache = useRef(new Map<string, string[]>());
+  // Linhas já quebradas + largura (px de tela) da maior: medir texto é caro e
+  // o resultado não muda com o zoom, então é medido uma vez por rótulo.
+  const labelLinesCache = useRef(new Map<string, { lines: string[]; widthPx: number }>());
   const positionDetailsButtonRef = useRef<(scale: number) => void>(() => {});
   // Se a fonte Inter terminar de carregar depois do 1º desenho, as medidas
   // feitas com a fonte reserva ficariam erradas: limpa o cache.
@@ -664,23 +755,25 @@ export default function NetworkGraph({
     return kept;
   }, []);
 
-  const drawLabels = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const scale = globalScale > 0 ? globalScale : 1;
-
-    // Ordem de desenho: apagados, depois vizinhos, e o centro do foco por
-    // último → fica por cima até de outros rótulos.
-    const rank = (n: GraphNode) => (focusIds.has(n.id) ? 2 : litIds.has(n.id) ? 1 : 0);
-    const ordered = hasFocus ? [...graphData.nodes].sort((a, b) => rank(a) - rank(b)) : graphData.nodes;
-
-    // Anticolisão: rótulos são desenhados do MAIS importante para o menos
-    // (centro do foco, vizinhos em destaque, esquemas, partidos, o resto) e um
-    // rótulo que encostaria num já desenhado é pulado — aparece ao aproximar.
-    const importance = (n: any) =>
-      (focusIds.has(n.id) || selectedNode?.id === n.id ? 4e6 : 0) +
+  // Anticolisão: rótulos são considerados do MAIS importante para o menos
+  // (centro do foco, vizinhos em destaque, esquemas, partidos, o resto) e um
+  // rótulo que encostaria num já aceito é pulado — aparece ao aproximar.
+  // A ordem só muda com os dados ou com o foco, então é calculada aqui e não
+  // a cada quadro.
+  const labelOrder = useMemo(() => {
+    const selectedId = selectedNode?.id;
+    const importance = (n: GraphNode) =>
+      (focusIds.has(n.id) || selectedId === n.id ? 4e6 : 0) +
       (hasFocus && litIds.has(n.id) ? 2e6 : 0) +
       (n.type === 'scheme' ? 3e5 : n.type === 'party' ? 2e5 : n.type === 'company' ? 1e5 : 0) +
       (adjacency.get(n.id)?.size ?? 0);
-    const byImportance = [...(ordered as any[])].sort((a, b) => importance(b) - importance(a));
+    const scored = graphData.nodes.map((node) => ({ node, score: importance(node) }));
+    scored.sort((a, b) => b.score - a.score);
+    return scored.map((x) => x.node as any);
+  }, [graphData.nodes, selectedNode, focusIds, litIds, hasFocus, adjacency]);
+
+  const drawLabels = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const scale = globalScale > 0 ? globalScale : 1;
     const placed: { x0: number; x1: number; y0: number; y1: number }[] = [];
     const pad = 3 / scale;
     const toDraw: { node: any; lines: string[]; y: number; fontSize: number; px: number; weight: number }[] = [];
@@ -690,7 +783,7 @@ export default function NetworkGraph({
     ctx.textBaseline = 'top';
     ctx.lineJoin = 'round';
 
-    for (const node of byImportance) {
+    for (const node of labelOrder) {
       if (typeof node.x !== 'number') continue;
       const style = NODE_STYLE[node.type as NodeType];
       const isSelected = selectedNode?.id === node.id;
@@ -711,17 +804,17 @@ export default function NetworkGraph({
       // Quebra medida na fonte em px de tela (independe do zoom → cacheável).
       const maxLines = isSelected || focusIds.has(node.id) ? Infinity : LABEL_MAX_LINES;
       const cacheKey = `${weight}|${px}|${maxLines}|${text}`;
-      let lines = labelLinesCache.current.get(cacheKey);
-      if (!lines) {
+      let wrapped = labelLinesCache.current.get(cacheKey);
+      if (!wrapped) {
         ctx.font = `${weight} ${px}px Inter, system-ui, sans-serif`;
-        lines = wrapLabel(ctx, text, maxLines);
-        labelLinesCache.current.set(cacheKey, lines);
+        const wrappedLines = wrapLabel(ctx, text, maxLines);
+        wrapped = { lines: wrappedLines, widthPx: Math.max(0, ...wrappedLines.map((l) => ctx.measureText(l).width)) };
+        labelLinesCache.current.set(cacheKey, wrapped);
       }
+      const { lines, widthPx } = wrapped;
 
       const y = node.y + getNodeRadius(node.type, node) + 6 / scale;
       const lineStep = fontSize * LABEL_LINE_HEIGHT;
-      ctx.font = `${weight} ${px}px Inter, system-ui, sans-serif`;
-      const widthPx = Math.max(...lines.map((l) => ctx.measureText(l).width));
       const extraLine = node.type === 'politician' && node.party && (scale >= 1 || isSelected || (hasFocus && litIds.has(node.id))) ? 1 : 0;
       const box = {
         x0: node.x - widthPx / 2 / scale - pad,
@@ -761,7 +854,7 @@ export default function NetworkGraph({
     }
     ctx.restore();
     positionDetailsButtonRef.current(scale);
-  }, [graphData.nodes, selectedNode, wrapLabel, hasFocus, focusIds, litIds, adjacency]);
+  }, [labelOrder, selectedNode, wrapLabel, hasFocus, focusIds, litIds]);
 
   /* -------------------------------------------------------------------------
    * 8b. BOTÃO FLUTUANTE "Exibir detalhes" — aparece acima do item selecionado
@@ -821,6 +914,36 @@ export default function NetworkGraph({
   }, [showDetailsButton, selectedNode, selectedLink]);
 
   /* -------------------------------------------------------------------------
+   * 8c. FUNÇÕES PASSADAS À BIBLIOTECA — memorizadas: uma função nova a cada
+   *     render faria a biblioteca tratar a propriedade como alterada.
+   * ----------------------------------------------------------------------- */
+  const linkWidth = useCallback((link: any) => (isLinkSelected(link) ? LINK_WIDTH_SELECTED : LINK_WIDTH), [isLinkSelected]);
+  // Ligações com partidos: ocultas (sem desenho nem clique) a não ser que
+  // estejam em foco ou o filtro "Partido" esteja marcado (showPartyLinks).
+  const linkVisibility = useCallback(
+    (link: any) => !isPartyLink(link) || showPartyLinks || (hasFocus && isLinkLit(link)),
+    [showPartyLinks, hasFocus, isLinkLit]
+  );
+  // Partículas animadas (quantidade por status em STATUS_STYLE.particles).
+  const linkParticles = useCallback((link: any) => (isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0), [isLinkLit]);
+  const linkParticleColor = useCallback((link: any) => statusColor(link.status), []);
+  // Hover (só com mouse; ver HOVER_POINTER_QUERY e suppressHoverUntilRef).
+  const handleNodeHover = useCallback(
+    (node: any) => {
+      if (!canHover || Date.now() < suppressHoverUntilRef.current) return;
+      setHoverNodeId(node ? node.id : null);
+    },
+    [canHover]
+  );
+  const handleLinkHover = useCallback(
+    (link: any) => {
+      if (!canHover || Date.now() < suppressHoverUntilRef.current) return;
+      setHoverLink(link ?? null);
+    },
+    [canHover]
+  );
+
+  /* -------------------------------------------------------------------------
    * 9. TELA CHEIA — protegido para iOS Safari (sem API) e promessas rejeitadas
    * ----------------------------------------------------------------------- */
   const toggleFullscreen = () => {
@@ -851,35 +974,24 @@ export default function NetworkGraph({
         // Desenho customizado (passos 6–8)
         nodeCanvasObject={drawNode}
         nodePointerAreaPaint={paintPointerArea}
-        linkCanvasObjectMode={() => 'replace'}
+        linkCanvasObjectMode={LINK_CANVAS_MODE}
         linkCanvasObject={drawLink}
         onRenderFramePost={drawLabels}
         // No modo 'replace' a cor/tracejado vêm de drawLink; linkWidth ainda
         // define a área de clique da linha, por isso acompanha a espessura.
-        linkWidth={(link: any) => (isLinkSelected(link) ? LINK_WIDTH_SELECTED : LINK_WIDTH)}
-        // Ligações com partidos: ocultas (sem desenho nem clique) a não ser que
-        // estejam em foco ou o filtro "Partido" esteja marcado (showPartyLinks).
-        linkVisibility={(link: any) => !isPartyLink(link) || showPartyLinks || (hasFocus && isLinkLit(link))}
-        // Partículas animadas (quantidade por status em STATUS_STYLE.particles)
-        linkDirectionalParticles={(link: any) => (isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0)}
+        linkWidth={linkWidth}
+        linkVisibility={linkVisibility}
+        linkDirectionalParticles={linkParticles}
         linkDirectionalParticleSpeed={0.005}
         linkDirectionalParticleWidth={5}
-        linkDirectionalParticleColor={(link: any) => statusColor(link.status)}
-        // Interação
-        onNodeClick={(node: any) => onSelectNode(node)}
-        // Foco + contexto ao passar o mouse (no celular, o toque seleciona).
-        onLinkClick={(link: any) => onSelectLink(link)}
-        // Hover (só com mouse; ver HOVER_POINTER_QUERY e suppressHoverUntilRef).
-        onNodeHover={(node: any) => {
-          if (!canHover || Date.now() < suppressHoverUntilRef.current) return;
-          setHoverNodeId(node ? node.id : null);
-        }}
-        onLinkHover={(link: any) => {
-          if (!canHover || Date.now() < suppressHoverUntilRef.current) return;
-          setHoverLink(link ?? null);
-        }}
+        linkDirectionalParticleColor={linkParticleColor}
+        // Interação (funções em 8c). No celular, o toque seleciona.
+        onNodeClick={onSelectNode as any}
+        onLinkClick={onSelectLink as any}
+        onNodeHover={handleNodeHover}
+        onLinkHover={handleLinkHover}
         // Toque/clique no fundo limpa a seleção (e o botão "Exibir detalhes").
-        onBackgroundClick={() => onClearSelection()}
+        onBackgroundClick={onClearSelection}
         // Arrastar: a biblioteca já faz o comportamento desejado sozinha —
         //   • esquema (fixo antes do arraste) → continua fixo onde foi solto;
         //   • demais nós (livres) → são soltos e voltam a se acomodar na teia.
@@ -991,6 +1103,10 @@ export default function NetworkGraph({
           <Link href="/esquemas" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
             <FileText className="w-3.5 h-3.5 text-cyan-400" />
             <span>Dossiês dos esquemas</span>
+          </Link>
+          <Link href="/correcoes" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+            <History className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Correções e atualizações</span>
           </Link>
           <Link href="/about" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
             <Info className="w-3.5 h-3.5 text-cyan-400" />

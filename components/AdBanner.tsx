@@ -26,14 +26,24 @@ export default function AdBanner({ adClient, adSlot }: AdBannerProps) {
   const pushedRef = useRef(false);
 
   useEffect(() => {
-    // React StrictMode runs effects twice in dev; AdSense throws on a double push.
-    if (pushedRef.current) return;
-    pushedRef.current = true;
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (err) {
-      console.error('AdSense error:', err);
-    }
+    // O bloco só existe em telas ≥ 1024px (`hidden lg:flex`). Pedir o anúncio
+    // com o bloco oculto (celular) faz o AdSense lançar erro ("No slot size
+    // for availableWidth=0") e gasta uma requisição à toa — então o pedido
+    // só sai quando a tela é larga (inclusive se a janela for alargada depois).
+    const wide = window.matchMedia('(min-width: 1024px)');
+    const request = () => {
+      // React StrictMode runs effects twice in dev; AdSense throws on a double push.
+      if (pushedRef.current || !wide.matches) return;
+      pushedRef.current = true;
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (err) {
+        console.error('AdSense error:', err);
+      }
+    };
+    request();
+    wide.addEventListener('change', request);
+    return () => wide.removeEventListener('change', request);
   }, []);
 
   return (

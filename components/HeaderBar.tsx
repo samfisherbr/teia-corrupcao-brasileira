@@ -9,7 +9,8 @@
  */
 
 import React from 'react';
-import { Share2, PieChart, BookOpen, X } from 'lucide-react';
+import Link from 'next/link';
+import { Share2, PieChart, BookOpen, FileText, X } from 'lucide-react';
 
 /** Qual "página" está visível: o grafo ou um dos painéis de tela cheia. */
 export type ActivePage = 'graph' | 'infographics' | 'glossary';
@@ -70,6 +71,17 @@ export default function HeaderBar({ activePage, setActivePage }: HeaderBarProps)
             <BookOpen className="hidden min-[390px]:block w-3.5 h-3.5 text-cyan-400 shrink-0" />
             <span>Glossário</span>
           </button>
+
+          {/* Versão em texto do mapa (páginas de dossiê). Só em telas ≥ 768px:
+              no celular não cabe ao lado dos dois botões — lá o link está no
+              menu "Termos & Privacidade", no canto inferior direito. */}
+          <Link
+            href="/esquemas"
+            className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-cyan-400 hover:bg-slate-800/60 border border-transparent hover:border-slate-700/60 transition-all"
+          >
+            <FileText className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span>Dossiês</span>
+          </Link>
         </nav>
       </div>
 

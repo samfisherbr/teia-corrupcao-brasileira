@@ -12,8 +12,9 @@ import type { Metadata } from 'next';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { SCHEME_DETAILS } from '@/data/schemeDetails';
 import { entityChipStyle } from '@/lib/graphConfig';
-import { loadSchemeNodes, loadSchemeStartYears } from '@/lib/db';
-import { DOSSIER_SCHEME_IDS, compareByYearDesc, fallbackSchemeTitle, schemePath } from '@/lib/schemes';
+import { loadSchemeIndex } from '@/lib/db';
+import { DOSSIER_SCHEME_IDS, fallbackSchemeTitle } from '@/lib/dossiers';
+import { compareByYearDesc, schemePath } from '@/lib/schemes';
 import { SITE_NAME } from '@/lib/site';
 
 export const runtime = 'edge';
@@ -28,9 +29,9 @@ export const metadata: Metadata = {
 export default async function SchemesIndexPage() {
   // Lista ordenada pelo ano do caso, do mais recente ao mais antigo, com os
   // anos lidos do banco a cada visita (sem banco: sem anos, ordem alfabética).
-  const [nodesRes, yearsRes] = await Promise.all([loadSchemeNodes(), loadSchemeStartYears()]);
-  const nodes = nodesRes ?? [];
-  const years = yearsRes ?? new Map<string, number>();
+  const index = await loadSchemeIndex();
+  const nodes = index?.nodes ?? [];
+  const years = index?.years ?? new Map<string, number>();
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const ids = Array.from(new Set([...nodes.map((n) => n.id), ...DOSSIER_SCHEME_IDS]));
   const items = ids

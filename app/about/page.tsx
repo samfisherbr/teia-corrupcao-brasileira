@@ -11,6 +11,7 @@ import { STATUS_STYLE } from '@/lib/graphConfig';
 export const metadata = {
   title: `Sobre | ${SITE_NAME}`,
   description: `Conheça o ${SITE_NAME}, visualizador de redes de relacionamento em casos de corrupção política no Brasil.`,
+  alternates: { canonical: '/about' },
 };
 
 export default function AboutUsPage() {
@@ -124,7 +125,12 @@ export default function AboutUsPage() {
               <a href={`mailto:${CONTACT_EMAIL}`} className="text-cyan-400 underline">
                 {CONTACT_EMAIL}
               </a>
-              . Pedidos de correção e de direito de resposta são analisados e, quando procedentes, aplicados.
+              . Pedidos de correção e de direito de resposta são analisados e, quando procedentes, aplicados — e toda
+              mudança de conteúdo fica registrada, com data e motivo, na página de{' '}
+              <Link href="/correcoes" className="text-cyan-400 hover:underline">
+                correções e atualizações
+              </Link>
+              . Cada dossiê mostra a data da última revisão.
             </p>
           </section>
 

@@ -13,7 +13,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
-import { ADSENSE_CLIENT, SITE_DOMAIN } from '@/lib/site';
+import { ADSENSE_CLIENT, SITE_DOMAIN, SITE_NAME } from '@/lib/site';
 
 export const metadata: Metadata = {
   metadataBase: new URL(`https://${SITE_DOMAIN}`),
@@ -24,6 +24,10 @@ export const metadata: Metadata = {
     shortcut: '/icon.svg',
     apple: '/icon.svg',
   },
+  // Padrão de compartilhamento (WhatsApp, X…) para todas as páginas; cada
+  // página pode sobrescrever. A imagem vem de app/opengraph-image.tsx.
+  openGraph: { siteName: SITE_NAME, locale: 'pt_BR', type: 'website' },
+  twitter: { card: 'summary_large_image' },
   other: { 'google-adsense-account': ADSENSE_CLIENT },
 };
 

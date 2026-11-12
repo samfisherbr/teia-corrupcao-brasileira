@@ -1,0 +1,23 @@
+# Confere toda segunda-feira se os links de fonte ainda respondem (dossiês,
+# vínculos e fotos). Links apodrecem com o tempo, então a checagem é
+# periódica e não trava o deploy. Se algum estiver quebrado (404, domínio
+# morto), o workflow falha e o GitHub avisa por e-mail; o relatório fica no
+# log da execução. Também pode ser rodado à mão em Actions → Links → Run workflow.
+name: Links
+
+on:
+  schedule:
+    - cron: '17 9 * * 1' # segundas, 09:17 UTC (06:17 em Brasília)
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Troque o domínio aqui se NEXT_PUBLIC_SITE_DOMAIN mudar.
+      - run: node scripts/check-links.mjs --site https://teiadacorrupcao.io
