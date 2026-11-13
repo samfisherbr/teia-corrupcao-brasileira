@@ -1,0 +1,101 @@
+/**
+ * Página "Sobre" — texto em PORTUGUÊS (o original). As versões em inglês e espanhol
+ * ficam nos arquivos vizinhos (.en.tsx e .es.tsx): ao mudar algo aqui, mude
+ * lá também e atualize LEGAL_LAST_UPDATED em lib/site.ts.
+ */
+import React from 'react';
+import Link from 'next/link';
+import { Info, Database, CheckCircle2, Scale } from 'lucide-react';
+import { SITE_NAME, CONTACT_EMAIL } from '@/lib/site';
+import { localePath } from '@/lib/i18n';
+import StatusList from './StatusList';
+
+export default function AboutPt() {
+  return (
+    <div className="space-y-8 text-sm leading-relaxed text-slate-300">
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <Info className="w-4 h-4 text-cyan-400" />
+          Missão e propósito
+        </h2>
+        <p>
+          A <strong>{SITE_NAME}</strong> é uma plataforma interativa que mapeia e visualiza as redes de relacionamento
+          presentes em investigações de corrupção política, fraudes em contratos públicos e fluxos financeiros no Brasil.
+        </p>
+        <p>
+          Nosso objetivo é tornar acessíveis, por meio de um grafo navegável, dossiês jurídicos extensos, relatórios de
+          Comissões Parlamentares de Inquérito (CPIs) e reportagens investigativas. Ao mapear as entidades — políticos,
+          partidos, empresas, operadores e esquemas — o usuário pode explorar como recursos públicos circularam entre
+          diferentes operações ao longo do tempo.
+        </p>
+      </section>
+
+      <section className="space-y-4 border-t border-slate-800/80 pt-6">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <Database className="w-4 h-4 text-cyan-400" />
+          Metodologia e rigor dos dados
+        </h2>
+        <p>
+          Imparcialidade e precisão factual são a base da coleta de dados. Cada entidade e cada conexão do grafo segue
+          regras estritas de fonte pública:
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+            <div className="flex items-center space-x-2 text-cyan-400 font-semibold text-xs font-mono">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Documentos oficiais</span>
+            </div>
+            <p className="text-xs text-slate-400">
+              Decisões judiciais públicas, denúncias do MPF, processos no STF e STJ, operações da Polícia Federal e
+              relatórios de auditoria da CGU e do TCU.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+            <div className="flex items-center space-x-2 text-cyan-400 font-semibold text-xs font-mono">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Imprensa de referência</span>
+            </div>
+            <p className="text-xs text-slate-400">
+              Reportagens de veículos de grande circulação (G1, Folha de S.Paulo, Estadão, UOL, CNN Brasil, BBC Brasil,
+              Agência Brasil), sem blogs partidários nem alegações de fóruns não verificadas.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3 border-t border-slate-800/80 pt-6">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <Scale className="w-4 h-4 text-cyan-400" />
+          Neutralidade e direito de defesa
+        </h2>
+        <p>
+          Cada conexão exibe o estágio jurídico em que o fato se encontra. Uma investigação ou denúncia não equivale a
+          condenação, e a anulação de uma condenação não equivale a absolvição. As posições da defesa e as decisões
+          favoráveis aos citados são registradas com o mesmo peso e em tom neutro.
+        </p>
+        <StatusList locale="pt" />
+      </section>
+
+      <section className="space-y-3 border-t border-slate-800/80 pt-6">
+        <h2 className="text-lg font-semibold text-slate-100">Contato e correções</h2>
+        <p>
+          Encontrou uma informação imprecisa, uma decisão judicial mais recente ou um link de fonte quebrado? Escreva
+          para{' '}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-cyan-400 underline">
+            {CONTACT_EMAIL}
+          </a>
+          . Pedidos de correção e de direito de resposta são analisados e, quando procedentes, aplicados — e toda
+          mudança de conteúdo fica registrada, com data e motivo, na página de{' '}
+          <Link href={localePath('pt', '/correcoes')} className="text-cyan-400 hover:underline">
+            correções e atualizações
+          </Link>
+          . Cada dossiê mostra a data da última revisão.
+        </p>
+      </section>
+
+    </div>
+  );
+}

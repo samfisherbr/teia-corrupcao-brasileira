@@ -2,8 +2,9 @@
  * Imagem de compartilhamento (Open Graph, 1200×630) — a "capa" que aparece
  * quando um link do site é colado no WhatsApp, X, Telegram etc.
  *
- * Usada por app/opengraph-image.tsx (página inicial e páginas fixas) e por
- * app/esquemas/[slug]/opengraph-image.tsx (uma por dossiê, com o título).
+ * Usada por app/[locale]/opengraph-image.tsx (página inicial e páginas fixas)
+ * e por app/[locale]/esquemas/[slug]/opengraph-image.tsx (uma por dossiê, com
+ * o título). Os textos chegam prontos, no idioma da página.
  * O desenho usa só flexbox e cores (limitações do next/og: sem grid, sem
  * classes Tailwind, todo <div> com mais de um filho precisa de display:flex).
  */
@@ -21,7 +22,7 @@ const DOTS = [
   { c: '#ffffff', x: 820, y: 500, s: 30 },
 ];
 
-export function renderOgImage({ eyebrow, title, footer }: { eyebrow: string; title: string; footer?: string }) {
+export function renderOgImage({ eyebrow, title, footer }: { eyebrow: string; title: string; footer: string }) {
   // Títulos longos diminuem para caber em até ~4 linhas.
   const fontSize = title.length > 70 ? 52 : title.length > 40 ? 64 : 78;
   return new ImageResponse(
@@ -58,7 +59,7 @@ export function renderOgImage({ eyebrow, title, footer }: { eyebrow: string; tit
           </div>
           <div style={{ display: 'flex', fontSize, fontWeight: 700, lineHeight: 1.12 }}>{title}</div>
           <div style={{ display: 'flex', flexDirection: 'column', fontSize: 26, color: '#94a3b8' }}>
-            <div style={{ display: 'flex' }}>{footer ?? 'A situação jurídica e a fonte de cada vínculo'}</div>
+            <div style={{ display: 'flex' }}>{footer}</div>
             <div style={{ display: 'flex', marginTop: 8, color: '#e2e8f0' }}>
               {SITE_NAME} · {SITE_DOMAIN}
             </div>

@@ -25,6 +25,8 @@ import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, P
 import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, getLinkEnds } from '@/lib/graphConfig';
 import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink } from '@/lib/layout';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useI18n } from '@/components/I18nProvider';
 
 // A biblioteca usa `window`, então só carrega no navegador (ssr: false).
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
@@ -271,6 +273,7 @@ export default function NetworkGraph({
   onOpenDetails,
   paused = false,
 }: NetworkGraphProps) {
+  const { t, href } = useI18n();
   const driftEnabled = DRIFT_ENABLED;
   const canHover = useHoverPointer();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1017,13 +1020,13 @@ export default function NetworkGraph({
         className="absolute left-0 top-0 z-30 inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-semibold text-cyan-200 bg-[#0e1726]/95 backdrop-blur-md border border-cyan-500/60 shadow-[0_0_16px_rgba(34,211,238,0.35)] hover:bg-cyan-950 active:scale-95 transition-colors"
       >
         <PanelRightOpen size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
-        Exibir detalhes
+        {t.graph.showDetails}
       </button>
 
       {/* LEGENDAS — geradas de lib/graphConfig.ts; escondidas em telas pequenas */}
       <div className="absolute top-4 right-6 hidden sm:block space-y-3 z-20 select-none">
         <div className="bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Legenda das Conexões</div>
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{t.graph.linkLegend}</div>
           {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => {
             const st = STATUS_STYLE[key];
             return (
@@ -1033,14 +1036,14 @@ export default function NetworkGraph({
                 ) : (
                   <span className="w-5 h-0.5 inline-block rounded-full" style={{ backgroundColor: st.color, boxShadow: `0 0 8px ${st.color}` }} />
                 )}
-                <span className="text-slate-200">{st.label}</span>
+                <span className="text-slate-200">{t.status[key]}</span>
               </div>
             );
           })}
         </div>
 
         <div className="bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Legenda dos Círculos</div>
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{t.graph.nodeLegend}</div>
           {(Object.keys(NODE_STYLE) as NodeType[]).map((key) => (
             <div key={key} className="flex items-center space-x-2.5">
               <span
@@ -1052,7 +1055,7 @@ export default function NetworkGraph({
                   boxShadow: `0 0 8px ${NODE_STYLE[key].color}`,
                 }}
               />
-              <span className="text-slate-200">{NODE_STYLE[key].label}</span>
+              <span className="text-slate-200">{t.nodeType[key].label}</span>
             </div>
           ))}
         </div>
@@ -1064,14 +1067,14 @@ export default function NetworkGraph({
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}
           className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
-          aria-label="Aproximar"
+          aria-label={t.graph.zoomIn}
         >
           <Plus className="w-4 h-4" />
         </button>
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() / 1.2, 400)}
           className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
-          aria-label="Afastar"
+          aria-label={t.graph.zoomOut}
         >
           <Minus className="w-4 h-4" />
         </button>
@@ -1079,58 +1082,75 @@ export default function NetworkGraph({
           onClick={() => graphRef.current?.zoomToFit(400, fitPadding)}
           className="px-2.5 py-1.5 md:py-1 hover:bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-mono rounded transition-colors"
         >
-          recentralizar
+          {t.graph.recenter}
         </button>
         <button
           onClick={toggleFullscreen}
           className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
-          aria-label="Tela cheia"
+          aria-label={t.graph.fullscreen}
         >
           <Maximize className="w-4 h-4" />
         </button>
       </div>
 
-      {/* MENU LEGAL — abre com o mouse (hover) e também com toque/teclado (focus-within).
-          Posição (bottom-6) e altura do botão iguais às dos controles de câmera, para
-          os dois ficarem alinhados na base: o py-3.5/md:py-3 do botão reproduz a altura
-          da caixa de câmera (46px no celular, 42px no desktop). Se mudar o padding de
-          um, mude o do outro. */}
-      <div className="absolute bottom-6 right-4 md:right-6 z-20 group">
-        <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 flex flex-col space-y-1 text-xs">
-          <div className="px-2 py-1 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-slate-800/80 mb-1">
-            Informações Legais
-          </div>
-          <Link href="/esquemas" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
-            <FileText className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Dossiês dos esquemas</span>
-          </Link>
-          <Link href="/correcoes" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
-            <History className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Correções e atualizações</span>
-          </Link>
-          <Link href="/about" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
-            <Info className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Sobre nós</span>
-          </Link>
-          <Link href="/privacy" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
-            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Política de privacidade</span>
-          </Link>
-          <Link href="/terms" className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
-            <Scale className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Termos de uso</span>
-          </Link>
-        </div>
+      {/* CANTO INFERIOR DIREITO — duas peças empilhadas, alinhadas à direita:
 
-        <button
-          className="flex items-center space-x-2 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-3.5 md:py-3 text-xs leading-4 text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
-          aria-label="Menu de páginas legais"
-          aria-haspopup="true"
-        >
-          <FileText className="w-4 h-4 text-cyan-400" />
-          <span className="font-mono text-xs hidden sm:inline">Termos & Privacidade</span>
-          <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 group-focus-within:rotate-180 transition-transform duration-200" />
-        </button>
+          1. SELETOR DE IDIOMA (só no celular, < 640px; em telas maiores ele fica
+             no cabeçalho). Fica logo acima do botão "Termos & Privacidade".
+          2. MENU LEGAL — abre com o mouse (hover) e também com toque/teclado
+             (focus-within). A lista de links abre ENTRE o botão e o seletor de
+             idioma e ocupa espaço de verdade (a altura anima de 0 até o tamanho
+             dela, via grid-rows 0fr → 1fr), então o seletor sobe junto e
+             continua visível com o menu aberto — sem altura fixa no código.
+
+          Posição (bottom-6) e altura do botão iguais às dos controles de câmera,
+          para os dois ficarem alinhados na base: o py-3.5/md:py-3 do botão
+          reproduz a altura da caixa de câmera (46px no celular, 42px no desktop).
+          Se mudar o padding de um, mude o do outro. */}
+      <div className="absolute bottom-6 right-4 md:right-6 z-20 flex flex-col items-end gap-2">
+        <LanguageSwitcher path="/" variant="floating" className="sm:hidden" />
+
+        <div className="group flex flex-col items-end">
+          <div className="grid grid-rows-[0fr] opacity-0 group-hover:grid-rows-[1fr] group-hover:opacity-100 group-focus-within:grid-rows-[1fr] group-focus-within:opacity-100 transition-all duration-200">
+            <div className="overflow-hidden min-h-0">
+              <div className="mb-2 w-52 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl flex flex-col space-y-1 text-xs">
+                <div className="px-2 py-1 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-slate-800/80 mb-1">
+                  {t.graph.legalInfo}
+                </div>
+                <Link href={href('/esquemas')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                  <FileText className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                  <span>{t.graph.menuDossiers}</span>
+                </Link>
+                <Link href={href('/correcoes')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                  <History className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                  <span>{t.common.correctionsAndUpdates}</span>
+                </Link>
+                <Link href={href('/about')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                  <Info className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                  <span>{t.graph.menuAbout}</span>
+                </Link>
+                <Link href={href('/privacy')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                  <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                  <span>{t.common.privacyPolicy}</span>
+                </Link>
+                <Link href={href('/terms')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                  <Scale className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                  <span>{t.common.termsOfUse}</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <button
+            className="flex items-center space-x-2 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-3.5 md:py-3 text-xs leading-4 text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
+            aria-label={t.graph.legalMenuAria}
+            aria-haspopup="true"
+          >
+            <FileText className="w-4 h-4 text-cyan-400" />
+            <span className="font-mono text-xs hidden sm:inline">{t.graph.termsAndPrivacy}</span>
+            <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 group-focus-within:rotate-180 transition-transform duration-200" />
+          </button>
+        </div>
       </div>
     </div>
   );

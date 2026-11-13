@@ -21,7 +21,9 @@ import React from 'react';
 import Link from 'next/link';
 import { FileText, X, ExternalLink, ArrowRight, BookOpen } from 'lucide-react';
 import { schemePath } from '@/lib/schemes';
-import { formatDatePtBR } from '@/lib/format';
+import { formatDate } from '@/lib/format';
+import { localizeAmountText } from '@/lib/money';
+import { useI18n } from '@/components/I18nProvider';
 import { GraphNode, GraphLink, GraphData, NodeType, LinkStatus, LinkType } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, LINK_TYPE_STYLE, FALLBACK_COLOR, getLinkEnds, getLinkKey, entityChipStyle } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
@@ -54,6 +56,7 @@ export default function InspectorDrawer({
 }: InspectorDrawerProps) {
   // Hooks precisam rodar antes de qualquer `return` antecipado (regra do React).
   // nodeById: busca O(1) de nós; brokenImage: lembra a foto que falhou ao carregar.
+  const { t, locale, href } = useI18n();
   const nodeById = React.useMemo(() => new Map(fullNodes.map((n) => [n.id, n])), [fullNodes]);
   const [brokenImage, setBrokenImage] = React.useState<string | null>(null);
 
@@ -77,10 +80,11 @@ export default function InspectorDrawer({
 
   if (!selectedNode && !selectedLink) return null;
 
-  const nodeStyle = selectedNode ? NODE_STYLE[selectedNode.type as NodeType] : undefined;
   const statusStyle = selectedLink ? STATUS_STYLE[selectedLink.status as LinkStatus] : undefined;
   const statusColor = statusStyle?.color ?? FALLBACK_COLOR;
   const typeStyle = selectedLink?.type ? LINK_TYPE_STYLE[selectedLink.type as LinkType] : undefined;
+  const reviewedOn = formatDate(selectedLink?.reviewed_at, locale);
+  const amountText = localizeAmountText(selectedLink?.amount, locale);
 
   // Normalização segura das entidades de Origem e Destino do Link (Suporta ID em String ou Objeto D3)
   const getLinkEntities = (link: GraphLink) => {
@@ -106,11 +110,11 @@ export default function InspectorDrawer({
       <div className="p-4 border-b border-slate-800 flex justify-between items-center">
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
           <FileText className="w-4 h-4 text-blue-400" />
-          {selectedNode ? 'Dossiê da Entidade' : 'Detalhes do Vínculo'}
+          {selectedNode ? t.inspector.entityTitle : t.inspector.linkTitle}
         </span>
         <button
           onClick={onClose}
-          aria-label="Fechar detalhes"
+          aria-label={t.inspector.closeDetails}
           className="p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
         >
           <X className="w-5 h-5" />
@@ -145,7 +149,7 @@ export default function InspectorDrawer({
                   className="px-2 py-0.5 rounded border text-[10px] font-semibold uppercase tracking-wider"
                   style={entityChipStyle(selectedNode.type)}
                 >
-                  {nodeStyle?.label || selectedNode.type}
+                  {t.nodeType[selectedNode.type as NodeType]?.label || selectedNode.type}
                 </span>
                 {selectedNode.party && (
                   <span className="bg-slate-800 border border-slate-700 text-slate-300 text-xs px-2 py-0.5 rounded font-mono">
@@ -159,7 +163,7 @@ export default function InspectorDrawer({
           {/* Crédito da foto (autor e licença), quando registrado no banco. */}
           {selectedNode.image_url && brokenImage !== selectedNode.image_url && selectedNode.image_credit && (
             <p className="-mt-3 text-[11px] text-slate-500 leading-snug">
-              Foto:{' '}
+              {t.inspector.photo}{' '}
               {isHttpUrl(selectedNode.image_source_url) ? (
                 <a
                   href={selectedNode.image_source_url!}
@@ -176,38 +180,39 @@ export default function InspectorDrawer({
           )}
 
           <div>
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 font-mono">Resumo Factual</h3>
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 font-mono">{t.inspector.summary}</h3>
             <p className="text-sm text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-lg border border-slate-800">
               {selectedNode.summary}
             </p>
             {selectedNode.type === 'scheme' && (
               <Link
-                href={schemePath(selectedNode.id)}
+                href={href(schemePath(selectedNode.id))}
                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-400 hover:text-cyan-200 hover:underline"
               >
                 <BookOpen size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
-                Ler o dossiê completo
+                {t.inspector.readDossier}
               </Link>
             )}
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Conexões Mapeadas</h3>
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">{t.inspector.connections}</h3>
             {connectionSections.length === 0 && (
-              <p className="text-xs text-slate-500 italic">Nenhuma conexão visível com os filtros atuais.</p>
+              <p className="text-xs text-slate-500 italic">{t.inspector.noConnections}</p>
             )}
             {connectionSections.map(({ key, items }) => {
               const st = NODE_STYLE[key as NodeType];
               const Icon = NODE_ICONS[key as NodeType];
               const color = st?.color ?? FALLBACK_COLOR;
+              const sectionTitle = t.nodeType[key as NodeType]?.plural ?? t.inspector.others;
               return (
-                <section key={key} aria-label={st?.plural ?? 'Outros'}>
+                <section key={key} aria-label={sectionTitle}>
                   <h4
                     className="flex items-center gap-2 mb-2 pb-1.5 border-b text-[11px] font-mono font-semibold uppercase tracking-wider"
                     style={{ color: st?.labelColor ?? '#cbd5e1', borderColor: `${color}40` }}
                   >
                     {Icon && <Icon size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />}
-                    <span>{st?.plural ?? 'Outros'}</span>
+                    <span>{sectionTitle}</span>
                     <span
                       className="ml-auto px-1.5 py-0.5 rounded border text-[10px] leading-none"
                       style={entityChipStyle(key)}
@@ -232,7 +237,7 @@ export default function InspectorDrawer({
                             )}
                           </span>
                           <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
-                            {link.year || 'N/A'}
+                            {link.year || t.common.notAvailable}
                           </span>
                         </div>
                         <p className="text-xs text-slate-400 line-clamp-2">{link.relation}</p>
@@ -252,7 +257,7 @@ export default function InspectorDrawer({
           {/* Card de Entidades Conectadas (Origem -> Destino) */}
           <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
             <span className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-wider block">
-              Entidades Conectadas
+              {t.inspector.connectedEntities}
             </span>
             <div className="flex items-center justify-between gap-2">
               {/* Origem */}
@@ -260,9 +265,9 @@ export default function InspectorDrawer({
                 onClick={() => sourceNode && onSelectNode && onSelectNode(sourceNode)}
                 className="flex-1 p-2 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors text-left group"
               >
-                <span className="text-[10px] text-slate-500 block uppercase font-mono">Origem</span>
+                <span className="text-[10px] text-slate-500 block uppercase font-mono">{t.inspector.source}</span>
                 <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-400 transition-colors line-clamp-1">
-                  {sourceNode?.label || (typeof selectedLink.source === 'string' ? selectedLink.source : 'Origem')}
+                  {sourceNode?.label || (typeof selectedLink.source === 'string' ? selectedLink.source : t.inspector.source)}
                 </span>
               </button>
 
@@ -273,9 +278,9 @@ export default function InspectorDrawer({
                 onClick={() => targetNode && onSelectNode && onSelectNode(targetNode)}
                 className="flex-1 p-2 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors text-left group"
               >
-                <span className="text-[10px] text-slate-500 block uppercase font-mono">Destino</span>
+                <span className="text-[10px] text-slate-500 block uppercase font-mono">{t.inspector.target}</span>
                 <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-400 transition-colors line-clamp-1">
-                  {targetNode?.label || (typeof selectedLink.target === 'string' ? selectedLink.target : 'Destino')}
+                  {targetNode?.label || (typeof selectedLink.target === 'string' ? selectedLink.target : t.inspector.target)}
                 </span>
               </button>
             </div>
@@ -286,47 +291,47 @@ export default function InspectorDrawer({
             {/* Categoria Operacional (type) */}
             {typeStyle && (
               <div className="flex items-center justify-between text-xs text-slate-400">
-                <span>Categoria da Relação:</span>
+                <span>{t.inspector.category}</span>
                 <span
                   className="font-bold font-mono uppercase tracking-wide px-2 py-0.5 rounded text-[10px]"
                   style={{ backgroundColor: `${typeStyle.color}20`, color: typeStyle.color, border: `1px solid ${typeStyle.color}50` }}
                 >
-                  {typeStyle.label}
+                  {t.linkType[selectedLink.type as LinkType]}
                 </span>
               </div>
             )}
 
             {/* Status Jurídico */}
             <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
-              <span>Status Jurídico:</span>
+              <span>{t.inspector.legalStatus}</span>
               <span 
                 className="font-bold font-mono uppercase tracking-wide px-2 py-0.5 rounded text-[10px]"
                 style={{ backgroundColor: `${statusColor}20`, color: statusColor, border: `1px solid ${statusColor}50` }}
               >
-                {statusStyle?.label ?? selectedLink.status}
+                {t.status[selectedLink.status as LinkStatus] ?? selectedLink.status}
               </span>
             </div>
 
             {/* Data em que o status foi conferido pela última vez, quando registrada */}
-            {formatDatePtBR(selectedLink.reviewed_at) && (
+            {reviewedOn && (
               <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
-                <span>Situação conferida em:</span>
-                <span className="font-mono text-slate-300">{formatDatePtBR(selectedLink.reviewed_at)}</span>
+                <span>{t.inspector.reviewedOn}</span>
+                <span className="font-mono text-slate-300">{reviewedOn}</span>
               </div>
             )}
 
             {/* Ano do Fato */}
             <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
-              <span>Ano do Fato:</span>
-              <span className="text-sm font-mono font-bold text-slate-200">{selectedLink.year || 'N/A'}</span>
+              <span>{t.inspector.year}</span>
+              <span className="text-sm font-mono font-bold text-slate-200">{selectedLink.year || t.common.notAvailable}</span>
             </div>
 
             {/* Montante Envolvido + ressalva (amount_note), quando houver */}
-            {selectedLink.amount && (
+            {amountText && (
               <div className="text-xs text-slate-400 border-t border-slate-900 pt-3 space-y-1">
                 <div className="flex items-center justify-between">
-                  <span>Montante Envolvido:</span>
-                  <span className="text-sm font-mono font-bold text-emerald-400">{selectedLink.amount}</span>
+                  <span>{t.inspector.amount}</span>
+                  <span className="text-sm font-mono font-bold text-emerald-400">{amountText}</span>
                 </div>
                 {selectedLink.amount_note && (
                   <p className="text-[11px] text-slate-500 italic text-right">{selectedLink.amount_note}</p>
@@ -337,7 +342,7 @@ export default function InspectorDrawer({
 
           {/* Descrição Factual / Relação */}
           <div>
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 font-mono">Descrição do Vínculo</h3>
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 font-mono">{t.inspector.description}</h3>
             <p className="text-sm text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-lg border border-slate-800">
               {selectedLink.relation}
             </p>
@@ -346,7 +351,7 @@ export default function InspectorDrawer({
           {/* Fonte Documental / Evidência */}
           {isHttpUrl(selectedLink.source_url) && (
             <div>
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 font-mono">Fonte Documental</h3>
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 font-mono">{t.inspector.documentSource}</h3>
               <a
                 href={selectedLink.source_url!}
                 target="_blank"

@@ -14,6 +14,10 @@
 -- e reviewed_at não existem nele (IF NOT EXISTS não altera tabela existente):
 -- rode uma vez migrations/0002_review_dates_and_credits.sql.
 --
+-- Banco criado ANTES de 13/11/2026? Faltam as tabelas de tradução
+-- (node_translations, link_translations): rode este arquivo de novo ou
+-- migrations/0003_translations.sql — os dois criam as tabelas se não existirem.
+--
 -- Fonte da verdade do formato dos dados. Se mudar algo aqui, mude também em
 -- nos master prompts (bloco <schema>, mantidos fora do repositório), em types/graph.ts e em
 -- lib/graphConfig.ts (cores/rótulos de status).
@@ -69,6 +73,28 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_links_unique
 -- Índices de apoio (não fazem parte do prompt; só aceleram consultas por ponta).
 CREATE INDEX IF NOT EXISTS idx_links_source ON links(source);
 CREATE INDEX IF NOT EXISTS idx_links_target ON links(target);
+
+-- Traduções (inglês e espanhol) dos textos de nodes e links. O português fica
+-- nas tabelas acima; aqui, só os textos traduzidos. Explicação completa e
+-- exemplos de INSERT em migrations/0003_translations.sql.
+CREATE TABLE IF NOT EXISTS node_translations (
+    node_id     TEXT NOT NULL,
+    lang        TEXT NOT NULL CHECK(lang IN ('en','es')),
+    label       TEXT,
+    summary     TEXT,
+    source_text TEXT NOT NULL,
+    PRIMARY KEY (node_id, lang)
+);
+
+CREATE TABLE IF NOT EXISTS link_translations (
+    link_id     INTEGER NOT NULL,
+    lang        TEXT NOT NULL CHECK(lang IN ('en','es')),
+    relation    TEXT,
+    amount      TEXT,
+    amount_note TEXT,
+    source_text TEXT NOT NULL,
+    PRIMARY KEY (link_id, lang)
+);
 
 -- ============================================================================
 -- CONSULTAS DE VERIFICAÇÃO (rodar manualmente, ex.: após inserir um dossiê)

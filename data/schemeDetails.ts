@@ -17,6 +17,12 @@
  *  - reviewedAt: data (AAAA-MM-DD) da última revisão do texto. ATUALIZE ao
  *    mexer no registro: aparece no dossiê como "Revisado em", vai para o
  *    sitemap (lastModified) e para os dados estruturados (dateModified).
+ *    Mudar a data também tira do ar as traduções deste registro até serem
+ *    atualizadas (ver SchemeDetailTranslation, abaixo).
+ *
+ * TRADUÇÕES: data/schemeDetails.en.ts (inglês) e data/schemeDetails.es.ts
+ * (espanhol), com as mesmas chaves. Dossiê novo sem tradução aparece em
+ * português nos outros idiomas.
  * ============================================================================
  */
 /** Formato de cada registro (Glossário, páginas de dossiê, sitemap). */
@@ -28,6 +34,25 @@ export interface SchemeDetail {
   impact: string;
   legalStatus: string;
   sources: { title: string; url: string }[];
+}
+
+/**
+ * Tradução de um registro (data/schemeDetails.en.ts e .es.ts). Só os textos:
+ * as fontes e a lista de dossiês vêm sempre deste arquivo.
+ *  - reviewedAt: COPIE o `reviewedAt` do registro em português que foi
+ *    traduzido. Se o português for revisto depois (data diferente), o site
+ *    volta a mostrar o português neste dossiê até a tradução ser atualizada
+ *    (ver lib/dossiers.ts).
+ *  - impact: comece pela mesma cifra, com os números por extenso em algarismos
+ *    ("R$ 6,200,000,000" em inglês; "R$ 6.200.000.000" em espanhol).
+ */
+export interface SchemeDetailTranslation {
+  title: string;
+  reviewedAt: string;
+  context: string;
+  mechanism: string;
+  impact: string;
+  legalStatus: string;
 }
 
 export const SCHEME_DETAILS: Record<string, SchemeDetail> = {

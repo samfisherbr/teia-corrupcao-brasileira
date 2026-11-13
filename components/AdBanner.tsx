@@ -10,6 +10,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 declare global {
   interface Window {
@@ -24,6 +25,7 @@ interface AdBannerProps {
 
 export default function AdBanner({ adClient, adSlot }: AdBannerProps) {
   const pushedRef = useRef(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     // O bloco só existe em telas ≥ 1024px (`hidden lg:flex`). Pedir o anúncio
@@ -57,7 +59,7 @@ export default function AdBanner({ adClient, adSlot }: AdBannerProps) {
             data-ad-slot={adSlot}
           />
           <span className="absolute text-[10px] font-mono text-slate-600 uppercase tracking-widest pointer-events-none -z-10">
-            Publicidade
+            {t.common.advertising}
           </span>
         </div>
       </div>
