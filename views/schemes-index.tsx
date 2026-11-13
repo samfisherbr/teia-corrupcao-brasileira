@@ -68,11 +68,11 @@ export default async function SchemesIndexView({ locale }: { locale: Locale }) {
             <BookOpen className="w-8 h-8 shrink-0 text-cyan-400" aria-hidden="true" />
             {t.schemesIndex.title}
           </h1>
+          {/* Apresentação logo abaixo do título (mesmo espaçamento do Glossário e dos Infográficos). */}
+          <p className="mt-6 text-sm text-slate-400 leading-relaxed">{t.schemesIndex.intro(items.length)}</p>
         </header>
 
-        <SchemeSearchList items={items}>
-          <p className="text-sm text-slate-400">{t.schemesIndex.intro(items.length)}</p>
-        </SchemeSearchList>
+        <SchemeSearchList items={items} />
       </div>
     </div>
   );
