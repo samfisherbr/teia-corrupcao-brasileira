@@ -1,5 +1,5 @@
 -- ============================================================================
--- SCHEMA DO CLOUDFLARE D1 — Teia da Corrupção (Master Prompt v2)
+-- SCHEMA DO CLOUDFLARE D1 — Teia da Corrupção (Master Prompt v4)
 -- ============================================================================
 -- Criar o banco do zero:
 --   1. npx wrangler d1 create teia-corrupcao
@@ -15,7 +15,7 @@
 -- rode uma vez migrations/0002_review_dates_and_credits.sql.
 --
 -- Fonte da verdade do formato dos dados. Se mudar algo aqui, mude também em
--- docs/prompt-dossie.md (prompt de geração), em types/graph.ts e em
+-- docs/MasterPrompt_Dossie.txt e docs/MasterPrompt_Scheduled.txt (blocos <schema>), em types/graph.ts e em
 -- lib/graphConfig.ts (cores/rótulos de status).
 -- ============================================================================
 

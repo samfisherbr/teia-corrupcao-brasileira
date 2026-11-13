@@ -31,7 +31,7 @@ interface Env {
 
 /**
  * `SELECT *` de propósito: a API funciona com QUALQUER versão das tabelas
- * (a antiga, sem amount_brl/amount_note, ou a do Master Prompt v2). Colunas
+ * (a antiga, sem amount_brl/amount_note, ou a atual). Colunas
  * que faltarem são preenchidas com null em `normalizeLink`. Pedir colunas pelo
  * nome fazia a consulta inteira falhar ("no such column") se uma delas não
  * existisse — foi o que quebrou o preview com tabelas no formato antigo.

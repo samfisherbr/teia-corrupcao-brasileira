@@ -1,6 +1,6 @@
 /**
  * Tipos de dados do grafo. Espelham EXATAMENTE as tabelas `nodes` e `links`
- * do Cloudflare D1 definidas em `schema.sql` (schema do Master Prompt v2).
+ * do Cloudflare D1 definidas em `schema.sql` (o mesmo schema de docs/MasterPrompt_Dossie.txt).
  *
  * Para adicionar um novo valor (ex.: um novo status jurídico):
  *   1. inclua-o no CHECK correspondente em `schema.sql`;
