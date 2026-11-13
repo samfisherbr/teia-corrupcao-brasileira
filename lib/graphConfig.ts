@@ -14,7 +14,6 @@ import type { GraphLink, GraphNode, LinkStatus, LinkType, NodeType } from '@/typ
 
 /**
  * Aparência de cada tipo de entidade.
- *  - label      texto usado em legendas e filtros
  *  - color      borda/brilho do círculo
  *  - radius     raio do círculo em unidades do grafo (também define a área de
  *               clique e a colisão). ↑ maior = círculo maior e mais espaçado.
@@ -22,20 +21,23 @@ import type { GraphLink, GraphNode, LinkStatus, LinkType, NodeType } from '@/typ
  *  - labelPx    tamanho do rótulo em PIXELS DE TELA (não muda com o zoom)
  *  - minZoom    zoom mínimo para o rótulo aparecer (0 = sempre). Valores menores
  *               mostram o rótulo mais cedo ao afastar a câmera.
- *  - plural     título das seções de conexões no painel de detalhes
+ *
+ * Os NOMES de cada tipo ("Partido", "Party"…) ficam nos textos de cada idioma:
+ * `nodeType` em messages/pt.ts, en.ts e es.ts. A ordem das chaves aqui é a
+ * ordem da legenda e dos filtros.
  *
  * As mesmas cores pintam etiquetas, ícones e chips do resto da interface
  * (glossário, painel de detalhes, barra lateral) via entityChipStyle().
  */
 export const NODE_STYLE: Record<
   NodeType,
-  { label: string; plural: string; color: string; radius: number; labelColor: string; labelPx: number; minZoom: number }
+  { color: string; radius: number; labelColor: string; labelPx: number; minZoom: number }
 > = {
-  scheme:     { label: 'Esquema de Corrupção', plural: 'Esquemas de Corrupção', color: '#ff00c8', radius: 100, labelColor: '#ff5ce0', labelPx: 13, minZoom: 0 },
-  party:      { label: 'Partido',              plural: 'Partidos',              color: '#3b38ff', radius: 70,  labelColor: '#a5a3ff', labelPx: 12, minZoom: 0.12 },
-  company:    { label: 'Empresa',              plural: 'Empresas',              color: '#878787', radius: 70,  labelColor: '#c4c4c4', labelPx: 11, minZoom: 0.3 },
-  politician: { label: 'Político',             plural: 'Políticos',             color: '#00eeff', radius: 40,  labelColor: '#a5f3fc', labelPx: 11, minZoom: 0.45 },
-  operator:   { label: 'Operador',             plural: 'Operadores',            color: '#ffffff', radius: 40,  labelColor: '#e2e8f0', labelPx: 11, minZoom: 0.45 },
+  scheme:     { color: '#ff00c8', radius: 100, labelColor: '#ff5ce0', labelPx: 13, minZoom: 0 },
+  party:      { color: '#3b38ff', radius: 70,  labelColor: '#a5a3ff', labelPx: 12, minZoom: 0.12 },
+  company:    { color: '#878787', radius: 70,  labelColor: '#c4c4c4', labelPx: 11, minZoom: 0.3 },
+  politician: { color: '#00eeff', radius: 40,  labelColor: '#a5f3fc', labelPx: 11, minZoom: 0.45 },
+  operator:   { color: '#ffffff', radius: 40,  labelColor: '#e2e8f0', labelPx: 11, minZoom: 0.45 },
 };
 
 /**
@@ -68,21 +70,22 @@ export const getNodeRadius = (type: string | undefined, node?: { __radius?: numb
  *  - particles  quantidade de "partículas" animadas correndo na linha
  *               (0 desliga; muitos links com partículas pesam em celulares).
  * A ordem das chaves aqui é a ordem em que aparecem na legenda e nos filtros.
+ * Os NOMES de cada status ficam em `status`, em messages/pt.ts, en.ts e es.ts.
  */
-export const STATUS_STYLE: Record<LinkStatus, { label: string; color: string; dashed: boolean; particles: number }> = {
-  confirmed:           { label: 'Fatos documentados',                color: '#60a5fa', dashed: false, particles: 0 },
-  under_investigation: { label: 'Sob investigação',                color: '#f59e0b', dashed: true,  particles: 2 },
-  convicted_appealing: { label: 'Condenados (cabe recurso)',        color: '#f97316', dashed: true,  particles: 0 },
-  convicted_final:     { label: 'Condenados (trânsito em julgado)', color: '#e11d48', dashed: false, particles: 0 },
-  annulled:            { label: 'Condenações anuladas',              color: '#9333ea', dashed: false, particles: 0 },
-  acquitted:           { label: 'Absolvidos',                       color: '#10b981', dashed: false, particles: 0 },
+export const STATUS_STYLE: Record<LinkStatus, { color: string; dashed: boolean; particles: number }> = {
+  confirmed:           { color: '#60a5fa', dashed: false, particles: 0 },
+  under_investigation: { color: '#f59e0b', dashed: true,  particles: 2 },
+  convicted_appealing: { color: '#f97316', dashed: true,  particles: 0 },
+  convicted_final:     { color: '#e11d48', dashed: false, particles: 0 },
+  annulled:            { color: '#9333ea', dashed: false, particles: 0 },
+  acquitted:           { color: '#10b981', dashed: false, particles: 0 },
 };
 
-/** Categoria operacional do vínculo (painel de detalhes e infográficos). */
-export const LINK_TYPE_STYLE: Record<LinkType, { label: string; color: string }> = {
-  transaction: { label: 'Transação Financeira', color: '#f59e0b' },
-  contract:    { label: 'Contrato / Vínculo',   color: '#3b82f6' },
-  process:     { label: 'Processo / Político',  color: '#a855f7' },
+/** Categoria operacional do vínculo (painel de detalhes). Nomes em `linkType`, em messages/. */
+export const LINK_TYPE_STYLE: Record<LinkType, { color: string }> = {
+  transaction: { color: '#f59e0b' },
+  contract:    { color: '#3b82f6' },
+  process:     { color: '#a855f7' },
 };
 
 /** Cor para valores desconhecidos (ex.: status antigo ainda no banco). */

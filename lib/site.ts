@@ -3,7 +3,7 @@
  * Altere aqui uma vez e as três páginas se atualizam.
  */
 
-/** Nome do projeto como aparece nos textos. */
+/** Nome do projeto como aparece nos textos. É a marca: não é traduzido nos outros idiomas. */
 export const SITE_NAME = 'Teia da Corrupção';
 
 /**
@@ -15,8 +15,11 @@ export const SITE_DOMAIN = process.env.NEXT_PUBLIC_SITE_DOMAIN || 'teiadacorrupc
 /** E-mail para dúvidas, correções e pedidos relativos à LGPD. */
 export const CONTACT_EMAIL = 'samfisherbr@gmail.com';
 
-/** Data da última revisão dos textos legais (atualize ao mudá-los). */
-export const LEGAL_LAST_UPDATED = '3 de novembro de 2026';
+/**
+ * Data (AAAA-MM-DD) da última revisão dos textos legais — atualize ao mudá-los.
+ * As páginas escrevem a data por extenso no idioma de cada uma.
+ */
+export const LEGAL_LAST_UPDATED = '2026-11-03';
 
 /**
  * ID de editor do Google AdSense (público: aparece no HTML de toda página).

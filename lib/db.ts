@@ -7,9 +7,23 @@
  * Só funciona no runtime "edge" do Cloudflare Pages (as páginas que usam
  * este módulo declaram `export const runtime = 'edge'`). Em `next dev` sem
  * o binding, getDB() devolve null.
+ *
+ * IDIOMA: as funções recebem o idioma da página. Em inglês e espanhol, nomes
+ * de esquemas, resumos e descrições dos vínculos vêm das tabelas de tradução
+ * (lib/translations.ts); o que não tiver tradução em dia vem em português.
+ * Banco sem as tabelas de tradução → tudo em português, sem erro.
  */
 import { getRequestContext } from '@cloudflare/next-on-pages';
 import type { GraphNode, LinkStatus, LinkType, NodeType } from '@/types/graph';
+import type { Locale } from '@/lib/i18n';
+import {
+  applyLinkTranslation,
+  applyNodeTranslation,
+  dbLang,
+  isMissingTranslationTables,
+  linkSelect,
+  nodeSelect,
+} from '@/lib/translations';
 
 interface D1Result<T> {
   results: T[];
@@ -28,7 +42,9 @@ type Row = Record<string, unknown>;
 const clean = (v: unknown): unknown =>
   v === undefined || v === '' || v === 'NULL' || v === 'N/A' ? null : v;
 
-const toNode = (r: Row): GraphNode => ({
+const toNode = (raw: Row): GraphNode => {
+  const r = applyNodeTranslation(raw);
+  return {
   id: String(r.id),
   label: String(r.label ?? r.id),
   type: r.type as NodeType,
@@ -37,7 +53,23 @@ const toNode = (r: Row): GraphNode => ({
   image_url: (clean(r.image_url) as string | null) ?? null,
   image_credit: (clean(r.image_credit) as string | null) ?? null,
   image_source_url: (clean(r.image_source_url) as string | null) ?? null,
-});
+  };
+};
+
+/**
+ * Roda `run` com o idioma pedido; se o banco ainda não tiver as tabelas de
+ * tradução, roda de novo em português (lang = null) em vez de falhar.
+ */
+async function withLang<T>(locale: Locale, run: (lang: string | null) => Promise<T>): Promise<T> {
+  const lang = dbLang(locale);
+  if (!lang) return run(null);
+  try {
+    return await run(lang);
+  } catch (e) {
+    if (!isMissingTranslationTables(e)) throw e;
+    return run(null);
+  }
+}
 
 /** Só aceita http(s): um `javascript:` vindo do banco nunca vira link. */
 export const safeHttpUrl = (v: unknown): string | null => {
@@ -73,7 +105,7 @@ export function getDB(): D1Database | null {
  * vínculo datado mais antigo — mesma regra de computeSchemeStartYears em
  * lib/schemes.ts), numa única ida ao banco. Null se o banco não responder.
  */
-export async function loadSchemeIndex(): Promise<{
+export async function loadSchemeIndex(locale: Locale): Promise<{
   nodes: GraphNode[];
   years: Map<string, number>;
   /** Nomes e partidos das entidades ligadas a cada esquema (para a busca). */
@@ -82,28 +114,38 @@ export async function loadSchemeIndex(): Promise<{
   const db = getDB();
   if (!db) return null;
   try {
-    const [nodesRes, yearsRes, termsRes] = await db.batch<Row>([
-      db.prepare("SELECT * FROM nodes WHERE type = 'scheme'"),
-      db.prepare(
-        `SELECT n.id AS id, MIN(CAST(l.year AS INTEGER)) AS start
-           FROM nodes n
-           JOIN links l ON l.source = n.id OR l.target = n.id
-          WHERE n.type = 'scheme' AND l.year IS NOT NULL AND CAST(l.year AS INTEGER) > 0
-          GROUP BY n.id`
-      ),
-      db.prepare(
-        `SELECT s.id AS id, e.label AS label, e.party AS party
-           FROM nodes s
-           JOIN links l ON l.source = s.id OR l.target = s.id
-           JOIN nodes e ON e.id = CASE WHEN l.source = s.id THEN l.target ELSE l.source END
-          WHERE s.type = 'scheme'`
-      ),
-    ]);
+    const [nodesRes, yearsRes, termsRes] = await withLang(locale, (lang) =>
+      db.batch<Row>([
+        db.prepare(`${nodeSelect(lang)} WHERE n.type = 'scheme'`),
+        db.prepare(
+          `SELECT n.id AS id, MIN(CAST(l.year AS INTEGER)) AS start
+             FROM nodes n
+             JOIN links l ON l.source = n.id OR l.target = n.id
+            WHERE n.type = 'scheme' AND l.year IS NOT NULL AND CAST(l.year AS INTEGER) > 0
+            GROUP BY n.id`
+        ),
+        // Busca: o nome em português sempre entra; no outro idioma, o traduzido também.
+        db.prepare(
+          lang
+            ? `SELECT s.id AS id, e.label AS label, e.party AS party, t.label AS label_tr
+                 FROM nodes s
+                 JOIN links l ON l.source = s.id OR l.target = s.id
+                 JOIN nodes e ON e.id = CASE WHEN l.source = s.id THEN l.target ELSE l.source END
+                 LEFT JOIN node_translations t ON t.node_id = e.id AND t.lang = '${lang}'
+                WHERE s.type = 'scheme'`
+            : `SELECT s.id AS id, e.label AS label, e.party AS party
+                 FROM nodes s
+                 JOIN links l ON l.source = s.id OR l.target = s.id
+                 JOIN nodes e ON e.id = CASE WHEN l.source = s.id THEN l.target ELSE l.source END
+                WHERE s.type = 'scheme'`
+        ),
+      ])
+    );
     const entityTerms = new Map<string, string[]>();
     for (const r of termsRes.results) {
       const id = String(r.id);
       if (!entityTerms.has(id)) entityTerms.set(id, []);
-      for (const v of [r.label, clean(r.party)]) if (v) entityTerms.get(id)!.push(String(v));
+      for (const v of [r.label, clean(r.label_tr), clean(r.party)]) if (v) entityTerms.get(id)!.push(String(v));
     }
     return {
       nodes: nodesRes.results.map(toNode),
@@ -125,29 +167,33 @@ export async function loadSchemeIndex(): Promise<{
  * status, o ano e a fonte), numa única ida ao banco. Null se o banco não
  * responder.
  *
- * `SELECT l.*` de propósito: funciona com ou sem as colunas opcionais
- * (reviewed_at, amount_note…) — as que faltarem viram null.
+ * `SELECT l.*` (em lib/translations.ts) de propósito: funciona com ou sem as
+ * colunas opcionais (reviewed_at, amount_note…) — as que faltarem viram null.
  */
 export async function loadScheme(
-  id: string
+  id: string,
+  locale: Locale
 ): Promise<{ scheme: GraphNode | null; connections: SchemeConnection[] } | null> {
   const db = getDB();
   if (!db) return null;
   try {
-    const [self, linksRes, nodesRes] = await db.batch<Row>([
-      db.prepare('SELECT * FROM nodes WHERE id = ?1').bind(id),
-      db.prepare('SELECT rowid AS _rowid, l.* FROM links l WHERE l.source = ?1 OR l.target = ?1').bind(id),
-      db
-        .prepare(
-          `SELECT * FROM nodes WHERE id <> ?1 AND id IN (
-             SELECT target FROM links WHERE source = ?1
-             UNION SELECT source FROM links WHERE target = ?1)`
-        )
-        .bind(id),
-    ]);
+    const [self, linksRes, nodesRes] = await withLang(locale, (lang) =>
+      db.batch<Row>([
+        db.prepare(`${nodeSelect(lang)} WHERE n.id = ?1`).bind(id),
+        db.prepare(`${linkSelect(lang)} WHERE l.source = ?1 OR l.target = ?1`).bind(id),
+        db
+          .prepare(
+            `${nodeSelect(lang)} WHERE n.id <> ?1 AND n.id IN (
+               SELECT target FROM links WHERE source = ?1
+               UNION SELECT source FROM links WHERE target = ?1)`
+          )
+          .bind(id),
+      ])
+    );
     const byId = new Map(nodesRes.results.map((r) => [String(r.id), toNode(r)]));
     const connections: SchemeConnection[] = [];
-    for (const r of linksRes.results) {
+    for (const raw of linksRes.results) {
+      const r = applyLinkTranslation(raw);
       const otherId = String(r.source) === id ? String(r.target) : String(r.source);
       const entity = byId.get(otherId);
       if (!entity) continue; // vínculo apontando para id inexistente

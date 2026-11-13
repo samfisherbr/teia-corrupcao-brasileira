@@ -28,6 +28,8 @@ import { GraphNode, GraphLink, NodeType, LinkStatus, GraphData } from '@/types/g
 import { getLinkEnds, normalizeText, STATUS_STYLE } from '@/lib/graphConfig';
 import { computeSchemeStartYears } from '@/lib/schemes';
 import { ADSENSE_CLIENT, ADSENSE_SLOTS } from '@/lib/site';
+import { useI18n } from '@/components/I18nProvider';
+import { DEFAULT_LOCALE } from '@/lib/i18n';
 
 /**
  * Infográficos/Glossário: carregados À PARTE do JavaScript inicial. O painel
@@ -75,6 +77,8 @@ const NO_STATUS_SELECTED = Object.fromEntries(
 ) as Record<LinkStatus, boolean>;
 
 export default function GraphApp() {
+  // Idioma da página: define os textos da interface e o idioma dos dados (/api/graph?lang=…).
+  const { t, locale } = useI18n();
   // Instância do grafo (zoom, centerAt…). Preenchida pelo NetworkGraph.
   const graphRef = useRef<any>(null);
 
@@ -157,14 +161,17 @@ export default function GraphApp() {
       try {
         // cache: 'no-store' → o navegador nunca usa uma cópia guardada da API
         // (a rota tem um cache curto na BORDA; ver app/api/graph/route.ts).
-        const res = await fetch('/api/graph', { signal: timeout.signal, cache: 'no-store' });
+        const apiUrl = locale === DEFAULT_LOCALE ? '/api/graph' : `/api/graph?lang=${locale}`;
+        const res = await fetch(apiUrl, { signal: timeout.signal, cache: 'no-store' });
         if (!res.ok) {
           // A API devolve { code, error, detail } explicando a causa. Sem
           // corpo legível, cai no status HTTP.
           const body = await res.json().catch(() => null);
           return {
             error: {
-              message: body?.error || `A API retornou status ${res.status}.`,
+              // O diagnóstico da API é em português (é para quem mantém o site);
+              // nos outros idiomas vai um aviso genérico, e o código do erro em `detail`.
+              message: locale === DEFAULT_LOCALE ? body?.error || t.app.apiStatus(res.status) : t.app.loadFailedGeneric,
               detail: [body?.code, body?.detail].filter(Boolean).join(' — ') || undefined,
             },
             // Erros de configuração (sem banco, sem tabelas) não mudam sozinhos.
@@ -173,7 +180,7 @@ export default function GraphApp() {
         }
         const data = await res.json();
         if (!Array.isArray(data?.nodes) || !Array.isArray(data?.links)) {
-          return { error: { message: 'Resposta da API em formato inesperado.' }, retry: true };
+          return { error: { message: t.app.badFormat }, retry: true };
         }
         return { data, retry: false };
       } catch (e: any) {
@@ -183,8 +190,8 @@ export default function GraphApp() {
         return {
           error: {
             message: timedOut
-              ? 'O servidor demorou demais para responder. Verifique a conexão e tente de novo.'
-              : 'Não foi possível conectar ao servidor. Verifique a conexão e tente de novo.',
+              ? t.app.timeout
+              : t.app.offline,
             detail: timedOut ? undefined : e?.message,
           },
           retry: true,
@@ -216,7 +223,7 @@ export default function GraphApp() {
     })();
 
     return () => controller.abort();
-  }, [reloadKey]);
+  }, [reloadKey, locale, t]);
 
   // Baixa o painel de Infográficos/Glossário quando o navegador estiver
   // ocioso depois de o grafo aparecer; um clique no cabeçalho antes disso
@@ -435,13 +442,13 @@ export default function GraphApp() {
           {isLoading && !error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30">
               <div className="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
-              <span className="text-xs font-mono text-cyan-400">Carregando a teia…</span>
+              <span className="text-xs font-mono text-cyan-400">{t.app.loading}</span>
             </div>
           )}
 
           {error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30 p-6 text-center">
-              <span className="text-red-400 font-mono text-sm mb-2">Falha ao carregar os dados</span>
+              <span className="text-red-400 font-mono text-sm mb-2">{t.app.loadFailed}</span>
               <p className="text-slate-300 text-xs max-w-lg mb-2 leading-relaxed">{error.message}</p>
               {error.detail && (
                 <code className="text-[11px] text-slate-500 max-w-lg mb-4 break-words">{error.detail}</code>
@@ -450,7 +457,7 @@ export default function GraphApp() {
                 onClick={() => setReloadKey((k) => k + 1)}
                 className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-200 rounded border border-slate-700"
               >
-                Tentar novamente
+                {t.common.tryAgain}
               </button>
             </div>
           )}
@@ -458,10 +465,9 @@ export default function GraphApp() {
           {/* Banco ligado e com tabelas, mas ainda sem nenhum dossiê inserido */}
           {!error && !isLoading && graphData.nodes.length === 0 && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center pointer-events-none">
-              <span className="text-cyan-400 font-mono text-sm mb-2">Banco conectado, ainda sem dados</span>
+              <span className="text-cyan-400 font-mono text-sm mb-2">{t.app.emptyTitle}</span>
               <p className="text-slate-400 text-xs max-w-md leading-relaxed">
-                Insira o SQL da Fase 2 de um dossiê aprovado (nodes antes de links). Os dados aparecem aqui assim
-                que a página for recarregada.
+                {t.app.emptyBody}
               </p>
             </div>
           )}

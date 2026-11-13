@@ -20,6 +20,11 @@ export const schemeSlug = (id: string): string =>
 
 export const schemeIdFromSlug = (slug: string): string => `${PREFIX}${slug.replace(/-/g, '_')}`;
 
+/**
+ * Endereço do dossiê SEM o prefixo de idioma. Para montar um link, passe pelo
+ * localePath de lib/i18n.ts: localePath(locale, schemePath(id)). O slug é o
+ * mesmo nos três idiomas (vem do id do banco).
+ */
 export const schemePath = (id: string): string => `/esquemas/${schemeSlug(id)}`;
 
 /**
@@ -49,10 +54,12 @@ export function computeSchemeStartYears(nodes: GraphNode[], links: GraphLink[]):
  */
 export function compareByYearDesc(
   a: { year?: number | null; title: string },
-  b: { year?: number | null; title: string }
+  b: { year?: number | null; title: string },
+  /** Código de idioma para a ordem alfabética (LOCALE_INFO[locale].tag). */
+  tag: string = 'pt-BR'
 ): number {
   const ya = a.year ?? -Infinity;
   const yb = b.year ?? -Infinity;
   if (ya !== yb) return yb - ya;
-  return a.title.localeCompare(b.title, 'pt-BR');
+  return a.title.localeCompare(b.title, tag);
 }
