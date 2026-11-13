@@ -11,9 +11,11 @@
 
 import React, { useEffect, useRef } from 'react';
 import { ADSENSE_CLIENT, ADSENSE_SLOTS } from '@/lib/site';
+import { useI18n } from '@/components/I18nProvider';
 
 export default function InArticleAd() {
   const pushedRef = useRef(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     // React StrictMode runs effects twice in dev; AdSense throws on a double push.
@@ -27,8 +29,8 @@ export default function InArticleAd() {
   }, []);
 
   return (
-    <aside aria-label="Publicidade" className="space-y-1">
-      <span className="block text-[10px] font-mono text-slate-600 uppercase tracking-widest">Publicidade</span>
+    <aside aria-label={t.common.advertising} className="space-y-1">
+      <span className="block text-[10px] font-mono text-slate-600 uppercase tracking-widest">{t.common.advertising}</span>
       <ins
         className="adsbygoogle"
         style={{ display: 'block', textAlign: 'center' }}

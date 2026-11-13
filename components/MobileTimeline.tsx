@@ -14,6 +14,7 @@
  */
 import React from 'react';
 import { Calendar } from 'lucide-react';
+import { useI18n } from '@/components/I18nProvider';
 
 interface MobileTimelineProps {
   startYearFilter: number;
@@ -30,6 +31,7 @@ export default function MobileTimeline({
   maxYear,
   nodeCount,
 }: MobileTimelineProps) {
+  const { t } = useI18n();
   const span = maxYear - minYear;
   const pct = span > 0 ? ((startYearFilter - minYear) / span) * 100 : 100;
 
@@ -40,7 +42,7 @@ export default function MobileTimeline({
         className="shrink-0 flex items-center gap-1.5 text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider"
       >
         <Calendar size={16} className="w-4 h-4 shrink-0 text-cyan-400" aria-hidden="true" />
-        Desde
+        {t.timeline.since}
       </label>
 
       <span className="shrink-0 text-[10px] font-mono text-slate-500" aria-hidden="true">
@@ -54,8 +56,8 @@ export default function MobileTimeline({
         step="1"
         value={startYearFilter}
         onChange={(e) => setStartYearFilter(Number(e.target.value))}
-        aria-label="Ano de início"
-        aria-valuetext={`A partir de ${startYearFilter}, ${nodeCount} nós visíveis`}
+        aria-label={t.sidebar.startYearAria}
+        aria-valuetext={t.timeline.valueText(startYearFilter, nodeCount)}
         className="timeline-range min-w-0 flex-1 h-8"
         style={{ '--pct': `${pct}%` } as React.CSSProperties}
       />

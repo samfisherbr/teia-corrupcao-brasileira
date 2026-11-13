@@ -11,6 +11,9 @@
  *
  * Robôs de busca e do AdSense (Googlebot, Mediapartners-Google, Bingbot…)
  * NÃO estão na lista e passam normalmente.
+ *
+ * O idioma NÃO passa por aqui: cada idioma tem a sua pasta de rotas
+ * (app/(pt), app/en, app/es — ver lib/i18n.ts), sem redirecionamento.
  */
 import { NextResponse, type NextRequest } from 'next/server';
 import { AI_BOT_UA_PATTERN } from '@/lib/aiBots';

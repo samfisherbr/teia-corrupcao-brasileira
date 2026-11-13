@@ -1,5 +1,11 @@
 /**
  * GET /api/graph — devolve { nodes, links } lidos do Cloudflare D1.
+ * GET /api/graph?lang=en (ou es) — o mesmo, com os textos traduzidos
+ * (tabelas node_translations / link_translations; o que não tiver tradução
+ * em dia vem em português). Ver lib/translations.ts. Com `lang`, cada nó e
+ * vínculo traz também `translated` (true = texto traduzido em dia; false =
+ * português, por falta de tradução ou porque o original mudou depois): é o que
+ * a auditoria agendada usa para listar traduções pendentes sem acesso ao banco.
  *
  * Roda no runtime "edge" (exigência do next-on-pages). O binding do banco deve
  * se chamar `DB` e precisa existir nos DOIS ambientes do Cloudflare Pages
@@ -15,6 +21,15 @@
  *   - tempo de cache     → CACHE_TTL_SECONDS
  */
 import { getRequestContext } from '@cloudflare/next-on-pages';
+import { isLocale } from '@/lib/i18n';
+import {
+  applyLinkTranslation,
+  applyNodeTranslation,
+  dbLang,
+  isMissingTranslationTables,
+  linkSelect,
+  nodeSelect,
+} from '@/lib/translations';
 
 export const runtime = 'edge';
 
@@ -30,14 +45,13 @@ interface Env {
 }
 
 /**
+ * As consultas ficam em lib/translations.ts (nodeSelect / linkSelect).
  * `SELECT *` de propósito: a API funciona com QUALQUER versão das tabelas
  * (a antiga, sem amount_brl/amount_note, ou a atual). Colunas
  * que faltarem são preenchidas com null em `normalizeLink`. Pedir colunas pelo
  * nome fazia a consulta inteira falhar ("no such column") se uma delas não
  * existisse — foi o que quebrou o preview com tabelas no formato antigo.
  */
-const NODES_SQL = 'SELECT * FROM nodes';
-const LINKS_SQL = 'SELECT rowid AS _rowid, * FROM links';
 
 type Row = Record<string, unknown>;
 
@@ -51,8 +65,13 @@ const toInt = (v: unknown): number | null => {
   return Number.isFinite(n) && clean(v) !== null ? Math.trunc(n) : null;
 };
 
-function normalizeNode(r: Row) {
+/** `translated` só existe nas respostas com ?lang= (a consulta traz `_tr`). */
+const translationFlag = (raw: Row) => ('_tr' in raw ? { translated: Number(raw._tr) === 1 } : {});
+
+function normalizeNode(raw: Row) {
+  const r = applyNodeTranslation(raw);
   return {
+    ...translationFlag(raw),
     id: r.id,
     label: r.label,
     type: r.type,
@@ -64,8 +83,10 @@ function normalizeNode(r: Row) {
   };
 }
 
-function normalizeLink(r: Row) {
+function normalizeLink(raw: Row) {
+  const r = applyLinkTranslation(raw);
   return {
+    ...translationFlag(raw),
     id: r.id ?? r._rowid, // tabelas antigas podem não ter coluna id
     source: r.source,
     target: r.target,
@@ -144,9 +165,15 @@ function diagnose(raw: string) {
 }
 
 export async function GET(request: Request) {
-  // Chave fixa (sem query string): /api/graph?x=1 não cria cópias extras.
+  // Idioma dos textos: /api/graph?lang=en | es. Sem `lang` (ou valor desconhecido) = português.
+  const langParam = new URL(request.url).searchParams.get('lang');
+  const lang = dbLang(isLocale(langParam) ? langParam : null);
+
+  // Chave fixa por idioma (só `lang` conhecido entra): /api/graph?x=1 não cria cópias extras.
   const cache = edgeCache();
-  const cacheKey = new Request(new URL('/api/graph', request.url).toString(), { method: 'GET' });
+  const cacheKey = new Request(new URL(lang ? `/api/graph?lang=${lang}` : '/api/graph', request.url).toString(), {
+    method: 'GET',
+  });
   if (cache) {
     try {
       const hit = await cache.match(cacheKey);
@@ -172,7 +199,15 @@ export async function GET(request: Request) {
 
   try {
     // batch = as duas consultas numa única ida ao banco.
-    const [nodesRes, linksRes] = await DB.batch<Row>([DB.prepare(NODES_SQL), DB.prepare(LINKS_SQL)]);
+    const query = (l: string | null) => DB.batch<Row>([DB.prepare(nodeSelect(l)), DB.prepare(linkSelect(l))]);
+    let nodesRes, linksRes;
+    try {
+      [nodesRes, linksRes] = await query(lang);
+    } catch (e) {
+      // Banco sem as tabelas de tradução (migração 0003 não rodada): responde em português.
+      if (!lang || !isMissingTranslationTables(e)) throw e;
+      [nodesRes, linksRes] = await query(null);
+    }
 
     const response = Response.json(
       { nodes: nodesRes.results.map(normalizeNode), links: linksRes.results.map(normalizeLink) },

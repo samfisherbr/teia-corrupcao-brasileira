@@ -1,6 +1,6 @@
 # 🛡️ Mapeamento de Redes & Esquemas de Corrupção no Brasil
 
-Aplicação interativa em React / Next.js com D3 e React-Force-Graph para visualização de grafos relacionais entre políticos, partidos, empresas e esquemas de corrupção.
+Aplicação interativa em React / Next.js com D3 e React-Force-Graph para visualização de grafos relacionais entre políticos, partidos, empresas e esquemas de corrupção. Disponível em português, inglês (`/en`) e espanhol (`/es`).
 
 ## 🚀 Tecnologias
 - **Next.js (App Router)**

@@ -13,8 +13,9 @@
  *     2. Rosca com a proporção de tipos de vínculo + contagem por status
  *     3. Cartões com o valor financeiro de cada esquema
  *   Glossário:
- *     Um cartão por esquema, com o texto de data/schemeDetails.ts, e uma
- *     barra de busca fixa no topo que filtra os cartões (ver glossaryMatches).
+ *     Um cartão por esquema, com o texto de data/schemeDetails*.ts (no idioma
+ *     da página, carregado sob demanda), e uma barra de busca fixa no topo
+ *     que filtra os cartões (ver glossaryMatches).
  *
  * Ajustes comuns: quantos partidos mostrar → PARTY_RANKING_SIZE;
  * cores da rosca → `categories` em operationalFlowMetrics.
@@ -28,7 +29,9 @@ import { getLinkEnds, normalizeText, STATUS_STYLE, NODE_STYLE, entityChipStyle }
 import { NODE_ICONS } from '@/lib/nodeIcons';
 import type { LinkStatus } from '@/types/graph';
 import { parseAmount, formatAmount } from '@/lib/money';
-import { SCHEME_DETAILS } from '@/data/schemeDetails';
+import { loadSchemeDetails, type LocalizedSchemeDetail } from '@/lib/dossiers';
+import { LOCALE_INFO } from '@/lib/i18n';
+import { useI18n } from '@/components/I18nProvider';
 import { schemePath, computeSchemeStartYears, compareByYearDesc } from '@/lib/schemes';
 import Link from 'next/link';
 import { 
@@ -65,7 +68,21 @@ interface HeaderOverlayProps {
 
 export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayProps) {
   // Controls overlay visibility based on active header navigation view
+  const { t, locale, href } = useI18n();
   const isOpen = activePage === 'infographics' || activePage === 'glossary';
+
+  // Textos dos dossiês no idioma da página. Chegam logo depois do painel
+  // (arquivo à parte, ~115 KB por idioma); até lá, os cartões saem sem dossiê.
+  const [schemeDetails, setSchemeDetails] = useState<Record<string, LocalizedSchemeDetail>>({});
+  useEffect(() => {
+    let cancelled = false;
+    loadSchemeDetails(locale).then((d) => {
+      if (!cancelled) setSchemeDetails(d);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
 
   // `inert` isn't in React 18's DOM typings, so set it directly.
   const panelRef = useRef<HTMLDivElement>(null);
@@ -84,9 +101,13 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
       graphData.nodes
         .filter((node) => node.type === 'scheme')
         .sort((a, b) =>
-          compareByYearDesc({ year: schemeYears.get(a.id), title: a.label }, { year: schemeYears.get(b.id), title: b.label })
+          compareByYearDesc(
+            { year: schemeYears.get(a.id), title: a.label },
+            { year: schemeYears.get(b.id), title: b.label },
+            LOCALE_INFO[locale].tag
+          )
         ),
-    [graphData.nodes, schemeYears]
+    [graphData.nodes, schemeYears, locale]
   );
 
   // O(1) lookups instead of graphData.nodes.find() inside every link loop (was O(N·L)).
@@ -105,7 +126,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
       add(targetId, sourceId);
     });
     return map;
-  }, [graphData.links]);
+  }, [graphData.links, t]);
 
   // ===========================================================================
   // INFOGRÁFICO 1 — RANKING DE CENTRALIDADE POR PARTIDO
@@ -171,7 +192,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
 
     const categories = [
       {
-        name: 'Transações & Propinas',
+        name: t.infographics.categoryTransaction,
         typeKey: 'transaction',
         count: transactions,
         percentage: pct(transactions),
@@ -179,7 +200,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
         bgClass: 'bg-amber-500'
       },
       {
-        name: 'Contratos & Licitações',
+        name: t.infographics.categoryContract,
         typeKey: 'contract',
         count: contracts,
         percentage: pct(contracts),
@@ -187,7 +208,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
         bgClass: 'bg-emerald-500'
       },
       {
-        name: 'Processos & Investigações',
+        name: t.infographics.categoryProcess,
         typeKey: 'process',
         count: processes,
         percentage: pct(processes),
@@ -201,7 +222,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
       categories,
       statusCounts
     };
-  }, [graphData.links]);
+  }, [graphData.links, t]);
 
   // ===========================================================================
   // INFOGRÁFICO 3 — VALOR FINANCEIRO POR ESQUEMA
@@ -231,7 +252,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
       let amount = brl;
       let currency: 'BRL' | 'USD' = 'BRL';
       if (amount === 0) {
-        const fallback = parseAmount(SCHEME_DETAILS[scheme.id]?.impact);
+        const fallback = parseAmount(schemeDetails[scheme.id]?.impact);
         if (fallback) {
           amount = fallback.value;
           currency = fallback.currency;
@@ -243,7 +264,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
         label: scheme.label,
         amount,
         currency,
-        formatted: amount > 0 ? formatAmount(amount, currency) : 'Em apuração',
+        formatted: amount > 0 ? formatAmount(amount, currency, locale) : t.infographics.amountPending,
       };
     });
 
@@ -253,12 +274,12 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
     items.sort((a, b) => (b.currency === a.currency ? b.amount - a.amount : a.currency === 'BRL' ? -1 : 1));
 
     const parts = [
-      totalBRL > 0 ? formatAmount(totalBRL, 'BRL') : null,
-      totalUSD > 0 ? formatAmount(totalUSD, 'USD') : null,
+      totalBRL > 0 ? formatAmount(totalBRL, 'BRL', locale) : null,
+      totalUSD > 0 ? formatAmount(totalUSD, 'USD', locale) : null,
     ].filter(Boolean);
 
-    return { items, formattedGrandTotal: parts.length ? parts.join(' + ') : 'Em levantamento' };
-  }, [schemeNodes, graphData.links]);
+    return { items, formattedGrandTotal: parts.length ? parts.join(' + ') : t.infographics.totalPending };
+  }, [schemeNodes, graphData.links, schemeDetails, locale, t]);
 
   // Toggle scheme expansion state
   const toggleExpand = (id: string) => {
@@ -287,7 +308,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
     () =>
       new Map(
         schemeNodes.map((scheme) => {
-          const d = SCHEME_DETAILS[scheme.id];
+          const d = schemeDetails[scheme.id];
           const entities = Array.from(neighbours.get(scheme.id) ?? [])
             .map((id) => nodeById.get(id))
             .flatMap((n) => (n ? [n.label, n.party] : []));
@@ -297,7 +318,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
           return [scheme.id, haystack];
         })
       ),
-    [schemeNodes, neighbours, nodeById]
+    [schemeNodes, neighbours, nodeById, schemeDetails]
   );
 
   const filteredSchemeNodes = useMemo(() => {
@@ -332,13 +353,13 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
             <div>
               <div className="flex items-center space-x-2 text-cyan-400 text-xs font-mono font-semibold uppercase tracking-wider">
                 <PieChartIcon className="w-4 h-4" />
-                <span>Painel de Análise de Dados</span>
+                <span>{t.infographics.eyebrow}</span>
               </div>
               <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1">
-                Infográficos & Inteligência Visual
+                {t.infographics.title}
               </h1>
               <p className="mt-1 text-slate-400 text-sm">
-                Métricas agregadas do banco de dados sobre redes de influência, fluxos operacionais e volume financeiro.
+                {t.infographics.intro}
               </p>
             </div>
 
@@ -347,7 +368,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
               <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-sm flex items-center justify-between">
                 <div>
                   <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
-                    Volume Mapeado
+                    {t.infographics.mappedVolume}
                   </span>
                   <span className="text-2xl font-bold text-emerald-400 mt-1 block">
                     {financialTreemapData.formattedGrandTotal}
@@ -361,10 +382,10 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
               <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-sm flex items-center justify-between">
                 <div>
                   <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
-                    Esquemas Registrados
+                    {t.infographics.registeredSchemes}
                   </span>
                   <span className="text-2xl font-bold mt-1 block" style={{ color: NODE_STYLE.scheme.labelColor }}>
-                    {schemeNodes.length} Casos
+                    {t.infographics.cases(schemeNodes.length)}
                   </span>
                 </div>
                 <div className="p-3 border rounded-lg" style={entityChipStyle('scheme')}>
@@ -375,10 +396,10 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
               <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-sm flex items-center justify-between">
                 <div>
                   <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
-                    Conexões Ativas
+                    {t.infographics.activeConnections}
                   </span>
                   <span className="text-2xl font-bold text-blue-400 mt-1 block">
-                    {graphData.links.length} Vínculos
+                    {t.infographics.links(graphData.links.length)}
                   </span>
                 </div>
                 <div className="p-3 bg-blue-950/60 border border-blue-800/40 rounded-lg text-blue-400">
@@ -395,29 +416,29 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">
                       <BarChart3 className="w-5 h-5" style={{ color: NODE_STYLE.party.labelColor }} />
-                      1. Ranking de centralidade por partido
+                      {t.infographics.rankingTitle}
                     </h2>
                     <span className="shrink-0 whitespace-nowrap text-[11px] font-mono border px-2 py-0.5 rounded" style={entityChipStyle('party')}>
-                      Grau de Conexões
+                      {t.infographics.rankingBadge}
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-1">
-                    Volume de nós e conexões associadas a cada sigla partidária na base.
+                    {t.infographics.rankingIntro}
                   </p>
                 </div>
 
                 <div className="space-y-4 my-2">
                   {partyCentralityRanking.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic">Nenhum partido com vínculos registrado.</p>
+                    <p className="text-xs text-slate-500 italic">{t.infographics.rankingEmpty}</p>
                   ) : (
                     partyCentralityRanking.slice(0, PARTY_RANKING_SIZE).map((item) => (
                       <div key={item.party} className="space-y-1.5">
                         <div className="flex justify-between items-center text-xs">
                           <span className="font-bold font-mono text-slate-200">
-                            {item.party} <span className="text-slate-500 font-normal">({item.politicianCount} políticos)</span>
+                            {item.party} <span className="text-slate-500 font-normal">{t.infographics.politiciansCount(item.politicianCount)}</span>
                           </span>
                           <span className="font-mono font-semibold" style={{ color: NODE_STYLE.party.labelColor }}>
-                            {item.count} vínculos
+                            {t.infographics.linksCount(item.count)}
                           </span>
                         </div>
                         <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
@@ -435,7 +456,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 </div>
 
                 <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-lg text-[11px] text-slate-400 leading-relaxed">
-                  💡 <strong>Insight:</strong> Revela quais partidos possuem maior número de ligações entre diferentes esquemas investigados.
+                  💡 <strong>{t.infographics.insightLabel}</strong> {t.infographics.insight}
                 </div>
               </div>
 
@@ -445,14 +466,14 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">
                       <Layers className="w-5 h-5 text-amber-400" />
-                      2. Diagrama de fluxo operacional
+                      {t.infographics.flowTitle}
                     </h2>
                     <span className="text-[11px] font-mono bg-amber-950/80 text-amber-300 border border-amber-800/50 px-2 py-0.5 rounded">
-                      Proporção de Vínculos
+                      {t.infographics.flowBadge}
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-1">
-                    Distribuição das conexões por categoria de operação e status jurídico.
+                    {t.infographics.flowIntro}
                   </p>
                 </div>
 
@@ -485,7 +506,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                         {operationalFlowMetrics.totalLinks}
                       </span>
                       <span className="text-[9px] font-mono text-slate-400 block uppercase">
-                        Conexões
+                        {t.infographics.connections}
                       </span>
                     </div>
                   </div>
@@ -506,13 +527,13 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 </div>
 
                 <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
-                  <span className="text-slate-400">Status jurídico:</span>
+                  <span className="text-slate-400">{t.infographics.legalStatus}</span>
                   {/* Uma etiqueta por status, com a cor de STATUS_STYLE */}
                   <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
                     {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => (
                       <span key={key} className="flex items-center gap-1" style={{ color: STATUS_STYLE[key].color }}>
                         <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: STATUS_STYLE[key].color }} />
-                        {operationalFlowMetrics.statusCounts[key]} {STATUS_STYLE[key].label}
+                        {operationalFlowMetrics.statusCounts[key]} {t.status[key]}
                       </span>
                     ))}
                   </div>
@@ -526,19 +547,19 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-400" />
-                    3. Mapa de calor financeiro por esquema
+                    {t.infographics.heatmapTitle}
                   </h2>
                   <span className="text-[11px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800/50 px-2.5 py-0.5 rounded">
-                    Total: {financialTreemapData.formattedGrandTotal}
+                    {t.infographics.total} {financialTreemapData.formattedGrandTotal}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-1">
-                  Comparativo de peso e volume financeiro atribuído a cada operação no banco de dados.
+                  {t.infographics.heatmapIntro}
                 </p>
               </div>
 
               {financialTreemapData.items.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">Nenhum esquema financeiro carregado.</p>
+                <p className="text-xs text-slate-500 italic">{t.infographics.heatmapEmpty}</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {financialTreemapData.items.map((item, index) => {
@@ -557,7 +578,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                       >
                         <div className="space-y-1">
                           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
-                            ESQUEMA #{index + 1}
+                            {t.infographics.schemeNumber(index + 1)}
                           </span>
                           <h3 className="font-bold text-sm text-white line-clamp-2">
                             {item.label}
@@ -565,7 +586,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                         </div>
 
                         <div className="pt-2 border-t border-slate-800/80 flex items-baseline justify-between">
-                          <span className="text-[11px] font-mono text-slate-400">Cifra Estimada:</span>
+                          <span className="text-[11px] font-mono text-slate-400">{t.infographics.estimatedFigure}</span>
                           <span className="text-lg font-mono font-extrabold text-emerald-400">
                             {item.formatted}
                           </span>
@@ -587,10 +608,10 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
                 <BookOpen className="w-8 h-8 text-cyan-400" />
-                Glossário e Dossiê dos Esquemas
+                {t.glossary.title}
               </h1>
               <p className="mt-2 text-slate-400 text-sm">
-                Documentação factual, contexto histórico, mecanismo operacional e status judicial dos esquemas de corrupção cadastrados.
+                {t.glossary.intro}
               </p>
             </div>
 
@@ -603,7 +624,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 className="sticky top-0 z-10 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80"
               >
                 <label htmlFor="glossary-search" className="sr-only">
-                  Buscar no glossário
+                  {t.glossary.searchLabel}
                 </label>
                 <div className="relative">
                   <Search
@@ -615,7 +636,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                     id="glossary-search"
                     type="search"
                     autoComplete="off"
-                    placeholder="Buscar esquema, político, partido, empresa ou termo..."
+                    placeholder={t.search.placeholder}
                     value={glossaryQuery}
                     onChange={(e) => setGlossaryQuery(e.target.value)}
                     onKeyDown={(e) => {
@@ -628,8 +649,8 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                     <button
                       type="button"
                       onClick={() => setGlossaryQuery('')}
-                      aria-label="Limpar busca"
-                      title="Limpar busca"
+                      aria-label={t.common.clearSearch}
+                      title={t.common.clearSearch}
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-800"
                     >
                       <X size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -638,31 +659,33 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 </div>
                 <p id="glossary-search-count" aria-live="polite" className="mt-2 text-[11px] font-mono text-slate-500">
                   {glossaryQuery.trim()
-                    ? `${filteredSchemeNodes.length} de ${schemeNodes.length} esquemas encontrados`
-                    : `${schemeNodes.length} esquemas cadastrados`}
+                    ? t.search.countFiltered(filteredSchemeNodes.length, schemeNodes.length)
+                    : t.search.countAll(schemeNodes.length)}
                 </p>
               </div>
             )}
 
             <div className="space-y-6">
               {schemeNodes.length === 0 ? (
-                <p className="text-sm text-slate-500">Nenhum esquema cadastrado no banco de dados ainda.</p>
+                <p className="text-sm text-slate-500">{t.glossary.empty}</p>
               ) : filteredSchemeNodes.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl">
                   <p className="text-sm text-slate-400">
-                    Nenhum esquema encontrado para <strong className="text-slate-200">“{glossaryQuery.trim()}”</strong>.
+                    {t.search.noneFor} <strong className="text-slate-200">“{glossaryQuery.trim()}”</strong>.
                   </p>
                   <button
                     type="button"
                     onClick={() => setGlossaryQuery('')}
                     className="mt-3 text-xs font-semibold text-cyan-400 hover:text-cyan-200 hover:underline"
                   >
-                    Limpar busca
+                    {t.common.clearSearch}
                   </button>
                 </div>
               ) : (
                 filteredSchemeNodes.map((scheme) => {
-                  const details = SCHEME_DETAILS[scheme.id];
+                  const details = schemeDetails[scheme.id];
+                  // Dossiê exibido em português numa página de outro idioma (tradução pendente).
+                  const textLang = details?.translationPending ? 'pt-BR' : undefined;
                   const connectedEntities = getConnectedEntities(scheme.id);
                   const isExpanded = expandedSchemeId === scheme.id;
 
@@ -687,7 +710,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                                 className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded border"
                                 style={entityChipStyle('scheme')}
                               >
-                                {NODE_STYLE.scheme.label}
+                                {t.nodeType.scheme.label}
                               </span>
                               {/* Ano do caso (vínculo datado mais antigo; ver computeSchemeStartYears) */}
                               {schemeYears.has(scheme.id) && (
@@ -702,7 +725,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                               aria-expanded={isExpanded}
                               className="shrink-0 whitespace-nowrap flex items-center gap-1 text-xs font-semibold text-cyan-400 hover:text-cyan-200 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800/50 px-3 py-1.5 rounded-lg transition-colors"
                             >
-                              <span>{isExpanded ? 'Recolher dossiê' : 'Expandir dossiê'}</span>
+                              <span>{isExpanded ? t.glossary.collapse : t.glossary.expand}</span>
                               {isExpanded ? <ChevronUp size={16} className="w-4 h-4 shrink-0" /> : <ChevronDown size={16} className="w-4 h-4 shrink-0" />}
                             </button>
                           </div>
@@ -722,23 +745,23 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                           <div className="flex items-start gap-2">
                             <Coins size={16} className="w-4 h-4 shrink-0 mt-px text-emerald-400" aria-hidden="true" />
                             <p className="min-w-0 leading-relaxed">
-                              <span className="font-mono">Impacto:</span>{' '}
-                              <strong className="font-medium text-slate-100">{details?.impact || 'Em Apuração'}</strong>
+                              <span className="font-mono">{t.dossier.impact}</span>{' '}
+                              <strong lang={textLang} className="font-medium text-slate-100">{details?.impact || t.glossary.impactPending}</strong>
                             </p>
                           </div>
                           <div className="flex flex-wrap gap-x-4 gap-y-2 font-mono">
                             <div className="flex items-center gap-1.5">
                               <PoliticianIcon size={16} className="w-4 h-4 shrink-0" style={{ color: NODE_STYLE.politician.labelColor }} aria-hidden="true" />
-                              <span>Políticos Vinculados: <strong className="text-slate-100">{politicians.length}</strong></span>
+                              <span>{t.glossary.politicians} <strong className="text-slate-100">{politicians.length}</strong></span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <CompanyIcon size={16} className="w-4 h-4 shrink-0" style={{ color: NODE_STYLE.company.labelColor }} aria-hidden="true" />
-                              <span>Empresas Envolvidas: <strong className="text-slate-100">{companies.length}</strong></span>
+                              <span>{t.glossary.companies} <strong className="text-slate-100">{companies.length}</strong></span>
                             </div>
                             {operators.length > 0 && (
                               <div className="flex items-center gap-1.5">
                                 <OperatorIcon size={16} className="w-4 h-4 shrink-0" style={{ color: NODE_STYLE.operator.labelColor }} aria-hidden="true" />
-                                <span>Operadores Financeiros: <strong className="text-slate-100">{operators.length}</strong></span>
+                                <span>{t.glossary.operators} <strong className="text-slate-100">{operators.length}</strong></span>
                               </div>
                             )}
                           </div>
@@ -751,16 +774,16 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                           {details?.context && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
-                                Contexto Histórico e Origem
+                                {t.glossary.context}
                               </h3>
-                              <p className="text-sm text-slate-300 leading-relaxed">{details.context}</p>
+                              <p lang={textLang} className="text-sm text-slate-300 leading-relaxed">{details.context}</p>
                             </div>
                           )}
 
                           {details?.mechanism && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
-                                Funcionamento do Esquema
+                                {t.glossary.mechanism}
                               </h3>
                               <p className="text-sm text-slate-300 leading-relaxed bg-slate-900 p-4 rounded-lg border border-slate-800">
                                 {details.mechanism}
@@ -772,7 +795,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                           {connectedEntities.length > 0 && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-2">
-                                Entidades Mapeadas no Banco de Dados
+                                {t.glossary.entities}
                               </h3>
                               <div className="flex flex-wrap gap-2">
                                 {connectedEntities.map((ent) => {
@@ -780,7 +803,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                                   return (
                                     <span
                                       key={ent.id}
-                                      title={NODE_STYLE[ent.type]?.label}
+                                      title={t.nodeType[ent.type]?.label}
                                       className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border font-medium"
                                       style={entityChipStyle(ent.type)}
                                     >
@@ -798,16 +821,16 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                           {details?.legalStatus && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
-                                Desdobramentos Jurídicos & Situação Atual
+                                {t.glossary.legal}
                               </h3>
-                              <p className="text-sm text-slate-300 leading-relaxed">{details.legalStatus}</p>
+                              <p lang={textLang} className="text-sm text-slate-300 leading-relaxed">{details.legalStatus}</p>
                             </div>
                           )}
 
                           {details?.sources && details.sources.length > 0 && (
                             <div>
                               <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-2">
-                                Fontes Documentais & Reportagens
+                                {t.glossary.sources}
                               </h3>
                               <ul className="space-y-1.5">
                                 {details.sources.map((src, idx) => (
@@ -828,11 +851,11 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                           )}
 
                           <Link
-                            href={schemePath(scheme.id)}
+                            href={href(schemePath(scheme.id))}
                             className="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-400 hover:text-cyan-200 hover:underline"
                           >
                             <BookOpen size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
-                            Abrir a página deste dossiê
+                            {t.glossary.openPage}
                           </Link>
                         </div>
                       )}

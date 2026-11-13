@@ -19,6 +19,7 @@ import { Search, Calendar, Filter, BookOpen, Scale, Component } from 'lucide-rea
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
+import { useI18n } from '@/components/I18nProvider';
 
 interface SidebarControlsProps {
   searchQuery: string;
@@ -43,6 +44,7 @@ interface SidebarControlsProps {
 
 /** "Limpar filtros" ao lado do título de cada grupo de filtros. */
 function ClearFiltersButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -50,7 +52,7 @@ function ClearFiltersButton({ onClick, disabled }: { onClick: () => void; disabl
       disabled={disabled}
       className="text-[10px] font-mono text-cyan-400 hover:text-cyan-200 hover:underline disabled:text-slate-600 disabled:no-underline disabled:cursor-default"
     >
-      Limpar filtros
+      {t.sidebar.clearFilters}
     </button>
   );
 }
@@ -79,6 +81,7 @@ export default function SidebarControls({
   const schemeNodes = React.useMemo(() => nodes.filter((node) => node.type === 'scheme'), [nodes]);
   const anyTypeSelected = Object.values(typeFilters).some(Boolean);
   const anyStatusSelected = Object.values(statusFilters).some(Boolean);
+  const { t, href } = useI18n();
 
   return (
     <aside className="hidden md:flex w-80 bg-[#090f1b] border-r border-slate-800/80 flex-col z-20 shadow-xl h-full">
@@ -89,7 +92,7 @@ export default function SidebarControls({
           <Component className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-slate-100 leading-tight">Painel de Controle</h1>
+          <h1 className="text-sm font-bold text-slate-100 leading-tight">{t.sidebar.title}</h1>
         </div>
       </div>
 
@@ -98,13 +101,13 @@ export default function SidebarControls({
         {/* Busca */}
         <div>
           <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-            Buscar Entidade
+            {t.sidebar.searchLabel}
           </label>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
             <input
               type="text"
-              placeholder="Político, partido ou empresa..."
+              placeholder={t.sidebar.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-[#0e1726] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
@@ -117,7 +120,7 @@ export default function SidebarControls({
           <div className="flex justify-between items-center mb-2">
             <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-              Ano de Início (Fato)
+              {t.sidebar.startYear}
             </label>
             <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded">
               {startYearFilter}
@@ -130,7 +133,7 @@ export default function SidebarControls({
             step="1"
             value={startYearFilter}
             onChange={(e) => setStartYearFilter(Number(e.target.value))}
-            aria-label="Ano de início"
+            aria-label={t.sidebar.startYearAria}
             className="w-full accent-cyan-400 cursor-pointer bg-slate-900 rounded-lg h-1.5"
           />
         </div>
@@ -140,7 +143,7 @@ export default function SidebarControls({
           <div className="mb-2.5 flex items-center justify-between gap-2">
             <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Filter className="w-3.5 h-3.5 text-cyan-400" />
-              Tipos de Entidade
+              {t.sidebar.entityTypes}
             </label>
             <ClearFiltersButton onClick={clearTypeFilters} disabled={!anyTypeSelected} />
           </div>
@@ -163,7 +166,7 @@ export default function SidebarControls({
                   <div className="flex items-center space-x-2.5">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
                     <IconComp size={16} className="w-4 h-4 shrink-0" style={{ color: cfg.labelColor }} aria-hidden="true" />
-                    <span>{cfg.label}</span>
+                    <span>{t.nodeType[typeKey].label}</span>
                   </div>
                 </button>
               );
@@ -176,7 +179,7 @@ export default function SidebarControls({
           <div className="mb-2.5 flex items-center justify-between gap-2">
             <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Scale className="w-3.5 h-3.5 text-cyan-400" />
-              Status Jurídico
+              {t.sidebar.legalStatus}
             </label>
             <ClearFiltersButton onClick={clearStatusFilters} disabled={!anyStatusSelected} />
           </div>
@@ -193,7 +196,7 @@ export default function SidebarControls({
                 }`}
               >
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: st.color }} />
-                <span>{st.label}</span>
+                <span>{t.status[st.key]}</span>
               </button>
             ))}
           </div>
@@ -204,11 +207,11 @@ export default function SidebarControls({
           <div className="mb-2.5 flex items-center justify-between gap-2">
             <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
-              Índice de Esquemas
+              {t.sidebar.schemeIndex}
             </label>
             {/* Página com todos os dossiês em texto (legível por robôs de busca). */}
-            <Link href="/esquemas" className="text-[10px] font-mono text-cyan-400 hover:text-cyan-200 hover:underline">
-              Ver todos →
+            <Link href={href('/esquemas')} className="text-[10px] font-mono text-cyan-400 hover:text-cyan-200 hover:underline">
+              {t.sidebar.seeAll}
             </Link>
           </div>
           {/* Altura: até 20rem, mas nunca maior que a tela menos 16rem (cabeçalho
@@ -220,7 +223,7 @@ export default function SidebarControls({
             style={{ maxHeight: 'min(20rem, max(6rem, calc(100dvh - 16rem)))' }}
           >
             {schemeNodes.length === 0 ? (
-              <span className="text-xs text-slate-600 italic block p-1">Nenhum esquema encontrado</span>
+              <span className="text-xs text-slate-600 italic block p-1">{t.sidebar.noSchemes}</span>
             ) : (
               schemeNodes.map((scheme) => {
                 const isSelected = selectedNode?.id === scheme.id;
@@ -257,8 +260,8 @@ export default function SidebarControls({
 
       {/* Rodapé do Painel */}
       <div className="p-3 border-t border-slate-800/80 bg-[#080d16] text-[11px] font-mono text-slate-400 flex justify-between items-center">
-        <span>Nós: <strong className="text-cyan-400">{nodeCount}</strong></span>
-        <span>Conexões: <strong className="text-cyan-400">{linkCount}</strong></span>
+        <span>{t.sidebar.nodes}: <strong className="text-cyan-400">{nodeCount}</strong></span>
+        <span>{t.sidebar.connections}: <strong className="text-cyan-400">{linkCount}</strong></span>
       </div>
     </aside>
   );

@@ -6,12 +6,14 @@
  * diferenciar acentos/maiúsculas, todas as palavras digitadas precisam
  * aparecer, em qualquer campo (nome, resumo, textos do dossiê, entidades e
  * partidos ligados). A lista inteira vem renderizada do servidor (os robôs
- * de busca a leem); a filtragem acontece no navegador.
+ * de busca a leem); a filtragem acontece no navegador. Os itens já chegam no
+ * idioma da página (título, resumo, link e texto pesquisável).
  */
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Search, X } from 'lucide-react';
 import { entityChipStyle, normalizeText } from '@/lib/graphConfig';
+import { useI18n } from '@/components/I18nProvider';
 
 export interface SchemeListItem {
   id: string;
@@ -24,6 +26,7 @@ export interface SchemeListItem {
 }
 
 export default function SchemeSearchList({ items, children }: { items: SchemeListItem[]; children?: React.ReactNode }) {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
 
   const index = useMemo(() => new Map(items.map((i) => [i.id, normalizeText(i.terms)])), [items]);
@@ -41,7 +44,7 @@ export default function SchemeSearchList({ items, children }: { items: SchemeLis
         className="sticky top-0 z-10 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 bg-[#080d16]/95 backdrop-blur-md border-b border-slate-800/80"
       >
         <label htmlFor="esquemas-search" className="sr-only">
-          Buscar nos dossiês
+          {t.schemesIndex.searchLabel}
         </label>
         <div className="relative">
           <Search
@@ -53,7 +56,7 @@ export default function SchemeSearchList({ items, children }: { items: SchemeLis
             id="esquemas-search"
             type="search"
             autoComplete="off"
-            placeholder="Buscar esquema, político, partido, empresa ou termo..."
+            placeholder={t.search.placeholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -66,8 +69,8 @@ export default function SchemeSearchList({ items, children }: { items: SchemeLis
             <button
               type="button"
               onClick={() => setQuery('')}
-              aria-label="Limpar busca"
-              title="Limpar busca"
+              aria-label={t.common.clearSearch}
+              title={t.common.clearSearch}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-800"
             >
               <X size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -76,8 +79,8 @@ export default function SchemeSearchList({ items, children }: { items: SchemeLis
         </div>
         <p id="esquemas-search-count" aria-live="polite" className="mt-2 text-[11px] font-mono text-slate-500">
           {query.trim()
-            ? `${filtered.length} de ${items.length} esquemas encontrados`
-            : `${items.length} esquemas cadastrados`}
+            ? t.search.countFiltered(filtered.length, items.length)
+            : t.search.countAll(items.length)}
         </p>
       </div>
 
@@ -87,14 +90,14 @@ export default function SchemeSearchList({ items, children }: { items: SchemeLis
       {filtered.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl">
           <p className="text-sm text-slate-400">
-            Nenhum esquema encontrado para <strong className="text-slate-200">“{query.trim()}”</strong>.
+            {t.search.noneFor} <strong className="text-slate-200">“{query.trim()}”</strong>.
           </p>
           <button
             type="button"
             onClick={() => setQuery('')}
             className="mt-3 text-xs font-semibold text-cyan-400 hover:text-cyan-200 hover:underline"
           >
-            Limpar busca
+            {t.common.clearSearch}
           </button>
         </div>
       ) : (
@@ -110,7 +113,7 @@ export default function SchemeSearchList({ items, children }: { items: SchemeLis
                     className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded border"
                     style={entityChipStyle('scheme')}
                   >
-                    Dossiê
+                    {t.schemesIndex.badge}
                   </span>
                   {item.year && (
                     <span className="text-[11px] font-mono font-bold text-slate-300 tabular-nums">{item.year}</span>
