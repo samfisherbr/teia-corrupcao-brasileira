@@ -2,10 +2,10 @@
 -- SCHEMA DO CLOUDFLARE D1 — Teia da Corrupção
 -- ============================================================================
 -- Criar o banco do zero:
---   1. npx wrangler d1 create teia-corrupcao
---   2. ligue o banco ao projeto do Cloudflare Pages com o nome de binding DB
---      (Pages → Settings → Functions → D1 database bindings, ou wrangler.toml)
---   3. npx wrangler d1 execute teia-corrupcao --remote --file=./schema.sql
+--   1. npx wrangler d1 create corruption_graph_db
+--   2. ligue o banco ao projeto com o binding DB: o wrangler.toml já faz isso;
+--      se criou um banco novo, troque o database_id lá pelo id que o passo 1 mostrar
+--   3. npx wrangler d1 execute corruption_graph_db --remote --file=./schema.sql
 --   4. rode os INSERTs da Fase 2 de cada dossiê aprovado (nodes antes de links)
 --
 -- Pode rodar este arquivo de novo sem risco: tudo usa IF NOT EXISTS.
