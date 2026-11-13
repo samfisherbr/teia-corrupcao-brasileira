@@ -25,7 +25,7 @@ export interface SchemeListItem {
   terms: string;
 }
 
-export default function SchemeSearchList({ items, children }: { items: SchemeListItem[]; children?: React.ReactNode }) {
+export default function SchemeSearchList({ items }: { items: SchemeListItem[] }) {
   const { t } = useI18n();
   const [query, setQuery] = useState('');
 
@@ -84,8 +84,6 @@ export default function SchemeSearchList({ items, children }: { items: SchemeLis
         </p>
       </div>
 
-      {/* Texto de apresentação da página (vem do servidor). */}
-      {children}
 
       {filtered.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl">

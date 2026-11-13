@@ -358,7 +358,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
               <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1">
                 {t.infographics.title}
               </h1>
-              <p className="mt-1 text-slate-400 text-sm">
+              <p className="mt-6 text-sm text-slate-400 leading-relaxed">
                 {t.infographics.intro}
               </p>
             </div>
@@ -610,7 +610,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 <BookOpen className="w-8 h-8 text-cyan-400" />
                 {t.glossary.title}
               </h1>
-              <p className="mt-2 text-slate-400 text-sm">
+              <p className="mt-6 text-sm text-slate-400 leading-relaxed">
                 {t.glossary.intro}
               </p>
             </div>
