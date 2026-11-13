@@ -3,18 +3,20 @@
  * link para a sua página. Renderizado no servidor (runtime edge, lê o D1) —
  * é a porta de entrada dos robôs de busca para os dossiês.
  *
- * Lista = esquemas do banco + esquemas com dossiê em data/schemeDetails.ts
- * (sem banco, sai só a segunda parte, com títulos de reserva).
+ * Lista e contagem = esquemas do BANCO, lidos a cada visita: um caso novo
+ * no D1 aparece (e soma na contagem) sem mudar o código. Só se o banco não
+ * responder, a lista sai dos dossiês em data/schemeDetails.ts (títulos de
+ * reserva). Busca no navegador: components/SchemeSearchList.tsx.
  */
 import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { SCHEME_DETAILS } from '@/data/schemeDetails';
-import { entityChipStyle } from '@/lib/graphConfig';
 import { loadSchemeIndex } from '@/lib/db';
 import { DOSSIER_SCHEME_IDS, fallbackSchemeTitle } from '@/lib/dossiers';
 import { compareByYearDesc, schemePath } from '@/lib/schemes';
+import SchemeSearchList, { type SchemeListItem } from '@/components/SchemeSearchList';
 import { SITE_NAME } from '@/lib/site';
 
 export const runtime = 'edge';
@@ -33,14 +35,24 @@ export default async function SchemesIndexPage() {
   const nodes = index?.nodes ?? [];
   const years = index?.years ?? new Map<string, number>();
   const byId = new Map(nodes.map((n) => [n.id, n]));
-  const ids = Array.from(new Set([...nodes.map((n) => n.id), ...DOSSIER_SCHEME_IDS]));
-  const items = ids
-    .map((id) => ({
-      id,
-      title: byId.get(id)?.label ?? fallbackSchemeTitle(id),
-      summary: byId.get(id)?.summary ?? SCHEME_DETAILS[id]?.context.split('. ')[0] ?? null,
-      year: years.get(id) ?? null,
-    }))
+  const ids = index ? nodes.map((n) => n.id) : DOSSIER_SCHEME_IDS;
+  const items: SchemeListItem[] = ids
+    .map((id) => {
+      const d = SCHEME_DETAILS[id];
+      const title = byId.get(id)?.label ?? fallbackSchemeTitle(id);
+      const summary = byId.get(id)?.summary ?? d?.context.split('. ')[0] ?? null;
+      return {
+        id,
+        href: schemePath(id),
+        title,
+        summary,
+        year: years.get(id) ?? null,
+        // Mesmos campos da busca do Glossário.
+        terms: [title, summary, d?.impact, d?.context, d?.mechanism, d?.legalStatus, ...(index?.entityTerms.get(id) ?? [])]
+          .filter(Boolean)
+          .join(' '),
+      };
+    })
     .sort(compareByYearDesc);
 
   return (
@@ -51,41 +63,19 @@ export default async function SchemesIndexPage() {
           Voltar ao painel
         </Link>
 
-        <header className="space-y-2 border-b border-slate-800 pb-6">
+        <header>
           <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <BookOpen className="w-8 h-8 shrink-0 text-cyan-400" aria-hidden="true" />
             Esquemas de corrupção
           </h1>
+        </header>
+
+        <SchemeSearchList items={items}>
           <p className="text-sm text-slate-400">
             {items.length} esquemas documentados, com contexto histórico, funcionamento, impacto financeiro,
             situação jurídica e fontes — do caso mais recente ao mais antigo.
           </p>
-        </header>
-
-        <ul className="space-y-3">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link
-                href={schemePath(item.id)}
-                className="block p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-600 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded border"
-                    style={entityChipStyle('scheme')}
-                  >
-                    Dossiê
-                  </span>
-                  {item.year && (
-                    <span className="text-[11px] font-mono font-bold text-slate-300 tabular-nums">{item.year}</span>
-                  )}
-                </div>
-                <h2 className="mt-2 text-lg font-bold text-white">{item.title}</h2>
-                {item.summary && <p className="mt-1 text-sm text-slate-400 leading-relaxed line-clamp-2">{item.summary}</p>}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        </SchemeSearchList>
       </div>
     </div>
   );

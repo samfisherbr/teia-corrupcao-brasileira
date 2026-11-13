@@ -73,11 +73,16 @@ export function getDB(): D1Database | null {
  * vínculo datado mais antigo — mesma regra de computeSchemeStartYears em
  * lib/schemes.ts), numa única ida ao banco. Null se o banco não responder.
  */
-export async function loadSchemeIndex(): Promise<{ nodes: GraphNode[]; years: Map<string, number> } | null> {
+export async function loadSchemeIndex(): Promise<{
+  nodes: GraphNode[];
+  years: Map<string, number>;
+  /** Nomes e partidos das entidades ligadas a cada esquema (para a busca). */
+  entityTerms: Map<string, string[]>;
+} | null> {
   const db = getDB();
   if (!db) return null;
   try {
-    const [nodesRes, yearsRes] = await db.batch<Row>([
+    const [nodesRes, yearsRes, termsRes] = await db.batch<Row>([
       db.prepare("SELECT * FROM nodes WHERE type = 'scheme'"),
       db.prepare(
         `SELECT n.id AS id, MIN(CAST(l.year AS INTEGER)) AS start
@@ -86,7 +91,20 @@ export async function loadSchemeIndex(): Promise<{ nodes: GraphNode[]; years: Ma
           WHERE n.type = 'scheme' AND l.year IS NOT NULL AND CAST(l.year AS INTEGER) > 0
           GROUP BY n.id`
       ),
+      db.prepare(
+        `SELECT s.id AS id, e.label AS label, e.party AS party
+           FROM nodes s
+           JOIN links l ON l.source = s.id OR l.target = s.id
+           JOIN nodes e ON e.id = CASE WHEN l.source = s.id THEN l.target ELSE l.source END
+          WHERE s.type = 'scheme'`
+      ),
     ]);
+    const entityTerms = new Map<string, string[]>();
+    for (const r of termsRes.results) {
+      const id = String(r.id);
+      if (!entityTerms.has(id)) entityTerms.set(id, []);
+      for (const v of [r.label, clean(r.party)]) if (v) entityTerms.get(id)!.push(String(v));
+    }
     return {
       nodes: nodesRes.results.map(toNode),
       years: new Map(
@@ -94,6 +112,7 @@ export async function loadSchemeIndex(): Promise<{ nodes: GraphNode[]; years: Ma
           .map((r) => [String(r.id), Number(r.start)] as [string, number])
           .filter(([, y]) => Number.isFinite(y) && y > 0)
       ),
+      entityTerms,
     };
   } catch (e) {
     console.error('[lib/db] loadSchemeIndex:', e);
