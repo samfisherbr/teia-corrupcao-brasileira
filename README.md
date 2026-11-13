@@ -15,7 +15,7 @@ Aplicação interativa em React / Next.js com D3 e React-Force-Graph para visual
 npx wrangler d1 create teia-corrupcao
 npx wrangler d1 execute teia-corrupcao --remote --file=./schema.sql
 ```
-O binding do D1 no Cloudflare Pages deve se chamar `DB`. `schema.sql` é a fonte da verdade do formato dos dados; o prompt de geração (`docs/prompt-dossie.md`) precisa acompanhá-lo.
+O binding do D1 no Cloudflare Pages deve se chamar `DB`. `schema.sql` é a fonte da verdade do formato dos dados; os master prompts em `docs/` trazem uma cópia dele e precisam acompanhá-lo.
 
 **Banco criado antes de 12/11/2026?** Rode uma vez a migração que acrescenta a data de conferência dos vínculos (`links.reviewed_at`) e o crédito das fotos (`nodes.image_credit`, `nodes.image_source_url`):
 ```bash
@@ -74,4 +74,8 @@ Os parâmetros do layout radial (tamanho do anel, distância de cada tipo ao cen
 
 O `package-lock.json` é versionado: o Cloudflare Pages e o CI instalam exatamente as mesmas versões das dependências.
 
-O prompt de geração de dossiês (Fase 1 / Fase 2) está em `docs/prompt-dossie.md` e lista os mesmos tipos, status e colunas de `schema.sql` — mude os dois juntos.
+### Master prompts
+- `docs/MasterPrompt_Dossie.txt` — instruções do projeto para criar e corrigir dossiês (Fase 1 / Fase 2).
+- `docs/MasterPrompt_Scheduled.txt` — tarefa agendada de monitoramento (modos novidades e auditoria), somente leitura.
+
+Os dois trazem uma cópia do schema (`<schema>`), os mesmos tipos e status de `schema.sql` e a divisão do trabalho entre modelos (`<orquestracao>`: coleta mecânica em Haiku, leitura longa em Sonnet, decisões e revisão em Opus). **Mudou o schema? Mude os dois no mesmo commit** e cole a versão nova nas instruções do projeto e nas tarefas agendadas — o Claude lê o que está lá, não o arquivo do repositório.

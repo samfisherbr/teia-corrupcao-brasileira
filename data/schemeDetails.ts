@@ -6,7 +6,7 @@
  * banco (ex.: esquema_lava_jato). Se não bater, o cartão do Glossário aparece
  * sem o dossiê e o infográfico financeiro não encontra o `impact`.
  *
- * Novos registros vêm da Fase 2 do Master Prompt. Regras de formato:
+ * Novos registros vêm da Fase 2 do Master Prompt (docs/MasterPrompt_Dossie.txt). Regras de formato:
  *  - impact: comece pela cifra principal ("R$ 6.200.000.000 (…)") — o
  *    infográfico lê a PRIMEIRA cifra do texto quando os links não têm valor.
  *  - legalStatus: termine com a situação do caso e a data da verificação.
