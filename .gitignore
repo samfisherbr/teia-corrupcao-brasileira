@@ -7,3 +7,6 @@ next-env.d.ts
 *.tsbuildinfo
 .env*.local
 .dev.vars
+
+# Master prompts: privados, fora do repositório público
+docs/MasterPrompt_*

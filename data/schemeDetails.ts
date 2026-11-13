@@ -6,7 +6,7 @@
  * banco (ex.: esquema_lava_jato). Se não bater, o cartão do Glossário aparece
  * sem o dossiê e o infográfico financeiro não encontra o `impact`.
  *
- * Novos registros vêm da Fase 2 do Master Prompt (docs/MasterPrompt_Dossie.txt). Regras de formato:
+ * Novos registros vêm da Fase 2 do Master Prompt (mantido fora do repositório). Regras de formato:
  *  - impact: comece pela cifra principal ("R$ 6.200.000.000 (…)") — o
  *    infográfico lê a PRIMEIRA cifra do texto quando os links não têm valor.
  *  - legalStatus: termine com a situação do caso e a data da verificação.
@@ -71,7 +71,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_sivam": {
     title: "Caso Sivam",
-    reviewedAt: "2026-11-04",
+    reviewedAt: "2026-11-13",
     context: "O Sistema de Vigilância da Amazônia foi concebido em 1990 e contratado com dispensa de licitação, depois que 16 embaixadas indicaram empresas. As resoluções do Senado de 1994 nomearam a Raytheon como fornecedora e a ESCA como integradora nacional. O escândalo veio a público em novembro de 1995, quando a revista IstoÉ publicou trechos de um grampo da Polícia Federal no telefone do chefe do Cerimonial da Presidência.",
     mechanism: "A PF obteve autorização judicial para grampear o embaixador Júlio César Gomes dos Santos alegando suspeita de tráfico de drogas. As conversas, gravadas em setembro de 1995, mostram José Afonso Assumpção, dono da Líder Táxi Aéreo e representante da Raytheon, pedindo que o embaixador ajudasse a destravar o Sivam no Senado. O embaixador viajou aos EUA em avião do empresário. Um agente da PF entregou a fita a Xico Graziano, que a levou ao presidente. Embaixador, empresário e Raytheon negaram lobby ou suborno.",
     impact: "R$ 7.615.863.000,00 em financiamento externo autorizado pelo Senado em 1994, dos quais R$ 6.087.231.000,00 para a Raytheon e subcontratadas. Com juros e comissões, o total chegava a R$ 9.663.138.000,00. Nenhuma fonte apurou valor desviado, prejuízo ou valor recuperado.",

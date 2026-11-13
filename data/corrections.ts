@@ -35,6 +35,13 @@ export const CORRECTION_KIND_LABEL: Record<CorrectionKind, string> = {
 
 export const CORRECTIONS: Correction[] = [
   {
+    date: '2026-11-13',
+    scheme: 'esquema_sivam',
+    kind: 'correcao',
+    summary:
+      'O arquivamento, em 1996, do processo administrativo disciplinar do Itamaraty contra o embaixador Júlio César Gomes dos Santos estava classificado como "Absolvidos". Foi reclassificado como "Fatos documentados": a decisão foi da Corregedoria do Serviço Exterior, de natureza administrativa, e não uma absolvição judicial.',
+  },
+  {
     date: '2026-11-11',
     scheme: 'esquema_lava_jato',
     kind: 'correcao',
