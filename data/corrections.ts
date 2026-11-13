@@ -39,6 +39,16 @@ export interface Correction {
 export const CORRECTIONS: Correction[] = [
   {
     date: '2026-11-13',
+    kind: 'correcao',
+    summary:
+      'Corrigida a conversão para reais de dois valores em dólares usados nos infográficos: US$ 35 mil (Anões do Orçamento) e US$ 4 milhões (Escândalo do TRT-SP) estavam somados como valores cem vezes maiores, porque os centavos foram lidos como dígitos. Um vínculo do TRT-SP que exibia US$ 146.546.960,00 passou a exibir R$ 800.000.000, a cifra da AGU descrita na própria nota. Também foram padronizados no formato brasileiro valores que estavam escritos no formato inglês e corrigido o espaçamento de textos de 12 registros, sem mudança de conteúdo.',
+    translations: {
+      en: 'The conversion into reais of two US-dollar amounts used in the infographics has been corrected: US$ 35,000 (Budget Dwarfs) and US$ 4 million (TRT-SP scandal) were being added up as amounts a hundred times larger, because the cents had been read as digits. A TRT-SP link that showed US$ 146,546,960.00 now shows R$ 800,000,000, the AGU figure described in its own note. Amounts written in English number format were also standardised to the Brazilian format and the spacing of 12 records was corrected, with no change of content.',
+      es: 'Se ha corregido la conversión a reales de dos importes en dólares utilizados en las infografías: 35.000 dólares (Enanos del Presupuesto) y 4 millones de dólares (escándalo del TRT-SP) se sumaban como importes cien veces mayores, porque los céntimos se habían leído como dígitos. Un vínculo del TRT-SP que mostraba 146.546.960,00 dólares pasa a mostrar 800.000.000 de reales, la cifra de la AGU descrita en su propia nota. También se han normalizado al formato brasileño importes escritos en formato inglés y se ha corregido el espaciado de 12 registros, sin cambios de contenido.',
+    },
+  },
+  {
+    date: '2026-11-13',
     scheme: 'esquema_sivam',
     kind: 'correcao',
     summary:

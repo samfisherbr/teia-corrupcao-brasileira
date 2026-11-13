@@ -1117,7 +1117,8 @@ export default function NetworkGraph({
                 <div className="px-2 py-1 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-slate-800/80 mb-1">
                   {t.graph.legalInfo}
                 </div>
-                <Link href={href('/esquemas')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                {/* Só no celular: em telas ≥ 768px o cabeçalho já tem o botão "Dossiês". */}
+                <Link href={href('/esquemas')} className="md:hidden flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
                   <FileText className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
                   <span>{t.graph.menuDossiers}</span>
                 </Link>

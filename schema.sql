@@ -66,9 +66,14 @@ CREATE TABLE IF NOT EXISTS links (
 
 -- Torna `INSERT OR IGNORE INTO links` idempotente: rodar o mesmo dossiê duas
 -- vezes não duplica vínculos. COALESCE porque o SQLite trata NULLs como
--- diferentes entre si dentro de um índice único.
+-- diferentes entre si dentro de um índice único. O status faz parte da chave
+-- porque a história processual de uma pessoa num caso é gravada em vínculos
+-- separados, e dois estágios podem cair no mesmo ano (investigado e absolvido).
+-- Banco que já existia sem este índice (o de produção, até a migração 0005):
+-- ver migrations/0005_dedupe_links_and_unique_index.sql, que remove as cópias
+-- antes de criá-lo. Sem o índice, INSERT OR IGNORE NÃO ignora nada.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_links_unique
-    ON links(source, target, type, COALESCE(year, -1));
+    ON links(source, target, type, status, COALESCE(year, -1));
 
 -- Índices de apoio (não fazem parte do prompt; só aceleram consultas por ponta).
 CREATE INDEX IF NOT EXISTS idx_links_source ON links(source);

@@ -2,7 +2,10 @@
  * GET /api/graph — devolve { nodes, links } lidos do Cloudflare D1.
  * GET /api/graph?lang=en (ou es) — o mesmo, com os textos traduzidos
  * (tabelas node_translations / link_translations; o que não tiver tradução
- * em dia vem em português). Ver lib/translations.ts.
+ * em dia vem em português). Ver lib/translations.ts. Com `lang`, cada nó e
+ * vínculo traz também `translated` (true = texto traduzido em dia; false =
+ * português, por falta de tradução ou porque o original mudou depois): é o que
+ * a auditoria agendada usa para listar traduções pendentes sem acesso ao banco.
  *
  * Roda no runtime "edge" (exigência do next-on-pages). O binding do banco deve
  * se chamar `DB` e precisa existir nos DOIS ambientes do Cloudflare Pages
@@ -62,9 +65,13 @@ const toInt = (v: unknown): number | null => {
   return Number.isFinite(n) && clean(v) !== null ? Math.trunc(n) : null;
 };
 
+/** `translated` só existe nas respostas com ?lang= (a consulta traz `_tr`). */
+const translationFlag = (raw: Row) => ('_tr' in raw ? { translated: Number(raw._tr) === 1 } : {});
+
 function normalizeNode(raw: Row) {
   const r = applyNodeTranslation(raw);
   return {
+    ...translationFlag(raw),
     id: r.id,
     label: r.label,
     type: r.type,
@@ -79,6 +86,7 @@ function normalizeNode(raw: Row) {
 function normalizeLink(raw: Row) {
   const r = applyLinkTranslation(raw);
   return {
+    ...translationFlag(raw),
     id: r.id ?? r._rowid, // tabelas antigas podem não ter coluna id
     source: r.source,
     target: r.target,
