@@ -13,7 +13,7 @@ export const SITE_NAME = 'Teia da Corrupção';
 export const SITE_DOMAIN = process.env.NEXT_PUBLIC_SITE_DOMAIN || 'teiadacorrupcao.io';
 
 /** E-mail para dúvidas, correções e pedidos relativos à LGPD. */
-export const CONTACT_EMAIL = 'samfisherbr@gmail.com';
+export const CONTACT_EMAIL = 'teiadacorrupcao@gmail.com';
 
 /**
  * Data (AAAA-MM-DD) da última revisão dos textos legais — atualize ao mudá-los.
