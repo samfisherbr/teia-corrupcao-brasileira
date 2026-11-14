@@ -59,8 +59,12 @@ export default async function SchemesIndexView({ locale }: { locale: Locale }) {
     .sort((a, b) => compareByYearDesc(a, b, LOCALE_INFO[locale].tag));
 
   return (
-    <div className="h-[100dvh] w-full bg-[#080d16] text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
-      <div className="max-w-3xl mx-auto space-y-8">
+    // O espaçamento vertical fica no bloco de dentro, não no contêiner que rola:
+    // um elemento "sticky" para na borda interna do padding do contêiner, e
+    // com py-10 ali a barra de busca parava 40px abaixo do topo, deixando a
+    // lista aparecer por cima dela (como no Glossário, ela agora encosta no topo).
+    <div className="h-[100dvh] w-full bg-[#080d16] text-slate-200 font-sans px-4 sm:px-8 overflow-y-auto select-text">
+      <div className="max-w-3xl mx-auto space-y-8 py-10">
         <PageNav locale={locale} path="/esquemas" />
 
         <header>
