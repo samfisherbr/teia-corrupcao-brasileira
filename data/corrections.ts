@@ -42,10 +42,10 @@ export const CORRECTIONS: Correction[] = [
     scheme: 'esquema_compra_reeleicao',
     kind: 'correcao',
     summary:
-      'Incluída a negativa de Zila Bezerra, que antes constava como não localizada; fontes de sete vínculos trocadas por páginas da Folha e da Câmara, porque as anteriores não exibem mais o texto.',
+      'Incluída a negativa de Zila Bezerra, que antes constava como não localizada; fontes de sete vínculos trocadas por reportagens da Folha de S.Paulo de maio de 1997 e por uma página da Câmara. As fontes anteriores, do Congresso em Foco, continuam no ar: a primeira versão desta nota dizia, por engano, que elas não exibiam mais o texto.',
     translations: {
-      en: "Zila Bezerra's denial, previously listed as not found, was added; sources for seven links were replaced with Folha and Chamber of Deputies pages because the previous ones no longer display the text.",
-      es: 'Se incluyó la negativa de Zila Bezerra, que antes figuraba como no localizada; se sustituyeron las fuentes de siete vínculos por páginas de Folha y de la Cámara, porque las anteriores ya no muestran el texto.',
+      en: "Zila Bezerra's denial, previously listed as not found, was added; sources for seven links were replaced with Folha de S.Paulo reports from May 1997 and a Chamber of Deputies page. The previous sources, from Congresso em Foco, are still online: the first version of this note wrongly said they no longer displayed the text.",
+      es: 'Se incluyó la negativa de Zila Bezerra, que antes figuraba como no localizada; se sustituyeron las fuentes de siete vínculos por reportajes de Folha de S.Paulo de mayo de 1997 y por una página de la Cámara. Las fuentes anteriores, de Congresso em Foco, siguen disponibles: la primera versión de esta nota decía, por error, que ya no mostraban el texto.',
     },
   },
   {
