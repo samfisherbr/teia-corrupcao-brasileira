@@ -76,7 +76,7 @@ const BUTTON_CLASS: Record<Variant, string> = {
     'px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-cyan-400 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60',
   // Mesma caixa do botão "Termos & Privacidade" (NetworkGraph.tsx), para os dois parecerem um conjunto.
   floating:
-    'px-3 py-3 rounded-lg text-xs leading-4 text-slate-300 hover:text-cyan-400 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 hover:border-slate-700/80 shadow-xl',
+    'px-3 py-3 rounded-lg text-xs leading-4 text-slate-300 hover:text-cyan-400 bg-surface-field/95 backdrop-blur-md border border-slate-800 hover:border-slate-700/80 shadow-xl',
   page: 'px-2.5 py-1.5 rounded-lg text-xs font-mono text-slate-300 hover:text-cyan-400 bg-slate-900 border border-slate-800 hover:border-slate-700',
 };
 
@@ -156,7 +156,7 @@ export default function LanguageSwitcher({
         id={listId}
         hidden={!open}
         onKeyDown={onListKeyDown}
-        className={`absolute right-0 z-50 min-w-full w-max bg-[#0e1726] border border-slate-800 rounded-lg p-1 shadow-2xl space-y-0.5 ${
+        className={`absolute right-0 z-50 min-w-full w-max bg-surface-field border border-slate-800 rounded-lg p-1 shadow-2xl space-y-0.5 ${
           opensUp ? 'bottom-full mb-2' : 'top-full mt-2'
         }`}
       >

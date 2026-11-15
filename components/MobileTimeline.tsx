@@ -36,7 +36,7 @@ export default function MobileTimeline({
   const pct = span > 0 ? ((startYearFilter - minYear) / span) * 100 : 100;
 
   return (
-    <div className="md:hidden z-30 shrink-0 w-full px-3 py-2 bg-[#090f1b] border-b border-slate-800/80 flex items-center gap-3">
+    <div className="md:hidden z-30 shrink-0 w-full px-3 py-2 bg-surface-sidebar border-b border-slate-800/80 flex items-center gap-3">
       <label
         htmlFor="mobile-year"
         className="shrink-0 flex items-center gap-1.5 text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider"
@@ -45,7 +45,7 @@ export default function MobileTimeline({
         {t.timeline.since}
       </label>
 
-      <span className="shrink-0 text-[10px] font-mono text-slate-500" aria-hidden="true">
+      <span className="shrink-0 text-[10px] font-mono text-muted" aria-hidden="true">
         {minYear}
       </span>
       <input
@@ -61,7 +61,7 @@ export default function MobileTimeline({
         className="timeline-range min-w-0 flex-1 h-8"
         style={{ '--pct': `${pct}%` } as React.CSSProperties}
       />
-      <span className="shrink-0 text-[10px] font-mono text-slate-500" aria-hidden="true">
+      <span className="shrink-0 text-[10px] font-mono text-muted" aria-hidden="true">
         {maxYear}
       </span>
 

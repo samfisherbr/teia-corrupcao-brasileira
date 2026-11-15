@@ -41,7 +41,7 @@ export default function SchemeSearchList({ items }: { items: SchemeListItem[] })
       {/* Barra de busca: presa ao topo enquanto a lista rola (como no Glossário). */}
       <div
         role="search"
-        className="sticky top-0 z-10 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 bg-[#080d16]/95 backdrop-blur-md border-b border-slate-800/80"
+        className="sticky top-0 z-10 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 bg-surface-canvas/95 backdrop-blur-md border-b border-slate-800/80"
       >
         <label htmlFor="esquemas-search" className="sr-only">
           {t.schemesIndex.searchLabel}
@@ -49,7 +49,7 @@ export default function SchemeSearchList({ items }: { items: SchemeListItem[] })
         <div className="relative">
           <Search
             size={16}
-            className="w-4 h-4 shrink-0 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+            className="w-4 h-4 shrink-0 absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
             aria-hidden="true"
           />
           <input
@@ -63,7 +63,7 @@ export default function SchemeSearchList({ items }: { items: SchemeListItem[] })
               if (e.key === 'Escape') setQuery('');
             }}
             aria-describedby="esquemas-search-count"
-            className="w-full bg-[#0e1726] border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 [&::-webkit-search-cancel-button]:hidden"
+            className="w-full bg-surface-field border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-sm text-slate-200 placeholder-muted focus:outline-none focus:border-cyan-500 [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button
@@ -71,13 +71,13 @@ export default function SchemeSearchList({ items }: { items: SchemeListItem[] })
               onClick={() => setQuery('')}
               aria-label={t.common.clearSearch}
               title={t.common.clearSearch}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-800"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-muted hover:text-slate-200 hover:bg-slate-800"
             >
               <X size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
             </button>
           )}
         </div>
-        <p id="esquemas-search-count" aria-live="polite" className="mt-2 text-[11px] font-mono text-slate-500">
+        <p id="esquemas-search-count" aria-live="polite" className="mt-2 text-[11px] font-mono text-muted">
           {query.trim()
             ? t.search.countFiltered(filtered.length, items.length)
             : t.search.countAll(items.length)}

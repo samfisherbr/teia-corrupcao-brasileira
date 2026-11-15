@@ -32,7 +32,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { CalendarCheck, Coins, ExternalLink, Languages, Network } from 'lucide-react';
-import { FALLBACK_COLOR, NODE_STYLE, STATUS_STYLE, entityChipStyle } from '@/lib/graphConfig';
+import { FALLBACK_COLOR, NODE_STYLE, STATUS_STYLE, badgeStyle, entityChipStyle } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
 import InArticleAd from '@/components/InArticleAd';
 import { loadScheme, type SchemeConnection } from '@/lib/db';
@@ -102,7 +102,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function ConnectionItem({ c, t, locale }: { c: SchemeConnection; t: Messages; locale: Locale }) {
   const typeColor = NODE_STYLE[c.entity.type]?.color ?? FALLBACK_COLOR;
   const st = STATUS_STYLE[c.status];
-  const color = st?.color ?? FALLBACK_COLOR;
   const reviewed = formatDate(c.reviewed_at, locale);
   const amount = localizeAmountText(c.amount, locale);
   return (
@@ -114,7 +113,7 @@ function ConnectionItem({ c, t, locale }: { c: SchemeConnection; t: Messages; lo
         <span className="text-sm font-medium text-slate-200">
           {c.entity.label}
           {c.entity.party && c.entity.type === 'politician' && (
-            <span className="ml-1 font-mono text-slate-500">({c.entity.party})</span>
+            <span className="ml-1 font-mono text-muted">({c.entity.party})</span>
           )}
         </span>
         <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 tabular-nums">
@@ -128,10 +127,10 @@ function ConnectionItem({ c, t, locale }: { c: SchemeConnection; t: Messages; lo
           {c.amount_note ? ` — ${c.amount_note}` : ''}
         </p>
       )}
-      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
         <span
           className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded border"
-          style={{ backgroundColor: `${color}20`, color, borderColor: `${color}50` }}
+          style={badgeStyle(st)}
         >
           {t.status[c.status] ?? c.status}
         </span>
@@ -247,7 +246,7 @@ export default async function DossierView({ locale, slug }: { locale: Locale; sl
   ];
 
   return (
-    <div className="h-[100dvh] w-full bg-[#080d16] text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
+    <div className="h-[100dvh] w-full bg-surface-canvas text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(structuredData)} />
       <article className="max-w-3xl mx-auto space-y-8">
         <PageNav locale={locale} path={schemePath(s.id)} links={[{ href: '/esquemas', label: t.dossier.allSchemes }]} />
@@ -308,7 +307,7 @@ export default async function DossierView({ locale, slug }: { locale: Locale; sl
 
         {connections.length > 0 && (
           <Section title={t.dossier.who}>
-            <p className="text-xs text-slate-500 leading-relaxed">{t.dossier.whoNote}</p>
+            <p className="text-xs text-muted leading-relaxed">{t.dossier.whoNote}</p>
             <ConnectionSections connections={connections} t={t} locale={locale} />
           </Section>
         )}
@@ -321,7 +320,7 @@ export default async function DossierView({ locale, slug }: { locale: Locale; sl
 
         {details?.sources && details.sources.length > 0 && (
           <Section title={t.dossier.sources}>
-            {t.dossier.sourcesInPortuguese && <p className="text-xs text-slate-500">{t.dossier.sourcesInPortuguese}</p>}
+            {t.dossier.sourcesInPortuguese && <p className="text-xs text-muted">{t.dossier.sourcesInPortuguese}</p>}
             <ul lang={LOCALE_INFO[DEFAULT_LOCALE].tag} className="space-y-1.5">
               {details.sources.map((src, i) => (
                 <li key={i}>

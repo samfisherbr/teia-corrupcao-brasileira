@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import Link from 'next/link';
-import { Info, Database, CheckCircle2, Scale } from 'lucide-react';
+import { Info, Database, CircleCheck, Scale } from 'lucide-react';
 import { SITE_NAME, CONTACT_EMAIL } from '@/lib/site';
 import { localePath } from '@/lib/i18n';
 import StatusList from './StatusList';
@@ -43,7 +43,7 @@ export default function AboutEn() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
           <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
             <div className="flex items-center space-x-2 text-cyan-400 font-semibold text-xs font-mono">
-              <CheckCircle2 className="w-4 h-4" />
+              <CircleCheck className="w-4 h-4" />
               <span>Official documents</span>
             </div>
             <p className="text-xs text-slate-400">
@@ -55,7 +55,7 @@ export default function AboutEn() {
 
           <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
             <div className="flex items-center space-x-2 text-cyan-400 font-semibold text-xs font-mono">
-              <CheckCircle2 className="w-4 h-4" />
+              <CircleCheck className="w-4 h-4" />
               <span>Established news media</span>
             </div>
             <p className="text-xs text-slate-400">

@@ -15,7 +15,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Search, Calendar, Filter, BookOpen, Scale, Component } from 'lucide-react';
+import { Search, Calendar, Funnel, BookOpen, Scale, Component } from 'lucide-react';
 import { NodeType, LinkStatus, GraphNode } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
@@ -84,7 +84,7 @@ export default function SidebarControls({
   const { t, href } = useI18n();
 
   return (
-    <aside className="hidden md:flex w-80 bg-[#090f1b] border-r border-slate-800/80 flex-col z-20 shadow-xl h-full">
+    <aside className="hidden md:flex w-80 bg-surface-sidebar border-r border-slate-800/80 flex-col z-20 shadow-xl h-full">
       
       {/* Cabeçalho */}
       <div className="p-4 border-b border-slate-800/80 flex items-center space-x-3">
@@ -104,13 +104,13 @@ export default function SidebarControls({
             {t.sidebar.searchLabel}
           </label>
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted" />
             <input
               type="text"
               placeholder={t.sidebar.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#0e1726] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full bg-surface-field border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-muted focus:outline-none focus:border-cyan-500"
             />
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function SidebarControls({
         <div>
           <div className="mb-2.5 flex items-center justify-between gap-2">
             <label className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Filter className="w-3.5 h-3.5 text-cyan-400" />
+              <Funnel className="w-3.5 h-3.5 text-cyan-400" />
               {t.sidebar.entityTypes}
             </label>
             <ClearFiltersButton onClick={clearTypeFilters} disabled={!anyTypeSelected} />
@@ -160,7 +160,7 @@ export default function SidebarControls({
                   className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg border text-xs transition-all ${
                     active
                       ? 'bg-slate-800/80 border-cyan-500/60 text-slate-100 shadow-[0_0_10px_rgba(34,211,238,0.15)]'
-                      : 'bg-slate-950/40 border-slate-900 text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                      : 'bg-slate-950/40 border-slate-900 text-muted hover:text-slate-300 hover:border-slate-700'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5">
@@ -192,7 +192,7 @@ export default function SidebarControls({
                 className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg border text-xs transition-all ${
                   statusFilters[st.key]
                     ? 'bg-slate-800/80 border-cyan-500/60 text-slate-100 shadow-[0_0_10px_rgba(34,211,238,0.15)]'
-                    : 'bg-slate-950 border-slate-900 text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                    : 'bg-slate-950 border-slate-900 text-muted hover:text-slate-300 hover:border-slate-700'
                 }`}
               >
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: st.color }} />
@@ -223,7 +223,7 @@ export default function SidebarControls({
             style={{ maxHeight: 'min(20rem, max(6rem, calc(100dvh - 16rem)))' }}
           >
             {schemeNodes.length === 0 ? (
-              <span className="text-xs text-slate-600 italic block p-1">{t.sidebar.noSchemes}</span>
+              <span className="text-xs text-muted italic block p-1">{t.sidebar.noSchemes}</span>
             ) : (
               schemeNodes.map((scheme) => {
                 const isSelected = selectedNode?.id === scheme.id;
@@ -234,7 +234,7 @@ export default function SidebarControls({
                     className={`w-full text-left p-2 rounded-lg border text-xs transition-all flex items-center justify-between group ${
                       isSelected
                         ? 'text-slate-100'
-                        : 'bg-[#0e1726] border-slate-800 text-slate-300 hover:border-slate-700 hover:text-slate-100'
+                        : 'bg-surface-field border-slate-800 text-slate-300 hover:border-slate-700 hover:text-slate-100'
                     }`}
                     style={
                       isSelected
@@ -259,7 +259,7 @@ export default function SidebarControls({
       </div>
 
       {/* Rodapé do Painel */}
-      <div className="p-3 border-t border-slate-800/80 bg-[#080d16] text-[11px] font-mono text-slate-400 flex justify-between items-center">
+      <div className="p-3 border-t border-slate-800/80 bg-surface-canvas text-[11px] font-mono text-slate-400 flex justify-between items-center">
         <span>{t.sidebar.nodes}: <strong className="text-cyan-400">{nodeCount}</strong></span>
         <span>{t.sidebar.connections}: <strong className="text-cyan-400">{linkCount}</strong></span>
       </div>

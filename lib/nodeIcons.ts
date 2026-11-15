@@ -4,13 +4,13 @@
  * mesmo tipo ter sempre o mesmo ícone. As cores ficam em NODE_STYLE (graphConfig).
  */
 import type { ElementType } from 'react';
-import { ShieldAlert, Layers, UserCheck, Building2, Briefcase } from 'lucide-react';
+import { ShieldExclamationPoint, Layers, UserCheck, BuildingComplex, Briefcase } from 'lucide-react';
 import type { NodeType } from '@/types/graph';
 
 export const NODE_ICONS: Record<NodeType, ElementType> = {
   politician: UserCheck,
   party: Layers,
-  scheme: ShieldAlert,
-  company: Building2,
+  scheme: ShieldExclamationPoint,
+  company: BuildingComplex,
   operator: Briefcase,
 };

@@ -15,11 +15,20 @@
  */
 import React from 'react';
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import '@/app/globals.css';
 import { ADSENSE_CLIENT, SITE_DOMAIN, SITE_NAME } from '@/lib/site';
 import { LOCALE_INFO, type Locale } from '@/lib/i18n';
 import { getMessages } from '@/messages';
 import { I18nProvider } from '@/components/I18nProvider';
+
+/**
+ * Fonte Inter, servida pelo próprio site (next/font baixa os arquivos no build;
+ * o navegador não acessa o Google). Expõe a variável --font-inter, que
+ * `font-sans` (tailwind.config.js) e app/globals.css usam. `latin` cobre os
+ * acentos do português e do espanhol.
+ */
+const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' });
 
 export function layoutMetadata(locale: Locale): Metadata {
   const t = getMessages(locale);
@@ -42,7 +51,7 @@ export function layoutMetadata(locale: Locale): Metadata {
 
 export default function LocaleLayout({ locale, children }: { locale: Locale; children: React.ReactNode }) {
   return (
-    <html lang={LOCALE_INFO[locale].tag} className="dark h-full w-full">
+    <html lang={LOCALE_INFO[locale].tag} className={`dark h-full w-full ${inter.variable}`}>
       <head>
         {/* Script do Google AdSense (o código fornecido pelo AdSense). */}
         <script
@@ -51,7 +60,7 @@ export default function LocaleLayout({ locale, children }: { locale: Locale; chi
           crossOrigin="anonymous"
         />
       </head>
-      <body className="bg-[#080d16] text-slate-100 antialiased selection:bg-cyan-500 selection:text-black h-full w-full overflow-hidden">
+      <body className="bg-surface-canvas text-slate-100 font-sans antialiased selection:bg-cyan-500 selection:text-black h-full w-full overflow-hidden">
         <I18nProvider locale={locale}>{children}</I18nProvider>
       </body>
     </html>

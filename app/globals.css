@@ -1,7 +1,8 @@
 /*
  * Estilos globais. A maior parte do visual vem das classes Tailwind nos
- * componentes; aqui ficam só variáveis e classes reutilizadas.
- *   --bg-color      fundo geral (igual a BG_COLOR em NetworkGraph.tsx)
+ * componentes; aqui ficam só variáveis e classes reutilizadas. Os valores das
+ * cores e da fonte vêm de tailwind.config.js (theme()), a fonte única.
+ *   --bg-color      fundo geral (= surface.canvas = BG_COLOR em NetworkGraph.tsx)
  *   --panel-bg      fundo translúcido dos painéis "vidro" (.glass-panel)
  *   --border-color  borda sutil dos painéis
  */
@@ -10,15 +11,15 @@
 @tailwind utilities;
 
 :root {
-  --bg-color: #080d16;
-  --panel-bg: rgba(14, 23, 38, 0.85);
+  --bg-color: theme('colors.surface.canvas');
+  --panel-bg: theme('colors.surface.field / 85%');
   --border-color: rgba(255, 255, 255, 0.08);
 }
 
 html, body {
   background-color: var(--bg-color);
-  color: #e2e8f0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: theme('colors.slate.200');
+  font-family: theme('fontFamily.sans');
   overflow: hidden;
   margin: 0;
   padding: 0;
@@ -46,7 +47,7 @@ html, body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(8, 13, 22, 0.8);
+  background: theme('colors.surface.canvas / 80%');
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
@@ -82,13 +83,13 @@ html, body {
   background: linear-gradient(
     to right,
     rgb(var(--timeline-cyan)) var(--pct, 0%),
-    #334155 var(--pct, 0%)
+    theme('colors.slate.700') var(--pct, 0%)
   );
 }
 .timeline-range::-moz-range-track {
   height: 6px;
   border-radius: 9999px;
-  background: #334155;
+  background: theme('colors.slate.700');
 }
 .timeline-range::-moz-range-progress {
   height: 6px;
@@ -105,7 +106,7 @@ html, body {
   margin-top: -6px; /* centraliza na trilha de 6px: (6 − 18) / 2 */
   border-radius: 9999px;
   background: rgb(var(--timeline-cyan));
-  border: 2px solid #ecfeff;
+  border: 2px solid theme('colors.cyan.50');
   animation: timeline-hum 2.4s ease-in-out infinite;
 }
 .timeline-range::-moz-range-thumb {
@@ -113,17 +114,17 @@ html, body {
   height: 14px;
   border-radius: 9999px;
   background: rgb(var(--timeline-cyan));
-  border: 2px solid #ecfeff;
+  border: 2px solid theme('colors.cyan.50');
   animation: timeline-hum 2.4s ease-in-out infinite;
 }
 
 /* Contorno de foco para teclado, sem apagar o brilho */
 .timeline-range:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid #ecfeff;
+  outline: 2px solid theme('colors.cyan.50');
   outline-offset: 3px;
 }
 .timeline-range:focus-visible::-moz-range-thumb {
-  outline: 2px solid #ecfeff;
+  outline: 2px solid theme('colors.cyan.50');
   outline-offset: 3px;
 }
 
