@@ -40,12 +40,12 @@ import {
   ChevronDown, 
   ChevronUp, 
   BookOpen,
-  PieChart as PieChartIcon,
+  ChartPie as PieChartIcon,
   BarChart3,
   Layers,
   Activity,
   TrendingUp,
-  ShieldAlert,
+  ShieldExclamationPoint,
   Search,
   X
 } from 'lucide-react';
@@ -389,7 +389,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                   </span>
                 </div>
                 <div className="p-3 border rounded-lg" style={entityChipStyle('scheme')}>
-                  <ShieldAlert className="w-6 h-6" />
+                  <ShieldExclamationPoint className="w-6 h-6" />
                 </div>
               </div>
 
@@ -429,13 +429,13 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
 
                 <div className="space-y-4 my-2">
                   {partyCentralityRanking.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic">{t.infographics.rankingEmpty}</p>
+                    <p className="text-xs text-muted italic">{t.infographics.rankingEmpty}</p>
                   ) : (
                     partyCentralityRanking.slice(0, PARTY_RANKING_SIZE).map((item) => (
                       <div key={item.party} className="space-y-1.5">
                         <div className="flex justify-between items-center text-xs">
                           <span className="font-bold font-mono text-slate-200">
-                            {item.party} <span className="text-slate-500 font-normal">{t.infographics.politiciansCount(item.politicianCount)}</span>
+                            {item.party} <span className="text-muted font-normal">{t.infographics.politiciansCount(item.politicianCount)}</span>
                           </span>
                           <span className="font-mono font-semibold" style={{ color: NODE_STYLE.party.labelColor }}>
                             {t.infographics.linksCount(item.count)}
@@ -531,7 +531,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                   {/* Uma etiqueta por status, com a cor de STATUS_STYLE */}
                   <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
                     {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => (
-                      <span key={key} className="flex items-center gap-1" style={{ color: STATUS_STYLE[key].color }}>
+                      <span key={key} className="flex items-center gap-1" style={{ color: STATUS_STYLE[key].labelColor }}>
                         <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: STATUS_STYLE[key].color }} />
                         {operationalFlowMetrics.statusCounts[key]} {t.status[key]}
                       </span>
@@ -559,7 +559,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
               </div>
 
               {financialTreemapData.items.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">{t.infographics.heatmapEmpty}</p>
+                <p className="text-xs text-muted italic">{t.infographics.heatmapEmpty}</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {financialTreemapData.items.map((item, index) => {
@@ -629,7 +629,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 <div className="relative">
                   <Search
                     size={16}
-                    className="w-4 h-4 shrink-0 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                    className="w-4 h-4 shrink-0 absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
                     aria-hidden="true"
                   />
                   <input
@@ -643,7 +643,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                       if (e.key === 'Escape') setGlossaryQuery('');
                     }}
                     aria-describedby="glossary-search-count"
-                    className="w-full bg-[#0e1726] border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 [&::-webkit-search-cancel-button]:hidden"
+                    className="w-full bg-surface-field border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-sm text-slate-200 placeholder-muted focus:outline-none focus:border-cyan-500 [&::-webkit-search-cancel-button]:hidden"
                   />
                   {glossaryQuery && (
                     <button
@@ -651,13 +651,13 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                       onClick={() => setGlossaryQuery('')}
                       aria-label={t.common.clearSearch}
                       title={t.common.clearSearch}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-800"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-muted hover:text-slate-200 hover:bg-slate-800"
                     >
                       <X size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
                     </button>
                   )}
                 </div>
-                <p id="glossary-search-count" aria-live="polite" className="mt-2 text-[11px] font-mono text-slate-500">
+                <p id="glossary-search-count" aria-live="polite" className="mt-2 text-[11px] font-mono text-muted">
                   {glossaryQuery.trim()
                     ? t.search.countFiltered(filteredSchemeNodes.length, schemeNodes.length)
                     : t.search.countAll(schemeNodes.length)}
@@ -667,7 +667,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
 
             <div className="space-y-6">
               {schemeNodes.length === 0 ? (
-                <p className="text-sm text-slate-500">{t.glossary.empty}</p>
+                <p className="text-sm text-muted">{t.glossary.empty}</p>
               ) : filteredSchemeNodes.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl">
                   <p className="text-sm text-slate-400">

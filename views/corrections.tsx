@@ -6,7 +6,7 @@
 import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { History } from 'lucide-react';
+import { RotateCcwClock } from 'lucide-react';
 import { CORRECTIONS } from '@/data/corrections';
 import { fallbackSchemeTitle, loadSchemeDetails } from '@/lib/dossiers';
 import { formatDate } from '@/lib/format';
@@ -36,13 +36,13 @@ export default async function CorrectionsView({ locale }: { locale: Locale }) {
   }).sort((a, b) => b.date.localeCompare(a.date) || a.i - b.i);
 
   return (
-    <div className="h-[100dvh] w-full bg-[#080d16] text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
+    <div className="h-[100dvh] w-full bg-surface-canvas text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
       <div className="max-w-3xl mx-auto space-y-8">
         <PageNav locale={locale} path="/correcoes" />
 
         <header className="space-y-2 border-b border-slate-800 pb-6">
           <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <History className="w-8 h-8 shrink-0 text-cyan-400" aria-hidden="true" />
+            <RotateCcwClock className="w-8 h-8 shrink-0 text-cyan-400" aria-hidden="true" />
             {t.common.correctionsAndUpdates}
           </h1>
           <p className="text-sm text-slate-400 leading-relaxed">{t.corrections.intro}</p>

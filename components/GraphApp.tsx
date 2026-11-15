@@ -400,7 +400,7 @@ export default function GraphApp() {
 
 
   return (
-    <div className="relative h-[100dvh] w-full bg-[#080d16] text-slate-100 font-sans overflow-hidden flex flex-col">
+    <div className="relative h-[100dvh] w-full bg-surface-canvas text-slate-100 font-sans overflow-hidden flex flex-col">
       <HeaderBar activePage={activePage} setActivePage={setActivePage} />
 
       {/* Filtro de ano no celular (a barra lateral some < 768px). Oculto com
@@ -438,20 +438,20 @@ export default function GraphApp() {
           onSelectScheme={handleSelectSchemeFromIndex}
         />
 
-        <main className="relative flex-1 w-full h-full overflow-hidden bg-[#080d16]">
+        <main className="relative flex-1 w-full h-full overflow-hidden bg-surface-canvas">
           {isLoading && !error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-canvas z-30">
               <div className="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
               <span className="text-xs font-mono text-cyan-400">{t.app.loading}</span>
             </div>
           )}
 
           {error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080d16] z-30 p-6 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-canvas z-30 p-6 text-center">
               <span className="text-red-400 font-mono text-sm mb-2">{t.app.loadFailed}</span>
               <p className="text-slate-300 text-xs max-w-lg mb-2 leading-relaxed">{error.message}</p>
               {error.detail && (
-                <code className="text-[11px] text-slate-500 max-w-lg mb-4 break-words">{error.detail}</code>
+                <code className="text-[11px] text-muted max-w-lg mb-4 break-words">{error.detail}</code>
               )}
               <button
                 onClick={() => setReloadKey((k) => k + 1)}

@@ -21,7 +21,7 @@
 import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, PanelRightOpen, History } from 'lucide-react';
+import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, PanelRightOpen, RotateCcwClock } from 'lucide-react';
 import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, getLinkEnds } from '@/lib/graphConfig';
 import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink } from '@/lib/layout';
@@ -961,7 +961,7 @@ export default function NetworkGraph({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full flex-1 bg-[#080d16] overflow-hidden"
+      className="relative w-full h-full flex-1 bg-surface-canvas overflow-hidden"
       // Qualquer interação manual cancela o reenquadramento automático.
       onWheel={() => { userMovedCameraRef.current = true; }}
       onPointerDown={() => { userMovedCameraRef.current = true; }}
@@ -1017,7 +1017,7 @@ export default function NetworkGraph({
         type="button"
         onClick={onOpenDetails}
         style={{ visibility: 'hidden' }}
-        className="absolute left-0 top-0 z-30 inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-semibold text-cyan-200 bg-[#0e1726]/95 backdrop-blur-md border border-cyan-500/60 shadow-[0_0_16px_rgba(34,211,238,0.35)] hover:bg-cyan-950 active:scale-95 transition-colors"
+        className="absolute left-0 top-0 z-30 inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-semibold text-cyan-200 bg-surface-field/95 backdrop-blur-md border border-cyan-500/60 shadow-[0_0_16px_rgba(34,211,238,0.35)] hover:bg-cyan-950 active:scale-95 transition-colors"
       >
         <PanelRightOpen size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
         {t.graph.showDetails}
@@ -1025,7 +1025,7 @@ export default function NetworkGraph({
 
       {/* LEGENDAS — geradas de lib/graphConfig.ts; escondidas em telas pequenas */}
       <div className="absolute top-4 right-6 hidden sm:block space-y-3 z-20 select-none">
-        <div className="bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
+        <div className="bg-surface-field/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{t.graph.linkLegend}</div>
           {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => {
             const st = STATUS_STYLE[key];
@@ -1042,7 +1042,7 @@ export default function NetworkGraph({
           })}
         </div>
 
-        <div className="bg-[#0e1726]/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
+        <div className="bg-surface-field/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{t.graph.nodeLegend}</div>
           {(Object.keys(NODE_STYLE) as NodeType[]).map((key) => (
             <div key={key} className="flex items-center space-x-2.5">
@@ -1063,7 +1063,7 @@ export default function NetworkGraph({
 
       {/* CONTROLES DE CÂMERA — o fator 1.2 é o "passo" de cada clique de zoom.
           Alinhados na base com o MENU LEGAL (mesmo bottom-6 e mesma altura). */}
-      <div className="absolute bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
+      <div className="absolute bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}
           className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
@@ -1113,8 +1113,8 @@ export default function NetworkGraph({
         <div className="group flex flex-col items-end">
           <div className="grid grid-rows-[0fr] opacity-0 group-hover:grid-rows-[1fr] group-hover:opacity-100 group-focus-within:grid-rows-[1fr] group-focus-within:opacity-100 transition-all duration-200">
             <div className="overflow-hidden min-h-0">
-              <div className="mb-2 w-52 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl flex flex-col space-y-1 text-xs">
-                <div className="px-2 py-1 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-slate-800/80 mb-1">
+              <div className="mb-2 w-52 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl flex flex-col space-y-1 text-xs">
+                <div className="px-2 py-1 text-[10px] font-mono text-muted uppercase tracking-wider border-b border-slate-800/80 mb-1">
                   {t.graph.legalInfo}
                 </div>
                 {/* Só no celular: em telas ≥ 768px o cabeçalho já tem o botão "Dossiês". */}
@@ -1123,7 +1123,7 @@ export default function NetworkGraph({
                   <span>{t.graph.menuDossiers}</span>
                 </Link>
                 <Link href={href('/correcoes')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
-                  <History className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                  <RotateCcwClock className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
                   <span>{t.common.correctionsAndUpdates}</span>
                 </Link>
                 <Link href={href('/about')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
@@ -1143,7 +1143,7 @@ export default function NetworkGraph({
           </div>
 
           <button
-            className="flex items-center space-x-2 bg-[#0e1726]/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-3.5 md:py-3 text-xs leading-4 text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
+            className="flex items-center space-x-2 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-3.5 md:py-3 text-xs leading-4 text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
             aria-label={t.graph.legalMenuAria}
             aria-haspopup="true"
           >

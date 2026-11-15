@@ -51,14 +51,14 @@ export default function AdBanner({ adClient, adSlot }: AdBannerProps) {
   return (
     <>
       <div className="hidden lg:flex absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
-        <div className="w-[728px] h-[90px] bg-[#0e1726]/90 border border-slate-800 rounded-lg backdrop-blur-md flex items-center justify-center overflow-hidden shadow-2xl relative">
+        <div className="w-[728px] h-[90px] bg-surface-field/90 border border-slate-800 rounded-lg backdrop-blur-md flex items-center justify-center overflow-hidden shadow-2xl relative">
           <ins
             className="adsbygoogle"
             style={{ display: 'inline-block', width: '728px', height: '90px' }}
             data-ad-client={adClient}
             data-ad-slot={adSlot}
           />
-          <span className="absolute text-[10px] font-mono text-slate-600 uppercase tracking-widest pointer-events-none -z-10">
+          <span className="absolute text-[10px] font-mono text-muted uppercase tracking-widest pointer-events-none -z-10">
             {t.common.advertising}
           </span>
         </div>

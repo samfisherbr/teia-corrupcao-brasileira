@@ -30,7 +30,7 @@ export default function InArticleAd() {
 
   return (
     <aside aria-label={t.common.advertising} className="space-y-1">
-      <span className="block text-[10px] font-mono text-slate-600 uppercase tracking-widest">{t.common.advertising}</span>
+      <span className="block text-[10px] font-mono text-muted uppercase tracking-widest">{t.common.advertising}</span>
       <ins
         className="adsbygoogle"
         style={{ display: 'block', textAlign: 'center' }}

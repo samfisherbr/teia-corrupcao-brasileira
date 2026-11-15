@@ -34,7 +34,7 @@ export const NODE_STYLE: Record<
   { color: string; radius: number; labelColor: string; labelPx: number; minZoom: number }
 > = {
   scheme:     { color: '#ff00c8', radius: 100, labelColor: '#ff5ce0', labelPx: 13, minZoom: 0 },
-  party:      { color: '#3b38ff', radius: 70,  labelColor: '#a5a3ff', labelPx: 12, minZoom: 0.12 },
+  party:      { color: '#4b48ff', radius: 70,  labelColor: '#a5a3ff', labelPx: 12, minZoom: 0.12 },
   company:    { color: '#878787', radius: 70,  labelColor: '#c4c4c4', labelPx: 11, minZoom: 0.3 },
   politician: { color: '#00eeff', radius: 40,  labelColor: '#a5f3fc', labelPx: 11, minZoom: 0.45 },
   operator:   { color: '#ffffff', radius: 40,  labelColor: '#e2e8f0', labelPx: 11, minZoom: 0.45 },
@@ -66,26 +66,45 @@ export const getNodeRadius = (type: string | undefined, node?: { __radius?: numb
 
 /**
  * Aparência de cada status jurídico (linhas do grafo, legenda, filtros).
+ *  - color      cor da linha, do ponto da legenda e do fundo/borda da etiqueta
+ *  - labelColor cor do TEXTO da etiqueta. Igual a `color` quando ela já é
+ *               legível no fundo escuro; mais clara quando não é (contraste
+ *               mínimo de 4,5:1 — WCAG AA — sobre o fundo da etiqueta).
  *  - dashed  linha tracejada = caso ainda em aberto (sem decisão definitiva).
  *  - particles  quantidade de "partículas" animadas correndo na linha
  *               (0 desliga; muitos links com partículas pesam em celulares).
  * A ordem das chaves aqui é a ordem em que aparecem na legenda e nos filtros.
  * Os NOMES de cada status ficam em `status`, em messages/pt.ts, en.ts e es.ts.
  */
-export const STATUS_STYLE: Record<LinkStatus, { color: string; dashed: boolean; particles: number }> = {
-  confirmed:           { color: '#60a5fa', dashed: false, particles: 0 },
-  under_investigation: { color: '#f59e0b', dashed: true,  particles: 2 },
-  convicted_appealing: { color: '#f97316', dashed: true,  particles: 0 },
-  convicted_final:     { color: '#e11d48', dashed: false, particles: 0 },
-  annulled:            { color: '#9333ea', dashed: false, particles: 0 },
-  acquitted:           { color: '#10b981', dashed: false, particles: 0 },
+export const STATUS_STYLE: Record<LinkStatus, { color: string; labelColor: string; dashed: boolean; particles: number }> = {
+  confirmed:           { color: '#60a5fa', labelColor: '#60a5fa', dashed: false, particles: 0 },
+  under_investigation: { color: '#f59e0b', labelColor: '#f59e0b', dashed: true,  particles: 2 },
+  convicted_appealing: { color: '#f97316', labelColor: '#f97316', dashed: true,  particles: 0 },
+  convicted_final:     { color: '#e11d48', labelColor: '#fb7185', dashed: false, particles: 0 },
+  annulled:            { color: '#9333ea', labelColor: '#c084fc', dashed: false, particles: 0 },
+  acquitted:           { color: '#10b981', labelColor: '#10b981', dashed: false, particles: 0 },
 };
 
-/** Categoria operacional do vínculo (painel de detalhes). Nomes em `linkType`, em messages/. */
-export const LINK_TYPE_STYLE: Record<LinkType, { color: string }> = {
-  transaction: { color: '#f59e0b' },
-  contract:    { color: '#3b82f6' },
-  process:     { color: '#a855f7' },
+/**
+ * Categoria operacional do vínculo (painel de detalhes). Nomes em `linkType`, em messages/.
+ * `labelColor` = cor do texto da etiqueta (ver STATUS_STYLE).
+ */
+export const LINK_TYPE_STYLE: Record<LinkType, { color: string; labelColor: string }> = {
+  transaction: { color: '#f59e0b', labelColor: '#f59e0b' },
+  contract:    { color: '#3b82f6', labelColor: '#60a5fa' },
+  process:     { color: '#a855f7', labelColor: '#c084fc' },
+};
+
+/**
+ * Estilo da etiqueta de status jurídico ou de categoria do vínculo: fundo
+ * translúcido e borda na cor da linha, texto na cor legível (labelColor).
+ * Uso: <span style={badgeStyle(STATUS_STYLE[link.status])}>…</span>
+ */
+export const badgeStyle = (
+  st: { color: string; labelColor: string } | undefined,
+): { backgroundColor: string; borderColor: string; color: string } => {
+  const color = st?.color ?? FALLBACK_COLOR;
+  return { backgroundColor: `${color}20`, borderColor: `${color}50`, color: st?.labelColor ?? FALLBACK_COLOR };
 };
 
 /** Cor para valores desconhecidos (ex.: status antigo ainda no banco). */

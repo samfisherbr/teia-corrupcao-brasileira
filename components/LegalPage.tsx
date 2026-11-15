@@ -25,7 +25,7 @@ export default function LegalPage({
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-[100dvh] w-full bg-[#080d16] text-slate-200 font-sans px-4 py-12 sm:px-8 md:px-16 lg:px-24 overflow-y-auto select-text">
+    <div className="h-[100dvh] w-full bg-surface-canvas text-slate-200 font-sans px-4 py-12 sm:px-8 md:px-16 lg:px-24 overflow-y-auto select-text">
       <div className="max-w-4xl mx-auto space-y-8">
         <PageNav locale={locale} path={path} />
 

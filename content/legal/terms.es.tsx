@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import Link from 'next/link';
-import { ShieldAlert, FileCode, ExternalLink } from 'lucide-react';
+import { ShieldExclamationPoint, FileCode, ExternalLink } from 'lucide-react';
 import { SITE_NAME, SITE_DOMAIN, CONTACT_EMAIL } from '@/lib/site';
 import { localePath } from '@/lib/i18n';
 
@@ -71,7 +71,7 @@ export default function TermsEs() {
 
       <section className="space-y-3 border-t border-slate-800/80 pt-6">
         <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-          <ShieldAlert className="w-4 h-4 text-cyan-400" />
+          <ShieldExclamationPoint className="w-4 h-4 text-cyan-400" />
           4. Exención y limitación de responsabilidad
         </h2>
         <p>

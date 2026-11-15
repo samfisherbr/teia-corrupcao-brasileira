@@ -25,7 +25,7 @@ import { formatDate } from '@/lib/format';
 import { localizeAmountText } from '@/lib/money';
 import { useI18n } from '@/components/I18nProvider';
 import { GraphNode, GraphLink, GraphData, NodeType, LinkStatus, LinkType } from '@/types/graph';
-import { NODE_STYLE, STATUS_STYLE, LINK_TYPE_STYLE, FALLBACK_COLOR, getLinkEnds, getLinkKey, entityChipStyle } from '@/lib/graphConfig';
+import { NODE_STYLE, STATUS_STYLE, LINK_TYPE_STYLE, FALLBACK_COLOR, getLinkEnds, getLinkKey, entityChipStyle, badgeStyle } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
 
 /** Ordem das seções de conexões = ordem da legenda do grafo. */
@@ -81,7 +81,6 @@ export default function InspectorDrawer({
   if (!selectedNode && !selectedLink) return null;
 
   const statusStyle = selectedLink ? STATUS_STYLE[selectedLink.status as LinkStatus] : undefined;
-  const statusColor = statusStyle?.color ?? FALLBACK_COLOR;
   const typeStyle = selectedLink?.type ? LINK_TYPE_STYLE[selectedLink.type as LinkType] : undefined;
   const reviewedOn = formatDate(selectedLink?.reviewed_at, locale);
   const amountText = localizeAmountText(selectedLink?.amount, locale);
@@ -105,7 +104,7 @@ export default function InspectorDrawer({
     : { sourceNode: null, targetNode: null };
 
   return (
-     <aside className="absolute inset-y-0 right-0 w-full md:w-96 bg-[#0c1322]/95 backdrop-blur-xl border-l border-slate-800 flex flex-col z-30 shadow-2xl animate-in slide-in-from-right duration-200">
+     <aside className="absolute inset-y-0 right-0 w-full md:w-96 bg-surface-drawer/95 backdrop-blur-xl border-l border-slate-800 flex flex-col z-30 shadow-2xl animate-in slide-in-from-right duration-200">
       {/* Topo do Drawer */}
       <div className="p-4 border-b border-slate-800 flex justify-between items-center">
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
@@ -162,7 +161,7 @@ export default function InspectorDrawer({
 
           {/* Crédito da foto (autor e licença), quando registrado no banco. */}
           {selectedNode.image_url && brokenImage !== selectedNode.image_url && selectedNode.image_credit && (
-            <p className="-mt-3 text-[11px] text-slate-500 leading-snug">
+            <p className="-mt-3 text-[11px] text-muted leading-snug">
               {t.inspector.photo}{' '}
               {isHttpUrl(selectedNode.image_source_url) ? (
                 <a
@@ -198,7 +197,7 @@ export default function InspectorDrawer({
           <div className="space-y-4">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">{t.inspector.connections}</h3>
             {connectionSections.length === 0 && (
-              <p className="text-xs text-slate-500 italic">{t.inspector.noConnections}</p>
+              <p className="text-xs text-muted italic">{t.inspector.noConnections}</p>
             )}
             {connectionSections.map(({ key, items }) => {
               const st = NODE_STYLE[key as NodeType];
@@ -233,7 +232,7 @@ export default function InspectorDrawer({
                           <span className="text-xs font-medium text-slate-200">
                             {other?.label || otherId}
                             {other?.party && other.type === 'politician' && (
-                              <span className="ml-1 font-mono text-slate-500">({other.party})</span>
+                              <span className="ml-1 font-mono text-muted">({other.party})</span>
                             )}
                           </span>
                           <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
@@ -256,7 +255,7 @@ export default function InspectorDrawer({
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Card de Entidades Conectadas (Origem -> Destino) */}
           <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-            <span className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-wider block">
+            <span className="text-[10px] font-mono font-semibold text-muted uppercase tracking-wider block">
               {t.inspector.connectedEntities}
             </span>
             <div className="flex items-center justify-between gap-2">
@@ -265,7 +264,7 @@ export default function InspectorDrawer({
                 onClick={() => sourceNode && onSelectNode && onSelectNode(sourceNode)}
                 className="flex-1 p-2 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors text-left group"
               >
-                <span className="text-[10px] text-slate-500 block uppercase font-mono">{t.inspector.source}</span>
+                <span className="text-[10px] text-muted block uppercase font-mono">{t.inspector.source}</span>
                 <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-400 transition-colors line-clamp-1">
                   {sourceNode?.label || (typeof selectedLink.source === 'string' ? selectedLink.source : t.inspector.source)}
                 </span>
@@ -278,7 +277,7 @@ export default function InspectorDrawer({
                 onClick={() => targetNode && onSelectNode && onSelectNode(targetNode)}
                 className="flex-1 p-2 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors text-left group"
               >
-                <span className="text-[10px] text-slate-500 block uppercase font-mono">{t.inspector.target}</span>
+                <span className="text-[10px] text-muted block uppercase font-mono">{t.inspector.target}</span>
                 <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-400 transition-colors line-clamp-1">
                   {targetNode?.label || (typeof selectedLink.target === 'string' ? selectedLink.target : t.inspector.target)}
                 </span>
@@ -293,8 +292,8 @@ export default function InspectorDrawer({
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <span>{t.inspector.category}</span>
                 <span
-                  className="font-bold font-mono uppercase tracking-wide px-2 py-0.5 rounded text-[10px]"
-                  style={{ backgroundColor: `${typeStyle.color}20`, color: typeStyle.color, border: `1px solid ${typeStyle.color}50` }}
+                  className="font-bold font-mono uppercase tracking-wide px-2 py-0.5 rounded border text-[10px]"
+                  style={badgeStyle(typeStyle)}
                 >
                   {t.linkType[selectedLink.type as LinkType]}
                 </span>
@@ -305,8 +304,8 @@ export default function InspectorDrawer({
             <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
               <span>{t.inspector.legalStatus}</span>
               <span 
-                className="font-bold font-mono uppercase tracking-wide px-2 py-0.5 rounded text-[10px]"
-                style={{ backgroundColor: `${statusColor}20`, color: statusColor, border: `1px solid ${statusColor}50` }}
+                className="font-bold font-mono uppercase tracking-wide px-2 py-0.5 rounded border text-[10px]"
+                style={badgeStyle(statusStyle)}
               >
                 {t.status[selectedLink.status as LinkStatus] ?? selectedLink.status}
               </span>
@@ -334,7 +333,7 @@ export default function InspectorDrawer({
                   <span className="text-sm font-mono font-bold text-emerald-400">{amountText}</span>
                 </div>
                 {selectedLink.amount_note && (
-                  <p className="text-[11px] text-slate-500 italic text-right">{selectedLink.amount_note}</p>
+                  <p className="text-[11px] text-muted italic text-right">{selectedLink.amount_note}</p>
                 )}
               </div>
             )}
