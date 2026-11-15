@@ -132,7 +132,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_compra_reeleicao": {
     title: "Compra de Votos da Reeleição",
-    reviewedAt: "2026-11-05",
+    reviewedAt: "2026-11-15",
     context: "A emenda constitucional que permitiu a reeleição para presidente, governadores e prefeitos foi articulada desde 1995 e aprovada em primeiro turno na Câmara em 28 de janeiro de 1997, por 336 votos a 17. Em 13 e 14 de maio de 1997, a Folha de S.Paulo divulgou gravações feitas a pedido do jornal em que deputados do Acre admitiam ter vendido o voto.",
     mechanism: "Nas fitas, os deputados Ronivon Santiago e João Maia, do PFL do Acre, diziam ter recebido R$ 200 mil cada um. Ronivon descrevia repasses do governador do Amazonas, Amazonino Mendes, ao governador do Acre, Orleir Cameli, e citava os colegas Chicão Brígido, Zila Bezerra e Osmir Lima; a reportagem apontava ainda o ministro Sérgio Motta e o deputado Luís Eduardo Magalhães como operadores. Os citados negaram, e Ronivon disse que a conversa fora uma brincadeira. Em delação de 2016, sem prova judicial, Pedro Corrêa afirmou que mais de 50 deputados venderam o voto.",
     impact: "R$ 200 mil por deputado, valor citado nas gravações por Ronivon Santiago e João Maia, sem confirmação judicial. Não há cifra oficial de valor desviado, prejuízo ou recuperação, porque nenhuma investigação quantificou o esquema. A emenda foi aprovada e permitiu a reeleição de FHC em 1998.",
