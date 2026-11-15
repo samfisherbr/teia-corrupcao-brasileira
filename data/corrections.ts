@@ -42,10 +42,10 @@ export const CORRECTIONS: Correction[] = [
     scheme: 'esquema_compra_reeleicao',
     kind: 'correcao',
     summary:
-      'Incluída a negativa de Zila Bezerra, que antes constava como não localizada; fontes de cinco vínculos trocadas por páginas da Folha e da Câmara, porque as anteriores não exibem mais o texto.',
+      'Incluída a negativa de Zila Bezerra, que antes constava como não localizada; fontes de sete vínculos trocadas por páginas da Folha e da Câmara, porque as anteriores não exibem mais o texto.',
     translations: {
-      en: "Zila Bezerra's denial, previously listed as not found, was added; sources for five links were replaced with Folha and Chamber of Deputies pages because the previous ones no longer display the text.",
-      es: 'Se incluyó la negativa de Zila Bezerra, que antes figuraba como no localizada; se sustituyeron las fuentes de cinco vínculos por páginas de Folha y de la Cámara, porque las anteriores ya no muestran el texto.',
+      en: "Zila Bezerra's denial, previously listed as not found, was added; sources for seven links were replaced with Folha and Chamber of Deputies pages because the previous ones no longer display the text.",
+      es: 'Se incluyó la negativa de Zila Bezerra, que antes figuraba como no localizada; se sustituyeron las fuentes de siete vínculos por páginas de Folha y de la Cámara, porque las anteriores ya no muestran el texto.',
     },
   },
   {
