@@ -38,6 +38,17 @@ export interface Correction {
 
 export const CORRECTIONS: Correction[] = [
   {
+    date: '2026-11-15',
+    scheme: 'esquema_compra_reeleicao',
+    kind: 'correcao',
+    summary:
+      'Incluída a negativa de Zila Bezerra, que antes constava como não localizada; fontes de cinco vínculos trocadas por páginas da Folha e da Câmara, porque as anteriores não exibem mais o texto.',
+    translations: {
+      en: "Zila Bezerra's denial, previously listed as not found, was added; sources for five links were replaced with Folha and Chamber of Deputies pages because the previous ones no longer display the text.",
+      es: 'Se incluyó la negativa de Zila Bezerra, que antes figuraba como no localizada; se sustituyeron las fuentes de cinco vínculos por páginas de Folha y de la Cámara, porque las anteriores ya no muestran el texto.',
+    },
+  },
+  {
     date: '2026-11-13',
     kind: 'correcao',
     summary:
