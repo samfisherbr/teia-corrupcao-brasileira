@@ -113,7 +113,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_trt_sp": {
     title: "Escândalo do TRT-SP",
-    reviewedAt: "2026-11-04",
+    reviewedAt: "2026-11-15",
     context: "Em 1992, o Tribunal Regional do Trabalho da 2ª Região, presidido pelo juiz Nicolau dos Santos Neto, abriu a licitação para construir o Fórum Trabalhista da Barra Funda, em São Paulo, vencida pela construtora Incal. O caso veio a público em 1998, depois que um ex-genro do juiz denunciou ao Ministério Público Federal seu patrimônio incompatível com o salário de magistrado. A CPI do Judiciário, em 1999, quebrou sigilos e chegou às empresas do senador Luiz Estevão, cassado pelo Senado em junho de 2000.",
     mechanism: "Segundo o MPF, a Incal Incorporações, de Fábio Monteiro de Barros e José Eduardo Ferraz, e o Grupo OK, de Luiz Estevão, combinaram-se para disputar a licitação, e a execução da obra teve superfaturamento de materiais, pagamentos antecipados e transferências ilícitas para contas no Brasil e no exterior. Uma auditoria constatou que, seis anos após a licitação, só 64% da obra estava pronta, embora toda a verba já tivesse sido liberada. A quebra de sigilos mostrou transferências da Incal para o Grupo OK coincidentes com os pagamentos do tribunal. Os réus negam os desvios.",
     impact: "R$ 169.400.000 desviados em valores de 1998, segundo o MPF, que em 2017 cobrou R$ 1,04 bilhão em ressarcimento, somando o desvio corrigido e danos morais. Em 2012, o Grupo OK firmou acordo de R$ 468 milhões com a AGU e pagou R$ 338 milhões até suspender as parcelas, em março de 2016. Em 2023, a AGU retomou a cobrança de uma dívida de mais de R$ 800 milhões decorrente da condenação no TCU; Luiz Estevão afirma que os valores penhorados já quitam o débito.",
@@ -203,7 +203,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_vampiro": {
     title: "Operação Vampiro",
-    reviewedAt: "2026-11-05",
+    reviewedAt: "2026-11-15",
     context: "Desde o início dos anos 90 a Polícia Federal investigava irregularidades em licitações do Ministério da Saúde. Em 2003, o ministro Humberto Costa pediu averiguação à PF e ao MPF, e as investigações se intensificaram após denúncia de uma fornecedora sobre licitação de hemoderivados. Em maio de 2004 a PF deflagrou a Operação Vampiro e prendeu 17 pessoas, entre servidores, lobistas e empresários.",
     mechanism: "Segundo o MPF, servidores cooptados ocupavam postos estratégicos e facilitavam fraudes nas concorrências em troca de propina, com lobistas ligados a políticos como intermediários. A PF comprovou fraudes em quatro concorrências no primeiro inquérito, e a acusação de 2006 descreve pagamentos em dinheiro vivo e em malas. Em ação de improbidade, o MPF também aponta acordo de divisão do mercado de hemoderivados entre empresários; as defesas contestam as interceptações.",
     impact: "US$ 100 milhões (cerca de R$ 280 milhões) em perdas com hemoderivados, estimativa do procurador Marlon Weichert, do MPF, em dezembro de 2004. O Ministério da Saúde estimou R$ 2 bilhões em 13 anos, valor que a PF não confirmou no primeiro inquérito, e uma reportagem de 2007 cita R$ 120 milhões entre 1997 e 2004 sem indicar quem apurou. A ação de improbidade pede ressarcimento de R$ 27,5 milhões.",

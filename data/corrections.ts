@@ -39,13 +39,56 @@ export interface Correction {
 export const CORRECTIONS: Correction[] = [
   {
     date: '2026-11-15',
+    scheme: 'esquema_trt_sp',
+    kind: 'correcao',
+    summary:
+      'Removidos 19 vínculos que apareciam em duplicidade. Por causa deles, o infográfico de valores somava R$ 2.579.672.000 para o esquema, o dobro dos R$ 1.289.836.000 registrados nos vínculos.',
+    translations: {
+      en: 'Nineteen links that appeared twice have been removed. Because of them, the amounts infographic added up R$ 2,579,672,000 for the scheme, double the R$ 1,289,836,000 recorded in the links.',
+      es: 'Se han eliminado 19 vínculos que aparecían duplicados. Por su causa, la infografía de importes sumaba 2.579.672.000 reales para el esquema, el doble de los 1.289.836.000 reales registrados en los vínculos.',
+    },
+  },
+  {
+    date: '2026-11-15',
     scheme: 'esquema_compra_reeleicao',
     kind: 'correcao',
     summary:
-      'Incluída a negativa de Zila Bezerra, que antes constava como não localizada; fontes de sete vínculos trocadas por páginas da Folha e da Câmara, porque as anteriores não exibem mais o texto.',
+      'Removidos 14 vínculos que apareciam em duplicidade. Por causa deles, o infográfico de valores somava R$ 1.000.000 para o esquema, o dobro dos R$ 500.000 registrados nos vínculos.',
     translations: {
-      en: "Zila Bezerra's denial, previously listed as not found, was added; sources for seven links were replaced with Folha and Chamber of Deputies pages because the previous ones no longer display the text.",
-      es: 'Se incluyó la negativa de Zila Bezerra, que antes figuraba como no localizada; se sustituyeron las fuentes de siete vínculos por páginas de Folha y de la Cámara, porque las anteriores ya no muestran el texto.',
+      en: 'Fourteen links that appeared twice have been removed. Because of them, the amounts infographic added up R$ 1,000,000 for the scheme, double the R$ 500,000 recorded in the links.',
+      es: 'Se han eliminado 14 vínculos que aparecían duplicados. Por su causa, la infografía de importes sumaba 1.000.000 de reales para el esquema, el doble de los 500.000 reales registrados en los vínculos.',
+    },
+  },
+  {
+    date: '2026-11-15',
+    scheme: 'esquema_vampiro',
+    kind: 'correcao',
+    summary:
+      'Passou a constar no dossiê a afirmação de Delúbio Soares, à época, de que o PT recebeu doações de campanha de laboratórios, cerca de R$ 1,5 milhão ou R$ 1,6 milhão, todas declaradas na prestação de contas. Antes, ela aparecia só num vínculo repetido entre Delúbio e o PT, que foi removido.',
+    translations: {
+      en: "Delúbio Soares's statement at the time that the PT had received campaign donations from laboratories, about R$ 1.5 million or R$ 1.6 million, all declared in its campaign accounts, now appears in the dossier. Previously it appeared only in a repeated link between Delúbio and the PT, which has been removed.",
+      es: 'Pasa a figurar en el dosier la afirmación de Delúbio Soares, en su momento, de que el PT recibió donaciones de campaña de laboratorios, unos 1,5 o 1,6 millones de reales, todas declaradas en la rendición de cuentas. Antes solo aparecía en un vínculo repetido entre Delúbio y el PT, que se ha eliminado.',
+    },
+  },
+  {
+    date: '2026-11-15',
+    kind: 'correcao',
+    summary:
+      'Removidos dois vínculos repetidos da filiação de Jair Bolsonaro ao PL. A fonte do vínculo mantido foi trocada por notícia da Agência Brasil de 30 de novembro de 2021 sobre a filiação; a anterior, sobre o escândalo do MEC, não tratava do tema.',
+    translations: {
+      en: "Two repeated links for Jair Bolsonaro's membership of the PL have been removed. The source of the remaining link has been replaced with an Agência Brasil report of 30 November 2021 on his joining the party; the previous one, about the Education Ministry (MEC) scandal, did not cover the subject.",
+      es: 'Se han eliminado dos vínculos repetidos de la afiliación de Jair Bolsonaro al PL. La fuente del vínculo que se mantiene se ha sustituido por una noticia de Agência Brasil del 30 de noviembre de 2021 sobre la afiliación; la anterior, sobre el escándalo del Ministerio de Educación (MEC), no trataba el tema.',
+    },
+  },
+  {
+    date: '2026-11-15',
+    scheme: 'esquema_compra_reeleicao',
+    kind: 'correcao',
+    summary:
+      'Incluída a negativa de Zila Bezerra, que antes constava como não localizada; fontes de sete vínculos trocadas por reportagens da Folha de S.Paulo de maio de 1997 e por uma página da Câmara. As fontes anteriores, do Congresso em Foco, continuam no ar: a primeira versão desta nota dizia, por engano, que elas não exibiam mais o texto.',
+    translations: {
+      en: "Zila Bezerra's denial, previously listed as not found, was added; sources for seven links were replaced with Folha de S.Paulo reports from May 1997 and a Chamber of Deputies page. The previous sources, from Congresso em Foco, are still online: the first version of this note wrongly said they no longer displayed the text.",
+      es: 'Se incluyó la negativa de Zila Bezerra, que antes figuraba como no localizada; se sustituyeron las fuentes de siete vínculos por reportajes de Folha de S.Paulo de mayo de 1997 y por una página de la Cámara. Las fuentes anteriores, de Congresso em Foco, siguen disponibles: la primera versión de esta nota decía, por error, que ya no mostraban el texto.',
     },
   },
   {
