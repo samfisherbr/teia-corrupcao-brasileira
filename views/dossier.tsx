@@ -11,7 +11,8 @@
  * funcionamento, situação jurídica e fontes vêm de data/schemeDetails.ts;
  * a lista "Quem aparece no caso" vem dos vínculos do banco — cada entidade
  * com o papel, o STATUS JURÍDICO, o ano e a FONTE daquele vínculo (é o que
- * sustenta cada citação; no grafo isso só aparece ao clicar numa linha).
+ * sustenta cada citação; no grafo isso só aparece ao clicar numa linha),
+ * agrupada por tipo como as "Conexões Mapeadas" do painel lateral.
  * Sem banco, a página sai só com o dossiê e o título de reserva. Esquema
  * desconhecido → 404.
  *
@@ -92,36 +93,35 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-/** Um vínculo do esquema: quem, com que papel, em que situação e segundo qual fonte. */
+/**
+ * Um vínculo do esquema, no mesmo cartão das "Conexões Mapeadas" do painel
+ * lateral (InspectorDrawer): borda esquerda na cor do tipo, nome + ano no topo
+ * e o papel abaixo. Por ser a página de referência, o texto não é cortado e o
+ * cartão traz ainda a situação jurídica, o valor citado e a fonte do vínculo.
+ */
 function ConnectionItem({ c, t, locale }: { c: SchemeConnection; t: Messages; locale: Locale }) {
-  const Icon = NODE_ICONS[c.entity.type];
+  const typeColor = NODE_STYLE[c.entity.type]?.color ?? FALLBACK_COLOR;
   const st = STATUS_STYLE[c.status];
   const color = st?.color ?? FALLBACK_COLOR;
   const reviewed = formatDate(c.reviewed_at, locale);
   const amount = localizeAmountText(c.amount, locale);
   return (
-    <li className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border font-medium"
-          style={entityChipStyle(c.entity.type)}
-          title={t.nodeType[c.entity.type]?.label}
-        >
-          {Icon && <Icon size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />}
-          <span>
-            {c.entity.label}
-            {c.entity.party ? ` (${c.entity.party})` : ''}
-          </span>
+    <li
+      className="p-3 bg-slate-950 border border-slate-800 border-l-2 rounded-lg space-y-2"
+      style={{ borderLeftColor: typeColor }}
+    >
+      <div className="flex justify-between items-start gap-2">
+        <span className="text-sm font-medium text-slate-200">
+          {c.entity.label}
+          {c.entity.party && c.entity.type === 'politician' && (
+            <span className="ml-1 font-mono text-slate-500">({c.entity.party})</span>
+          )}
         </span>
-        <span
-          className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded border"
-          style={{ backgroundColor: `${color}20`, color, borderColor: `${color}50` }}
-        >
-          {t.status[c.status] ?? c.status}
+        <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 tabular-nums">
+          {c.year || t.common.notAvailable}
         </span>
-        {c.year && <span className="text-[11px] font-mono text-slate-400 tabular-nums">{c.year}</span>}
       </div>
-      {c.relation && <p className="text-sm text-slate-300 leading-relaxed">{c.relation}</p>}
+      {c.relation && <p className="text-sm text-slate-400 leading-relaxed">{c.relation}</p>}
       {amount && (
         <p className="text-xs text-slate-400">
           <span className="font-mono">{t.dossier.amountCited}</span> <span className="text-emerald-400 font-mono">{amount}</span>
@@ -129,6 +129,12 @@ function ConnectionItem({ c, t, locale }: { c: SchemeConnection; t: Messages; lo
         </p>
       )}
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+        <span
+          className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded border"
+          style={{ backgroundColor: `${color}20`, color, borderColor: `${color}50` }}
+        >
+          {t.status[c.status] ?? c.status}
+        </span>
         {c.source_url && (
           <a
             href={c.source_url}
@@ -147,6 +153,49 @@ function ConnectionItem({ c, t, locale }: { c: SchemeConnection; t: Messages; lo
         )}
       </p>
     </li>
+  );
+}
+
+/**
+ * Vínculos agrupados por tipo da entidade (Partidos, Empresas, Políticos…),
+ * com o mesmo cabeçalho de seção do painel lateral: ícone, nome no plural na
+ * cor do tipo e a contagem. `connections` já chega ordenado por tipo.
+ */
+function ConnectionSections({ connections, t, locale }: { connections: SchemeConnection[]; t: Messages; locale: Locale }) {
+  const groups = new Map<NodeType, SchemeConnection[]>();
+  for (const c of connections) {
+    const list = groups.get(c.entity.type);
+    if (list) list.push(c);
+    else groups.set(c.entity.type, [c]);
+  }
+  return (
+    <div className="space-y-4">
+      {[...groups].map(([type, items]) => {
+        const st = NODE_STYLE[type];
+        const Icon = NODE_ICONS[type];
+        const color = st?.color ?? FALLBACK_COLOR;
+        const sectionTitle = t.nodeType[type]?.plural ?? t.inspector.others;
+        return (
+          <section key={type} aria-label={sectionTitle}>
+            <h3
+              className="flex items-center gap-2 mb-2 pb-1.5 border-b text-[11px] font-mono font-semibold uppercase tracking-wider"
+              style={{ color: st?.labelColor ?? '#cbd5e1', borderColor: `${color}40` }}
+            >
+              {Icon && <Icon size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />}
+              <span>{sectionTitle}</span>
+              <span className="ml-auto px-1.5 py-0.5 rounded border text-[10px] leading-none" style={entityChipStyle(type)}>
+                {items.length}
+              </span>
+            </h3>
+            <ul className="space-y-2">
+              {items.map((c) => (
+                <ConnectionItem key={c.key} c={c} t={t} locale={locale} />
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
   );
 }
 
@@ -260,11 +309,7 @@ export default async function DossierView({ locale, slug }: { locale: Locale; sl
         {connections.length > 0 && (
           <Section title={t.dossier.who}>
             <p className="text-xs text-slate-500 leading-relaxed">{t.dossier.whoNote}</p>
-            <ul className="space-y-2">
-              {connections.map((c) => (
-                <ConnectionItem key={c.key} c={c} t={t} locale={locale} />
-              ))}
-            </ul>
+            <ConnectionSections connections={connections} t={t} locale={locale} />
           </Section>
         )}
 
