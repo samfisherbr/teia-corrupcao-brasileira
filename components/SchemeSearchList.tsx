@@ -102,8 +102,12 @@ export default function SchemeSearchList({ items }: { items: SchemeListItem[] })
         <ul className="space-y-3">
           {filtered.map((item) => (
             <li key={item.id}>
+              {/* prefetch={false}: sem isto, cada cartão visível dispara uma requisição
+                  à Function (e ao banco) ao abrir o índice — no plano gratuito, dezenas
+                  de requisições por visita. O dossiê carrega no clique. */}
               <Link
                 href={item.href}
+                prefetch={false}
                 className="block p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-600 transition-colors"
               >
                 <div className="flex items-center gap-2">

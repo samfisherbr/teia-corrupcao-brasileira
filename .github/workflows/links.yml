@@ -10,14 +10,20 @@ on:
     - cron: '17 9 * * 1' # segundas, 09:17 UTC (06:17 em Brasília)
   workflow_dispatch:
 
+# Só lê o código; não escreve nada no repositório.
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
         with:
-          node-version: 20
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
       # Troque o domínio aqui se NEXT_PUBLIC_SITE_DOMAIN mudar.
       - run: node scripts/check-links.mjs --site https://teiadacorrupcao.io

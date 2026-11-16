@@ -1,0 +1,8 @@
+# Como relatar uma falha de segurança na Teia da Corrupção (RFC 9116).
+# Renove a data de "Expires" antes de vencer (no máximo 1 ano à frente).
+Contact: https://github.com/samfisherbr/teia-corrupcao-brasileira/security/advisories/new
+Contact: mailto:teiadacorrupcao@gmail.com
+Expires: 2027-11-16T00:00:00.000Z
+Preferred-Languages: pt, en, es
+Canonical: https://teiadacorrupcao.io/.well-known/security.txt
+Policy: https://github.com/samfisherbr/teia-corrupcao-brasileira/security/policy

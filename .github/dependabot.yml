@@ -1,0 +1,44 @@
+# Dependabot: abre pull requests para atualizar dependências (npm) e as
+# actions dos workflows. Cada PR passa pelo CI e ganha um preview no Pages.
+# As correções de SEGURANÇA também dependem de Settings → Code security →
+# "Dependabot alerts" e "Dependabot security updates" ligados.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    groups:
+      # Atualizações pequenas juntas num PR só.
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Versões novas que exigem migração e testes à parte (não automáticas):
+      # Next 16 não é suportado pelo @cloudflare/next-on-pages; React 19,
+      # Tailwind 4 e TypeScript 7 mudam APIs/configuração.
+      - dependency-name: next
+        update-types: [version-update:semver-major]
+      - dependency-name: react
+        update-types: [version-update:semver-major]
+      - dependency-name: react-dom
+        update-types: [version-update:semver-major]
+      - dependency-name: '@types/react'
+        update-types: [version-update:semver-major]
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
+      - dependency-name: tailwindcss
+        update-types: [version-update:semver-major]
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: America/Sao_Paulo

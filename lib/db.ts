@@ -24,6 +24,7 @@ import {
   linkSelect,
   nodeSelect,
 } from '@/lib/translations';
+import { edgeCachedJson } from '@/lib/edgeCache';
 
 interface D1Result<T> {
   results: T[];
@@ -101,9 +102,27 @@ export function getDB(): D1Database | null {
 }
 
 /**
+ * Por quanto tempo os dados dos dossiês ficam no cache de borda
+ * (lib/edgeCache.ts): até FRESH, sem consultar o banco; depois, até MAX_AGE,
+ * a cópia ainda é entregue enquanto o banco é consultado em segundo plano.
+ */
+const PAGE_CACHE = { freshSeconds: 600, maxAgeSeconds: 3600 } as const;
+
+/** Formato guardado no cache (JSON: sem Map). */
+interface SchemeIndexData {
+  nodes: GraphNode[];
+  years: [string, number][];
+  entityTerms: [string, string[]][];
+}
+
+/**
  * Índice de dossiês: nós do tipo esquema + ano de início de cada um (ano do
  * vínculo datado mais antigo — mesma regra de computeSchemeStartYears em
- * lib/schemes.ts), numa única ida ao banco. Null se o banco não responder.
+ * lib/schemes.ts) + nomes e partidos das entidades ligadas (para a busca).
+ * Uma ida ao banco com duas leituras simples (todos os nós; origem, destino e
+ * ano de todos os vínculos) e o resto calculado aqui — antes, duas junções
+ * com OR liam ~7.400 linhas por visita; agora ~1.000, e só quando o cache vence.
+ * Null se o banco não responder.
  */
 export async function loadSchemeIndex(locale: Locale): Promise<{
   nodes: GraphNode[];
@@ -114,48 +133,43 @@ export async function loadSchemeIndex(locale: Locale): Promise<{
   const db = getDB();
   if (!db) return null;
   try {
-    const [nodesRes, yearsRes, termsRes] = await withLang(locale, (lang) =>
-      db.batch<Row>([
-        db.prepare(`${nodeSelect(lang)} WHERE n.type = 'scheme'`),
-        db.prepare(
-          `SELECT n.id AS id, MIN(CAST(l.year AS INTEGER)) AS start
-             FROM nodes n
-             JOIN links l ON l.source = n.id OR l.target = n.id
-            WHERE n.type = 'scheme' AND l.year IS NOT NULL AND CAST(l.year AS INTEGER) > 0
-            GROUP BY n.id`
-        ),
-        // Busca: o nome em português sempre entra; no outro idioma, o traduzido também.
-        db.prepare(
-          lang
-            ? `SELECT s.id AS id, e.label AS label, e.party AS party, t.label AS label_tr
-                 FROM nodes s
-                 JOIN links l ON l.source = s.id OR l.target = s.id
-                 JOIN nodes e ON e.id = CASE WHEN l.source = s.id THEN l.target ELSE l.source END
-                 LEFT JOIN node_translations t ON t.node_id = e.id AND t.lang = '${lang}'
-                WHERE s.type = 'scheme'`
-            : `SELECT s.id AS id, e.label AS label, e.party AS party
-                 FROM nodes s
-                 JOIN links l ON l.source = s.id OR l.target = s.id
-                 JOIN nodes e ON e.id = CASE WHEN l.source = s.id THEN l.target ELSE l.source END
-                WHERE s.type = 'scheme'`
-        ),
-      ])
+    const data = await edgeCachedJson<SchemeIndexData>(
+      `scheme-index/${locale}`,
+      async () => {
+        const [nodesRes, linksRes] = await withLang(locale, (lang) =>
+          db.batch<Row>([db.prepare(nodeSelect(lang)), db.prepare('SELECT source, target, year FROM links')])
+        );
+        const byId = new Map(nodesRes.results.map((r) => [String(r.id), r]));
+        const isScheme = (id: string) => byId.get(id)?.type === 'scheme';
+        const years = new Map<string, number>();
+        const terms = new Map<string, string[]>();
+
+        // Cada vínculo conta para o(s) esquema(s) nas suas pontas.
+        const visit = (schemeId: string, otherId: string, rawYear: unknown) => {
+          const y = Math.trunc(Number(clean(rawYear)));
+          if (Number.isFinite(y) && y > 0) years.set(schemeId, Math.min(years.get(schemeId) ?? y, y));
+          const other = byId.get(otherId);
+          if (!other) return; // vínculo apontando para id inexistente
+          if (!terms.has(schemeId)) terms.set(schemeId, []);
+          // Busca: o nome em português sempre entra; no outro idioma, o traduzido também.
+          for (const v of [other.label, clean(other._tr_label), clean(other.party)]) if (v) terms.get(schemeId)!.push(String(v));
+        };
+        for (const l of linksRes.results) {
+          const source = String(l.source);
+          const target = String(l.target);
+          if (isScheme(source)) visit(source, target, l.year);
+          if (isScheme(target) && target !== source) visit(target, source, l.year);
+        }
+
+        return {
+          nodes: nodesRes.results.filter((r) => r.type === 'scheme').map(toNode),
+          years: [...years],
+          entityTerms: [...terms],
+        };
+      },
+      PAGE_CACHE
     );
-    const entityTerms = new Map<string, string[]>();
-    for (const r of termsRes.results) {
-      const id = String(r.id);
-      if (!entityTerms.has(id)) entityTerms.set(id, []);
-      for (const v of [r.label, clean(r.label_tr), clean(r.party)]) if (v) entityTerms.get(id)!.push(String(v));
-    }
-    return {
-      nodes: nodesRes.results.map(toNode),
-      years: new Map(
-        yearsRes.results
-          .map((r) => [String(r.id), Number(r.start)] as [string, number])
-          .filter(([, y]) => Number.isFinite(y) && y > 0)
-      ),
-      entityTerms,
-    };
+    return { nodes: data.nodes, years: new Map(data.years), entityTerms: new Map(data.entityTerms) };
   } catch (e) {
     console.error('[lib/db] loadSchemeIndex:', e);
     return null;
@@ -164,8 +178,9 @@ export async function loadSchemeIndex(locale: Locale): Promise<{
 
 /**
  * Esquema e seus vínculos diretos (cada um com a entidade da outra ponta, o
- * status, o ano e a fonte), numa única ida ao banco. Null se o banco não
- * responder.
+ * status, o ano e a fonte), numa única ida ao banco (consultas por índice:
+ * idx_links_source / idx_links_target), guardado no cache de borda. Null se o
+ * banco não responder.
  *
  * `SELECT l.*` (em lib/translations.ts) de propósito: funciona com ou sem as
  * colunas opcionais (reviewed_at, amount_note…) — as que faltarem viram null.
@@ -177,41 +192,48 @@ export async function loadScheme(
   const db = getDB();
   if (!db) return null;
   try {
-    const [self, linksRes, nodesRes] = await withLang(locale, (lang) =>
-      db.batch<Row>([
-        db.prepare(`${nodeSelect(lang)} WHERE n.id = ?1`).bind(id),
-        db.prepare(`${linkSelect(lang)} WHERE l.source = ?1 OR l.target = ?1`).bind(id),
-        db
-          .prepare(
-            `${nodeSelect(lang)} WHERE n.id <> ?1 AND n.id IN (
-               SELECT target FROM links WHERE source = ?1
-               UNION SELECT source FROM links WHERE target = ?1)`
-          )
-          .bind(id),
-      ])
+    // "Não encontrado" (scheme null) não é guardado: um esquema recém-inserido aparece na hora.
+    return await edgeCachedJson(
+      `scheme/${locale}/${encodeURIComponent(id)}`,
+      async () => {
+        const [self, linksRes, nodesRes] = await withLang(locale, (lang) =>
+          db.batch<Row>([
+            db.prepare(`${nodeSelect(lang)} WHERE n.id = ?1`).bind(id),
+            db.prepare(`${linkSelect(lang)} WHERE l.source = ?1 OR l.target = ?1`).bind(id),
+            db
+              .prepare(
+                `${nodeSelect(lang)} WHERE n.id <> ?1 AND n.id IN (
+                   SELECT target FROM links WHERE source = ?1
+                   UNION SELECT source FROM links WHERE target = ?1)`
+              )
+              .bind(id),
+          ])
+        );
+        const byId = new Map(nodesRes.results.map((r) => [String(r.id), toNode(r)]));
+        const connections: SchemeConnection[] = [];
+        for (const raw of linksRes.results) {
+          const r = applyLinkTranslation(raw);
+          const otherId = String(r.source) === id ? String(r.target) : String(r.source);
+          const entity = byId.get(otherId);
+          if (!entity) continue; // vínculo apontando para id inexistente
+          const year = Number(clean(r.year));
+          connections.push({
+            key: String(r.id ?? r._rowid),
+            entity,
+            relation: String(clean(r.relation) ?? ''),
+            type: (clean(r.type) as LinkType | null) ?? null,
+            status: r.status as LinkStatus,
+            year: clean(r.year) !== null && Number.isFinite(year) && year > 0 ? Math.trunc(year) : null,
+            amount: (clean(r.amount) as string | null) ?? null,
+            amount_note: (clean(r.amount_note) as string | null) ?? null,
+            source_url: safeHttpUrl(r.source_url),
+            reviewed_at: (clean(r.reviewed_at) as string | null) ?? null,
+          });
+        }
+        return { scheme: self.results[0] ? toNode(self.results[0]) : null, connections };
+      },
+      { ...PAGE_CACHE, shouldCache: (v) => v.scheme !== null }
     );
-    const byId = new Map(nodesRes.results.map((r) => [String(r.id), toNode(r)]));
-    const connections: SchemeConnection[] = [];
-    for (const raw of linksRes.results) {
-      const r = applyLinkTranslation(raw);
-      const otherId = String(r.source) === id ? String(r.target) : String(r.source);
-      const entity = byId.get(otherId);
-      if (!entity) continue; // vínculo apontando para id inexistente
-      const year = Number(clean(r.year));
-      connections.push({
-        key: String(r.id ?? r._rowid),
-        entity,
-        relation: String(clean(r.relation) ?? ''),
-        type: (clean(r.type) as LinkType | null) ?? null,
-        status: r.status as LinkStatus,
-        year: clean(r.year) !== null && Number.isFinite(year) && year > 0 ? Math.trunc(year) : null,
-        amount: (clean(r.amount) as string | null) ?? null,
-        amount_note: (clean(r.amount_note) as string | null) ?? null,
-        source_url: safeHttpUrl(r.source_url),
-        reviewed_at: (clean(r.reviewed_at) as string | null) ?? null,
-      });
-    }
-    return { scheme: self.results[0] ? toNode(self.results[0]) : null, connections };
   } catch (e) {
     console.error('[lib/db] loadScheme:', e);
     return null;

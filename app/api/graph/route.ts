@@ -13,15 +13,16 @@
  * um deploy de preview (branch/pull request) não enxerga o binding de produção.
  *
  * Em caso de falha, a resposta traz `code` + `error` (mensagem em português
- * com o próximo passo) + `detail` (mensagem original do D1). A página exibe
- * isso na tela, para o problema ser identificável sem abrir os logs.
+ * com o próximo passo). A página exibe isso na tela; a mensagem original do
+ * D1 vai para os logs da Function (não é mostrada ao público).
  *
  * Ajustes comuns:
  *   - colunas devolvidas → normalizeNode / normalizeLink
- *   - tempo de cache     → CACHE_TTL_SECONDS
+ *   - tempo de cache     → CACHE_FRESH_SECONDS / CACHE_MAX_AGE_SECONDS
  */
 import { getRequestContext } from '@cloudflare/next-on-pages';
 import { isLocale } from '@/lib/i18n';
+import { edgeCachedText } from '@/lib/edgeCache';
 import {
   applyLinkTranslation,
   applyNodeTranslation,
@@ -103,34 +104,37 @@ function normalizeLink(raw: Row) {
 }
 
 /**
- * CACHE: a resposta fica guardada por CACHE_TTL_SECONDS no cache de borda do
- * Cloudflare (Cache API) e NUNCA no navegador.
+ * CACHE: o JSON fica no cache de borda do Cloudflare (lib/edgeCache.ts) e
+ * NUNCA no navegador.
  *
- *  - Borda: durante esse tempo as visitas (do mesmo data center) recebem a
- *    cópia sem ir ao banco. Depois de um INSERT/UPDATE no D1, o site leva no
- *    máximo CACHE_TTL_SECONDS para mostrar o dado novo. Para desligar, use 0.
+ *  - Borda: por CACHE_FRESH_SECONDS as visitas (do mesmo data center) recebem a
+ *    cópia sem ir ao banco; depois disso a cópia ainda é entregue na hora e o
+ *    banco é consultado em segundo plano (até CACHE_MAX_AGE_SECONDS). Depois de
+ *    um INSERT/UPDATE no D1, o site mostra o dado novo em poucos minutos.
+ *    No plano gratuito isso é o que segura o limite diário de leituras do D1.
  *  - Navegador: `max-age=0` — sempre pergunta ao servidor. É o que evita o
- *    problema antigo (com stale-while-revalidate, o celular mostrava uma cópia
- *    de até 24 h). Não volte a usar stale-while-revalidate aqui.
+ *    problema antigo (com stale-while-revalidate no navegador, o celular
+ *    mostrava uma cópia de até 24 h). Não use stale-while-revalidate no
+ *    Cache-Control da resposta.
  *
- * Um cabeçalho s-maxage sozinho não basta: respostas de Functions do
- * Cloudflare Pages só entram no cache se gravadas à mão com `caches.default`.
- * Respostas de erro nunca são guardadas.
+ * O cabeçalho `X-Edge-Cache` (hit | stale | miss | bypass) mostra o que
+ * aconteceu, para conferir com `curl -I`. Respostas de erro nunca são guardadas.
  */
-const CACHE_TTL_SECONDS = 60;
-const CACHE_CONTROL =
-  CACHE_TTL_SECONDS > 0 ? `public, max-age=0, s-maxage=${CACHE_TTL_SECONDS}` : 'no-store';
-
-/** Cache de borda do Cloudflare; undefined fora dele (ex.: `next dev`). */
-const edgeCache = (): Cache | undefined =>
-  CACHE_TTL_SECONDS > 0 ? (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default : undefined;
+const CACHE_FRESH_SECONDS = 300;
+const CACHE_MAX_AGE_SECONDS = 3600;
+const CACHE_CONTROL = 'public, max-age=0, must-revalidate';
 
 /** Tipos de falha reconhecidos. O frontend usa `code` para escolher o texto de ajuda. */
 type FailureCode = 'NO_BINDING' | 'NO_TABLES' | 'SCHEMA_MISMATCH' | 'DB_UNAVAILABLE' | 'QUERY_FAILED';
 
+/**
+ * `detail` (mensagem crua do D1) vai só para o log, não para o visitante:
+ * Cloudflare Pages → Deployments → (deploy) → Functions → Real-time logs.
+ */
 function fail(code: FailureCode, error: string, detail?: string) {
+  if (detail) console.error(`[api/graph] ${code}:`, detail);
   return Response.json(
-    { code, error, detail },
+    { code, error },
     { status: code === 'NO_BINDING' || code === 'DB_UNAVAILABLE' ? 503 : 500, headers: { 'Cache-Control': 'no-store' } }
   );
 }
@@ -169,25 +173,7 @@ export async function GET(request: Request) {
   const langParam = new URL(request.url).searchParams.get('lang');
   const lang = dbLang(isLocale(langParam) ? langParam : null);
 
-  // Chave fixa por idioma (só `lang` conhecido entra): /api/graph?x=1 não cria cópias extras.
-  const cache = edgeCache();
-  const cacheKey = new Request(new URL(lang ? `/api/graph?lang=${lang}` : '/api/graph', request.url).toString(), {
-    method: 'GET',
-  });
-  if (cache) {
-    try {
-      const hit = await cache.match(cacheKey);
-      // Cópia nova: os cabeçalhos da resposta guardada são imutáveis.
-      if (hit) return new Response(hit.body, hit);
-    } catch {
-      // Cache indisponível: segue para o banco.
-    }
-  }
-
-  const { env, ctx } = getRequestContext() as unknown as {
-    env: Env;
-    ctx?: { waitUntil(p: Promise<unknown>): void };
-  };
+  const { env } = getRequestContext() as unknown as { env: Env };
   const DB = env.DB;
 
   if (!DB) {
@@ -197,8 +183,8 @@ export async function GET(request: Request) {
     );
   }
 
-  try {
-    // batch = as duas consultas numa única ida ao banco.
+  /** As duas consultas numa única ida ao banco; devolve o JSON pronto. */
+  const load = async () => {
     const query = (l: string | null) => DB.batch<Row>([DB.prepare(nodeSelect(l)), DB.prepare(linkSelect(l))]);
     let nodesRes, linksRes;
     try {
@@ -208,21 +194,20 @@ export async function GET(request: Request) {
       if (!lang || !isMissingTranslationTables(e)) throw e;
       [nodesRes, linksRes] = await query(null);
     }
+    return JSON.stringify({ nodes: nodesRes.results.map(normalizeNode), links: linksRes.results.map(normalizeLink) });
+  };
 
-    const response = Response.json(
-      { nodes: nodesRes.results.map(normalizeNode), links: linksRes.results.map(normalizeLink) },
-      { headers: { 'Cache-Control': CACHE_CONTROL } }
-    );
-    if (cache) {
-      // Grava em segundo plano: a visita não espera o cache.
-      const put = cache.put(cacheKey, response.clone()).catch(() => {});
-      if (ctx?.waitUntil) ctx.waitUntil(put);
-    }
-    return response;
+  try {
+    // Chave fixa por idioma (só `lang` conhecido entra): /api/graph?x=1 não cria cópias extras.
+    const { text, state } = await edgeCachedText(`api-graph/${lang ?? 'pt'}`, load, {
+      freshSeconds: CACHE_FRESH_SECONDS,
+      maxAgeSeconds: CACHE_MAX_AGE_SECONDS,
+    });
+    return new Response(text, {
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': CACHE_CONTROL, 'X-Edge-Cache': state },
+    });
   } catch (error) {
     const raw = error instanceof Error ? `${error.message}${error.cause ? ` (${String(error.cause)})` : ''}` : String(error);
-    // Aparece em Cloudflare Pages → Deployments → (deploy) → Functions → Real-time logs.
-    console.error('[api/graph] Falha na consulta ao D1:', raw);
     return diagnose(raw);
   }
 }

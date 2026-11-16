@@ -1,11 +1,19 @@
-# Checagem automática a cada push e pull request: tipos + build de produção.
-# Um erro de TypeScript ou de build aparece aqui antes de quebrar o deploy do
-# Cloudflare Pages (que faz o próprio build a partir do mesmo commit).
+# Checagem automática de cada pull request e de cada push no main: tipos +
+# build de produção do Cloudflare Pages (o mesmo comando que o Pages roda).
+# Um erro de TypeScript ou de build aparece aqui antes de quebrar o deploy.
+# O nome do job ("build") é o check exigido pela regra do branch main no GitHub
+# (Settings → Rules): se renomear o job, atualize a regra.
 name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+
+# O workflow só lê o código: o token do GitHub Actions não pode escrever nada.
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -16,11 +24,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
         with:
-          node-version: 20
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
-      - run: npm run build
+      # Build do Cloudflare Pages (roda o `next build` por dentro).
+      - run: npx @cloudflare/next-on-pages
+      # Relatório de traduções pendentes: informativo, não reprova o CI
+      # (dossiê sem tradução em dia aparece em português, de propósito).
+      - run: npm run check:translations
+        continue-on-error: true
