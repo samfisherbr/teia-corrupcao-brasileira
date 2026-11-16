@@ -1,5 +1,5 @@
 # Checagem automática de cada pull request e de cada push no main: tipos +
-# build de produção do Cloudflare Pages (o mesmo comando que o Pages roda).
+# lint + build de produção do Worker (o mesmo comando que o Cloudflare roda).
 # Um erro de TypeScript ou de build aparece aqui antes de quebrar o deploy.
 # O nome do job ("build") é o check exigido pela regra do branch main no GitHub
 # (Settings → Rules): se renomear o job, atualize a regra.
@@ -35,8 +35,8 @@ jobs:
       - run: npm run typecheck
       # ESLint: erros reprovam o CI; avisos (ex.: `any` no código do grafo) não.
       - run: npm run lint
-      # Build do Cloudflare Pages (roda o `next build` por dentro).
-      - run: npx @cloudflare/next-on-pages
+      # Build do Worker com o OpenNext (roda o `next build` por dentro).
+      - run: npx opennextjs-cloudflare build
       # Relatório de traduções pendentes: informativo, não reprova o CI
       # (dossiê sem tradução em dia aparece em português, de propósito).
       - run: npm run check:translations

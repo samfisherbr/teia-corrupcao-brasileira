@@ -1,5 +1,5 @@
 # Dependabot: abre pull requests para atualizar dependências (npm) e as
-# actions dos workflows. Cada PR passa pelo CI e ganha um preview no Pages.
+# actions dos workflows. Cada PR passa pelo CI (e o build do Worker).
 # As correções de SEGURANÇA também dependem de Settings → Code security →
 # "Dependabot alerts" e "Dependabot security updates" ligados.
 version: 2
@@ -17,9 +17,8 @@ updates:
       minor-and-patch:
         update-types: [minor, patch]
     ignore:
-      # Versões novas que exigem migração e testes à parte (não automáticas):
-      # Next 16 não é suportado pelo @cloudflare/next-on-pages; React 19,
-      # Tailwind 4 e TypeScript 7 mudam APIs/configuração.
+      # Versões novas que exigem migração e testes à parte (não automáticas).
+      # Atualizadas à mão em 11/2026: Next 16, React 19, Tailwind 4.
       - dependency-name: next
         update-types: [version-update:semver-major]
       - dependency-name: react
@@ -28,11 +27,16 @@ updates:
         update-types: [version-update:semver-major]
       - dependency-name: '@types/react'
         update-types: [version-update:semver-major]
-      - dependency-name: '@types/node'
+      - dependency-name: '@types/react-dom'
         update-types: [version-update:semver-major]
       - dependency-name: tailwindcss
         update-types: [version-update:semver-major]
       - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      # @types/node acompanha a versão do Node do CI (22), não a mais nova.
+      - dependency-name: '@types/node'
         update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions

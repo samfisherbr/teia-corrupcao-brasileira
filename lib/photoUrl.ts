@@ -17,7 +17,7 @@
  *     uma vez por mês; o site tem ~150). Passou do limite: `onerror=redirect`
  *     manda o navegador para a foto original, que continua funcionando.
  *
- * Só no domínio próprio: nos previews (*.pages.dev) e no `next dev` o
+ * Só no domínio próprio: nos endereços *.workers.dev (previews) e no `next dev` o
  * /cdn-cgi/image não existe, e as fotos vêm direto do R2. Quem usa
  * photoUrl() também tenta a original se a versão reduzida falhar.
  * Para desligar de vez: RESIZE_ENABLED = false.

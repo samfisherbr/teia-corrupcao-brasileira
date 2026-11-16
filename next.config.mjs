@@ -4,11 +4,19 @@
  *  - transpilePackages: força o Next a compilar o react-force-graph-2d
  *    (distribuído só como ESM moderno).
  *  - headers: cabeçalhos de segurança em todas as respostas (ver abaixo).
- *  - redirects: o endereço de produção *.pages.dev manda para o domínio próprio.
+ *  - redirects: o endereço de produção *.workers.dev manda para o domínio próprio.
+ *  - initOpenNextCloudflareForDev (no fim): em `next dev`, dá às páginas os
+ *    bindings do wrangler.toml (o D1), como no Worker de verdade.
  */
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
 
-/** Endereço de produção do Cloudflare Pages (o nome do projeto em wrangler.toml). */
-const PAGES_DEV_HOST = 'teia-corrupcao-brasileira.pages.dev';
+
+/**
+ * Endereço de produção do Worker em *.workers.dev: "<name do wrangler.toml>.<subdomínio da conta>.workers.dev".
+ * Expressão regular, para não depender do subdomínio da conta. Não pega as
+ * versões de preview ("<versão>-teiadacorrupcao.<…>.workers.dev").
+ */
+const WORKERS_DEV_HOST = '^teiadacorrupcao\\.[a-z0-9-]+\\.workers\\.dev$';
 const SITE_DOMAIN = process.env.NEXT_PUBLIC_SITE_DOMAIN || 'teiadacorrupcao.io';
 
 /**
@@ -50,17 +58,19 @@ const nextConfig = {
   },
 
   /**
-   * teia-corrupcao-brasileira.pages.dev → teiadacorrupcao.io (301).
+   * teiadacorrupcao.<conta>.workers.dev → teiadacorrupcao.io (301).
    * As regras do WAF (bloqueio de robôs de IA, limite de requisições) só valem
-   * no domínio próprio; sem isto, o endereço *.pages.dev servia o mesmo site
-   * sem essas proteções. Só o endereço EXATO de produção: os previews
-   * (<hash>.teia-corrupcao-brasileira.pages.dev, <branch>.…) continuam abrindo.
+   * no domínio próprio; sem isto, o endereço *.workers.dev serviria o mesmo
+   * site sem essas proteções. Só o endereço de produção: as versões de preview
+   * (<versão>-teiadacorrupcao.<conta>.workers.dev) continuam abrindo.
+   * Enquanto o domínio próprio ainda estiver no projeto Pages antigo, teste
+   * pelos endereços de preview.
    */
   async redirects() {
     return [
       {
         source: '/:path*',
-        has: [{ type: 'host', value: PAGES_DEV_HOST }],
+        has: [{ type: 'host', value: WORKERS_DEV_HOST }],
         destination: `https://${SITE_DOMAIN}/:path*`,
         permanent: true,
       },
@@ -68,4 +78,6 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
+
+initOpenNextCloudflareForDev();

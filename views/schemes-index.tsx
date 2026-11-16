@@ -1,7 +1,7 @@
 /**
  * Índice dos dossiês (/esquemas, /en/esquemas, /es/esquemas): lista de todos
  * os esquemas, cada um com link para a sua página. Renderizado no servidor
- * (runtime edge, lê o D1) — é a porta de entrada dos robôs de busca para os
+ * (Worker do Cloudflare, lê o D1) — é a porta de entrada dos robôs de busca para os
  * dossiês.
  *
  * Lista e contagem = esquemas do BANCO, lidos a cada visita: um caso novo

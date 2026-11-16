@@ -2,7 +2,7 @@
  * Página de dossiê de um esquema (/esquemas/<slug>, /en/esquemas/<slug>,
  * /es/esquemas/<slug> — o slug é o mesmo nos três idiomas).
  *
- * Renderizada no servidor a cada visita (runtime edge, lê o D1), para que o
+ * Renderizada no servidor a cada visita (Worker do Cloudflare, lê o D1), para que o
  * Google e outros robôs leiam o texto inteiro: o grafo da página inicial é
  * desenhado num <canvas> e o Glossário só aparece depois de um clique, então
  * nenhum dos dois é legível para eles.

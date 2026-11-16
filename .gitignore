@@ -1,6 +1,6 @@
 node_modules/
 .next/
-.vercel/
+.open-next/
 .wrangler/
 out/
 next-env.d.ts

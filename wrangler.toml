@@ -1,39 +1,62 @@
 # ============================================================================
-# Configuração do Cloudflare Pages (runtime) — Teia da Corrupção
+# Configuração do Worker do Cloudflare — Teia da Corrupção
 # ============================================================================
-# Com este arquivo no repositório, ELE passa a ser a fonte da verdade das
-# configurações de runtime do projeto: bindings, data e flags de
-# compatibilidade. No painel (Settings) esses campos ficam somente leitura.
-# As configurações de BUILD (comando, pasta de saída, branch) continuam no painel.
+# O site roda num Cloudflare Worker, gerado pelo adaptador OpenNext
+# (@opennextjs/cloudflare) a partir do build do Next.js. Este arquivo é a fonte
+# da verdade do runtime: nome, bindings, data e flags de compatibilidade.
 #
-# Por que existe: o painel só mostrava o binding do ambiente Production, e os
-# deploys de Preview (branches / pull requests) ficavam sem banco
-# ("NO_BINDING"). Tudo que está no nível de cima deste arquivo vale para
-# Production E Preview.
+# Comandos (package.json):
+#   npm run preview  → build + site rodando localmente no runtime do Worker
+#   npm run deploy   → build + publica em produção
+#   npm run upload   → build + envia uma VERSÃO nova sem publicar (preview)
 #
-# Para usar um banco diferente só nos previews, acrescente no final:
-#   [[env.preview.d1_databases]]
-#   binding = "DB"
-#   database_name = "<outro banco>"
-#   database_id = "<id do outro banco>"
-# (d1_databases não é herdado: se sobrescrever num ambiente, repita tudo nele.)
+# Deploy pelo GitHub: Workers & Pages → teiadacorrupcao → Settings → Build
+# (Workers Builds), com "npx opennextjs-cloudflare build" como comando de
+# build e "npx opennextjs-cloudflare deploy" como comando de deploy.
 #
-# Para voltar a gerenciar pelo painel: apague este arquivo e faça um novo
-# deploy; os valores do último deploy ficam editáveis de novo no painel.
+# Até 11/2026 o site rodava no Cloudflare Pages (projeto
+# "teia-corrupcao-brasileira", adaptador next-on-pages, descontinuado). O nome
+# do Worker é outro para não colidir com o do projeto Pages enquanto os dois
+# existirem.
 # ============================================================================
 
-# Nome do projeto no Cloudflare Pages (precisa ser igual ao do painel).
-name = "teia-corrupcao-brasileira"
+name = "teiadacorrupcao"
+main = ".open-next/worker.js"
 
-# Pasta gerada por `npx @cloudflare/next-on-pages` (igual a "Build output" no painel).
-pages_build_output_dir = ".vercel/output/static"
-
-# Copiado de Settings → Runtime → Compatibility date. Mudar a data pode alterar
-# o comportamento do runtime; avance só depois de testar num preview.
+# Mudar a data pode alterar o comportamento do runtime; avance só depois de
+# testar num preview. nodejs_compat é exigido pelo OpenNext.
 compatibility_date = "2026-10-26"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
-# Banco D1 usado pela rota /api/graph (app/api/graph/route.ts lê `env.DB`).
+# Arquivos estáticos (JS/CSS do Next, public/, páginas pré-geradas).
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# O Worker chamando a si mesmo (usado pelo OpenNext em revalidações).
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "teiadacorrupcao"
+
+# Banco D1 lido pelas páginas e por /api/graph (env.DB). Vale para produção e
+# para as versões de preview.
 [[d1_databases]]
 binding = "DB"
 database_name = "corruption_graph_db"
 database_id = "8ef78bfa-f668-40d9-8c30-d2db9dda631a"
+
+# Logs persistentes (console.error de /api/graph etc.) em Workers → Logs.
+[observability]
+enabled = true
+
+# Endereço *.workers.dev ligado para testar antes de mudar o domínio; o
+# next.config.js redireciona o endereço de produção dele para o domínio próprio.
+workers_dev = true
+preview_urls = true
+
+# Domínio próprio. Só descomente DEPOIS de removê-lo do projeto Pages
+# (Workers & Pages → teia-corrupcao-brasileira → Custom domains): um domínio
+# não pode estar nos dois ao mesmo tempo, e o deploy falha.
+# routes = [
+#   { pattern = "teiadacorrupcao.io", custom_domain = true },
+# ]

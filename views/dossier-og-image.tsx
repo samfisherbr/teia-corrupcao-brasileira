@@ -1,6 +1,6 @@
 /**
  * Imagem de compartilhamento de cada dossiê (/esquemas/<slug>), com o título
- * do caso no idioma da página. Gerada sob demanda no runtime edge; o título
+ * do caso no idioma da página. Gerada sob demanda no Worker; o título
  * vem de data/schemeDetails*.ts (sem consulta ao banco). Desenho em lib/ogImage.tsx.
  */
 import { fallbackSchemeTitle, loadSchemeDetails } from '@/lib/dossiers';

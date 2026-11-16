@@ -4,16 +4,18 @@
  * aqui, qualquer falha devolve `null` e a página usa o texto de
  * data/schemeDetails.ts com título de reserva, em vez de quebrar.
  *
- * Só funciona no runtime "edge" do Cloudflare Pages (as páginas que usam
- * este módulo declaram `export const runtime = 'edge'`). Em `next dev` sem
- * o binding, getDB() devolve null.
+ * Só funciona rodando no Cloudflare (Worker do OpenNext, ou `npm run preview`):
+ * o binding vem de getCloudflareContext(). As páginas que usam este módulo
+ * declaram `export const dynamic = 'force-dynamic'`, para nunca serem geradas
+ * no build, sem banco. Em `next dev`, o binding é o do wrangler.toml
+ * (initOpenNextCloudflareForDev, em next.config.js); sem ele, getDB() devolve null.
  *
  * IDIOMA: as funções recebem o idioma da página. Em inglês e espanhol, nomes
  * de esquemas, resumos e descrições dos vínculos vêm das tabelas de tradução
  * (lib/translations.ts); o que não tiver tradução em dia vem em português.
  * Banco sem as tabelas de tradução → tudo em português, sem erro.
  */
-import { getRequestContext } from '@cloudflare/next-on-pages';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import type { GraphNode, LinkStatus, LinkType, NodeType } from '@/types/graph';
 import type { Locale } from '@/lib/i18n';
 import {
@@ -94,10 +96,10 @@ export interface SchemeConnection {
 
 export function getDB(): D1Database | null {
   try {
-    const { env } = getRequestContext() as unknown as { env: { DB?: D1Database } };
+    const { env } = getCloudflareContext() as unknown as { env: { DB?: D1Database } };
     return env.DB ?? null;
   } catch {
-    return null; // fora do Cloudflare (ex.: next dev sem setupDevPlatform)
+    return null; // fora do Cloudflare (ex.: build, ou next dev sem o binding)
   }
 }
 

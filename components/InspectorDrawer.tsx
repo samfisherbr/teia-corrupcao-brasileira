@@ -130,7 +130,7 @@ export default function InspectorDrawer({
             {selectedNode.image_url && brokenImage !== selectedNode.image_url ? (
               // <img> de propósito: a foto já sai redimensionada pelo Cloudflare
               // (lib/photoUrl.ts), com volta ao original se falhar — o <Image> do
-              // Next não tem otimizador no Cloudflare Pages.
+              // Next precisaria de um binding IMAGES à parte no Cloudflare.
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={

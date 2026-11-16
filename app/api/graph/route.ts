@@ -7,10 +7,9 @@
  * português, por falta de tradução ou porque o original mudou depois): é o que
  * a auditoria agendada usa para listar traduções pendentes sem acesso ao banco.
  *
- * Roda no runtime "edge" (exigência do next-on-pages). O binding do banco deve
- * se chamar `DB` e precisa existir nos DOIS ambientes do Cloudflare Pages
- * (Settings → Bindings): Production E Preview. São configurações separadas;
- * um deploy de preview (branch/pull request) não enxerga o binding de produção.
+ * Roda no Worker do Cloudflare (adaptador OpenNext). O binding do banco se
+ * chama `DB` e é declarado no wrangler.toml, que vale para o deploy de
+ * produção e para as versões de preview.
  *
  * Em caso de falha, a resposta traz `code` + `error` (mensagem em português
  * com o próximo passo). A página exibe isso na tela; a mensagem original do
@@ -20,7 +19,7 @@
  *   - colunas devolvidas → normalizeNode / normalizeLink
  *   - tempo de cache     → CACHE_FRESH_SECONDS / CACHE_MAX_AGE_SECONDS
  */
-import { getRequestContext } from '@cloudflare/next-on-pages';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { isLocale } from '@/lib/i18n';
 import { edgeCachedText } from '@/lib/edgeCache';
 import {
@@ -32,7 +31,8 @@ import {
   nodeSelect,
 } from '@/lib/translations';
 
-export const runtime = 'edge';
+// Lê o D1 a cada requisição (o cache fica em lib/edgeCache.ts, não no build).
+export const dynamic = 'force-dynamic';
 
 // Tipagem mínima do D1 (troque por `@cloudflare/workers-types` se preferir
 // adicioná-lo como devDependency).
@@ -129,7 +129,7 @@ type FailureCode = 'NO_BINDING' | 'NO_TABLES' | 'SCHEMA_MISMATCH' | 'DB_UNAVAILA
 
 /**
  * `detail` (mensagem crua do D1) vai só para o log, não para o visitante:
- * Cloudflare Pages → Deployments → (deploy) → Functions → Real-time logs.
+ * Cloudflare → Workers & Pages → teia-corrupcao-brasileira → Logs.
  */
 function fail(code: FailureCode, error: string, detail?: string) {
   if (detail) console.error(`[api/graph] ${code}:`, detail);
@@ -161,7 +161,7 @@ function diagnose(raw: string) {
   if (/database.*(not found|does not exist|deleted)|D1_ERROR.*(not found|unavailable)|could not (route|find)/i.test(raw)) {
     return fail(
       'DB_UNAVAILABLE',
-      'O binding "DB" aponta para um banco D1 que não existe mais. Em Cloudflare Pages → Settings → Bindings, remova o binding antigo e ligue-o ao banco novo (em Production e em Preview).',
+      'O binding "DB" aponta para um banco D1 que não existe mais. Corrija o database_id do binding DB no wrangler.toml e faça um novo deploy.',
       raw
     );
   }
@@ -173,13 +173,13 @@ export async function GET(request: Request) {
   const langParam = new URL(request.url).searchParams.get('lang');
   const lang = dbLang(isLocale(langParam) ? langParam : null);
 
-  const { env } = getRequestContext() as unknown as { env: Env };
+  const { env } = getCloudflareContext() as unknown as { env: Env };
   const DB = env.DB;
 
   if (!DB) {
     return fail(
       'NO_BINDING',
-      'Nenhum banco D1 ligado a este ambiente. Em Cloudflare Pages → Settings → Bindings, adicione um "D1 database" com o nome de variável DB — em Production E em Preview, que são configurações separadas — e faça um novo deploy.'
+      'Nenhum banco D1 ligado a este ambiente. Confira o bloco [[d1_databases]] (binding = "DB") no wrangler.toml e faça um novo deploy.'
     );
   }
 
