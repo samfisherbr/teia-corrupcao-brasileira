@@ -14,10 +14,9 @@
 # (Workers Builds), com "npx opennextjs-cloudflare build" como comando de
 # build e "npx opennextjs-cloudflare deploy" como comando de deploy.
 #
-# Até 11/2026 o site rodava no Cloudflare Pages (projeto
-# "teia-corrupcao-brasileira", adaptador next-on-pages, descontinuado). O nome
-# do Worker é outro para não colidir com o do projeto Pages enquanto os dois
-# existirem.
+# Até 16/11/2026 o site rodava no Cloudflare Pages (projeto
+# "teia-corrupcao-brasileira", adaptador next-on-pages, descontinuado). Por
+# isso o Worker tem outro nome.
 # ============================================================================
 
 name = "teiadacorrupcao"
@@ -33,12 +32,10 @@ compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 workers_dev = true
 preview_urls = true
 
-# Domínio próprio. Só descomente DEPOIS de removê-lo do projeto Pages
-# (Workers & Pages → teia-corrupcao-brasileira → Custom domains): um domínio
-# não pode estar nos dois ao mesmo tempo, e o deploy falha.
-# routes = [
-#   { pattern = "teiadacorrupcao.io", custom_domain = true },
-# ]
+# Domínio próprio, servido por este Worker desde 16/11/2026.
+routes = [
+  { pattern = "teiadacorrupcao.io", custom_domain = true },
+]
 
 # Arquivos estáticos (JS/CSS do Next, public/, páginas pré-geradas).
 [assets]

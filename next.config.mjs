@@ -63,8 +63,6 @@ const nextConfig = {
    * no domínio próprio; sem isto, o endereço *.workers.dev serviria o mesmo
    * site sem essas proteções. Só o endereço de produção: as versões de preview
    * (<versão>-teiadacorrupcao.<conta>.workers.dev) continuam abrindo.
-   * Enquanto o domínio próprio ainda estiver no projeto Pages antigo, teste
-   * pelos endereços de preview.
    */
   async redirects() {
     return [
