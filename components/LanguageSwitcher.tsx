@@ -166,7 +166,7 @@ export default function LanguageSwitcher({
               href={localePath(l, path)}
               hrefLang={LOCALE_INFO[l].tag}
               lang={LOCALE_INFO[l].tag}
-              className="flex items-center gap-2 px-2.5 py-2 rounded text-xs text-slate-300 hover:text-cyan-400 hover:bg-slate-800 focus:outline-none focus-visible:bg-slate-800 focus-visible:text-cyan-400 whitespace-nowrap"
+              className="flex items-center gap-2 px-2.5 py-2 rounded-sm text-xs text-slate-300 hover:text-cyan-400 hover:bg-slate-800 focus:outline-hidden focus-visible:bg-slate-800 focus-visible:text-cyan-400 whitespace-nowrap"
             >
               <Flag locale={l} />
               <span>{LOCALE_INFO[l].name}</span>

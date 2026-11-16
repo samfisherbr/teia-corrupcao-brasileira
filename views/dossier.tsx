@@ -116,7 +116,7 @@ function ConnectionItem({ c, t, locale }: { c: SchemeConnection; t: Messages; lo
             <span className="ml-1 font-mono text-muted">({c.entity.party})</span>
           )}
         </span>
-        <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 tabular-nums">
+        <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-slate-900 text-slate-400 border border-slate-800 tabular-nums">
           {c.year || t.common.notAvailable}
         </span>
       </div>
@@ -129,7 +129,7 @@ function ConnectionItem({ c, t, locale }: { c: SchemeConnection; t: Messages; lo
       )}
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
         <span
-          className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded border"
+          className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-sm border"
           style={badgeStyle(st)}
         >
           {t.status[c.status] ?? c.status}
@@ -182,7 +182,7 @@ function ConnectionSections({ connections, t, locale }: { connections: SchemeCon
             >
               {Icon && <Icon size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />}
               <span>{sectionTitle}</span>
-              <span className="ml-auto px-1.5 py-0.5 rounded border text-[10px] leading-none" style={entityChipStyle(type)}>
+              <span className="ml-auto px-1.5 py-0.5 rounded-sm border text-[10px] leading-none" style={entityChipStyle(type)}>
                 {items.length}
               </span>
             </h3>
@@ -246,19 +246,19 @@ export default async function DossierView({ locale, slug }: { locale: Locale; sl
   ];
 
   return (
-    <div className="h-[100dvh] w-full bg-surface-canvas text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
+    <div className="h-dvh w-full bg-surface-canvas text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(structuredData)} />
       <article className="max-w-3xl mx-auto space-y-8">
         <PageNav locale={locale} path={schemePath(s.id)} links={[{ href: '/esquemas', label: t.dossier.allSchemes }]} />
 
         <header className="space-y-3 border-b border-slate-800 pb-6">
           <span
-            className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded border"
+            className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded-sm border"
             style={entityChipStyle('scheme')}
           >
             {t.nodeType.scheme.label}
           </span>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white break-words">{title}</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white wrap-break-word">{title}</h1>
           {summary && <p className="text-base text-slate-300 leading-relaxed">{summary}</p>}
           {reviewed && details && (
             <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-slate-400">

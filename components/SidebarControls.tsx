@@ -110,7 +110,7 @@ export default function SidebarControls({
               placeholder={t.sidebar.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-surface-field border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-muted focus:outline-none focus:border-cyan-500"
+              className="w-full bg-surface-field border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-muted focus:outline-hidden focus:border-cyan-500"
             />
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function SidebarControls({
               <Calendar className="w-3.5 h-3.5 text-cyan-400" />
               {t.sidebar.startYear}
             </label>
-            <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded">
+            <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded-sm">
               {startYearFilter}
             </span>
           </div>
@@ -247,7 +247,7 @@ export default function SidebarControls({
                     }
                   >
                     <div className="flex items-center space-x-2 truncate">
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: NODE_STYLE.scheme.color }} />
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: NODE_STYLE.scheme.color }} />
                       <span className="font-medium truncate">{scheme.label}</span>
                     </div>
                   </button>

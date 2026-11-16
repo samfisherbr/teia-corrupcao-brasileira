@@ -1,25 +1,78 @@
 /*
  * Estilos globais. A maior parte do visual vem das classes Tailwind nos
- * componentes; aqui ficam só variáveis e classes reutilizadas. Os valores das
- * cores e da fonte vêm de tailwind.config.js (theme()), a fonte única.
+ * componentes; aqui ficam só variáveis e classes reutilizadas. As cores e a fonte
+ * próprias do site são definidas UMA vez, no bloco @theme abaixo (Tailwind 4:
+ * a configuração fica no CSS; não há mais tailwind.config.js).
  *   --bg-color      fundo geral (= surface.canvas = BG_COLOR em NetworkGraph.tsx)
  *   --panel-bg      fundo translúcido dos painéis "vidro" (.glass-panel)
  *   --border-color  borda sutil dos painéis
  */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+/* animate-in / fade-in / slide-in-from-right usados no JSX (substitui o tailwindcss-animate). */
+@import 'tw-animate-css';
+
+/* Tema escuro ativado pela classe `dark` no <html> (como no darkMode: 'class' do v3). */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Tokens de interface — FONTE ÚNICA. Use-os pelas classes (`bg-surface-field`,
+ * `text-muted`, `font-sans`), nunca com hex solto (`bg-[#0e1726]`). No CSS,
+ * pelas variáveis (`var(--color-surface-field)`).
+ * As cores do GRAFO (tipos de entidade, status jurídico, categoria do vínculo)
+ * ficam em lib/graphConfig.ts, porque o canvas e os estilos inline as usam em
+ * JavaScript.
+ */
+@theme {
+  /* Superfícies, da mais funda à mais alta. Aceitam opacidade: `bg-surface-field/95`. */
+  --color-surface-canvas: #080d16; /* fundo da página e do grafo (= BG_COLOR em NetworkGraph.tsx) */
+  --color-surface-sidebar: #090f1b; /* barra lateral e faixa da linha do tempo */
+  --color-surface-drawer: #0c1322; /* painel de detalhes (InspectorDrawer), a 95% */
+  --color-surface-field: #0e1726; /* campos, painéis flutuantes do mapa, menus */
+
+  /*
+   * Texto secundário de baixa ênfase: placeholders, contagens, notas, marcas
+   * de ano. Contraste ≥ 4,5:1 (WCAG AA) em todas as superfícies acima e em
+   * slate-800/900. Substitui text-slate-500 (4,1:1) e o text-slate-600 usado
+   * em texto. slate-600 fica só para desabilitado.
+   */
+  --color-muted: #8090a6;
+
+  /* Inter, carregada por next/font em views/layout.tsx (variável --font-inter). */
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/*
+ * Compatibilidade com o visual do Tailwind 3 (mudanças de padrão do v4):
+ *  - borda sem cor explícita: era gray-200; no v4 seria currentColor;
+ *  - botões: voltam a mostrar a "mãozinha" (no v4 o cursor padrão é a seta).
+ */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 :root {
-  --bg-color: theme('colors.surface.canvas');
-  --panel-bg: theme('colors.surface.field / 85%');
+  --bg-color: var(--color-surface-canvas);
+  --panel-bg: color-mix(in oklab, var(--color-surface-field) 85%, transparent);
   --border-color: rgba(255, 255, 255, 0.08);
 }
 
 html, body {
   background-color: var(--bg-color);
-  color: theme('colors.slate.200');
-  font-family: theme('fontFamily.sans');
+  color: var(--color-slate-200);
+  font-family: var(--font-sans);
   overflow: hidden;
   margin: 0;
   padding: 0;
@@ -47,7 +100,7 @@ html, body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: theme('colors.surface.canvas / 80%');
+  background: color-mix(in oklab, var(--color-surface-canvas) 80%, transparent);
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
@@ -83,13 +136,13 @@ html, body {
   background: linear-gradient(
     to right,
     rgb(var(--timeline-cyan)) var(--pct, 0%),
-    theme('colors.slate.700') var(--pct, 0%)
+    var(--color-slate-700) var(--pct, 0%)
   );
 }
 .timeline-range::-moz-range-track {
   height: 6px;
   border-radius: 9999px;
-  background: theme('colors.slate.700');
+  background: var(--color-slate-700);
 }
 .timeline-range::-moz-range-progress {
   height: 6px;
@@ -106,7 +159,7 @@ html, body {
   margin-top: -6px; /* centraliza na trilha de 6px: (6 − 18) / 2 */
   border-radius: 9999px;
   background: rgb(var(--timeline-cyan));
-  border: 2px solid theme('colors.cyan.50');
+  border: 2px solid var(--color-cyan-50);
   animation: timeline-hum 2.4s ease-in-out infinite;
 }
 .timeline-range::-moz-range-thumb {
@@ -114,17 +167,17 @@ html, body {
   height: 14px;
   border-radius: 9999px;
   background: rgb(var(--timeline-cyan));
-  border: 2px solid theme('colors.cyan.50');
+  border: 2px solid var(--color-cyan-50);
   animation: timeline-hum 2.4s ease-in-out infinite;
 }
 
 /* Contorno de foco para teclado, sem apagar o brilho */
 .timeline-range:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid theme('colors.cyan.50');
+  outline: 2px solid var(--color-cyan-50);
   outline-offset: 3px;
 }
 .timeline-range:focus-visible::-moz-range-thumb {
-  outline: 2px solid theme('colors.cyan.50');
+  outline: 2px solid var(--color-cyan-50);
   outline-offset: 3px;
 }
 

@@ -65,7 +65,7 @@ export default function MobileTimeline({
         {maxYear}
       </span>
 
-      <span className="shrink-0 text-xs font-mono font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded tabular-nums">
+      <span className="shrink-0 text-xs font-mono font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded-sm tabular-nums">
         {startYearFilter}
       </span>
     </div>

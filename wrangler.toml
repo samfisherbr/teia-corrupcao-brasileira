@@ -28,6 +28,18 @@ main = ".open-next/worker.js"
 compatibility_date = "2026-10-26"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
+# Endereço *.workers.dev ligado para testar antes de mudar o domínio; o
+# next.config.js redireciona o endereço de produção dele para o domínio próprio.
+workers_dev = true
+preview_urls = true
+
+# Domínio próprio. Só descomente DEPOIS de removê-lo do projeto Pages
+# (Workers & Pages → teia-corrupcao-brasileira → Custom domains): um domínio
+# não pode estar nos dois ao mesmo tempo, e o deploy falha.
+# routes = [
+#   { pattern = "teiadacorrupcao.io", custom_domain = true },
+# ]
+
 # Arquivos estáticos (JS/CSS do Next, public/, páginas pré-geradas).
 [assets]
 directory = ".open-next/assets"
@@ -48,15 +60,3 @@ database_id = "8ef78bfa-f668-40d9-8c30-d2db9dda631a"
 # Logs persistentes (console.error de /api/graph etc.) em Workers → Logs.
 [observability]
 enabled = true
-
-# Endereço *.workers.dev ligado para testar antes de mudar o domínio; o
-# next.config.js redireciona o endereço de produção dele para o domínio próprio.
-workers_dev = true
-preview_urls = true
-
-# Domínio próprio. Só descomente DEPOIS de removê-lo do projeto Pages
-# (Workers & Pages → teia-corrupcao-brasileira → Custom domains): um domínio
-# não pode estar nos dois ao mesmo tempo, e o deploy falha.
-# routes = [
-#   { pattern = "teiadacorrupcao.io", custom_domain = true },
-# ]

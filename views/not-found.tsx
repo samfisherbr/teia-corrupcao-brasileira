@@ -12,7 +12,7 @@ import { useI18n } from '@/components/I18nProvider';
 export default function NotFound() {
   const { t, href } = useI18n();
   return (
-    <div className="h-[100dvh] w-full bg-surface-canvas text-slate-200 font-sans flex flex-col items-center justify-center gap-4 p-6 text-center">
+    <div className="h-dvh w-full bg-surface-canvas text-slate-200 font-sans flex flex-col items-center justify-center gap-4 p-6 text-center">
       <span className="text-cyan-400 font-mono text-sm">{t.notFound.code}</span>
       <h1 className="text-2xl font-bold text-white">{t.notFound.title}</h1>
       <p className="text-sm text-slate-400 max-w-md leading-relaxed">{t.notFound.body}</p>

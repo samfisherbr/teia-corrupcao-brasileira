@@ -36,7 +36,7 @@ export default async function CorrectionsView({ locale }: { locale: Locale }) {
   }).sort((a, b) => b.date.localeCompare(a.date) || a.i - b.i);
 
   return (
-    <div className="h-[100dvh] w-full bg-surface-canvas text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
+    <div className="h-dvh w-full bg-surface-canvas text-slate-200 font-sans px-4 py-10 sm:px-8 overflow-y-auto select-text">
       <div className="max-w-3xl mx-auto space-y-8">
         <PageNav locale={locale} path="/correcoes" />
 
@@ -58,7 +58,7 @@ export default async function CorrectionsView({ locale }: { locale: Locale }) {
                   <time dateTime={c.date} className="font-bold text-slate-300">
                     {formatDate(c.date, locale) ?? c.date}
                   </time>
-                  <span className="px-2 py-0.5 rounded border border-slate-700 bg-slate-800 text-slate-300 uppercase tracking-wider text-[10px]">
+                  <span className="px-2 py-0.5 rounded-sm border border-slate-700 bg-slate-800 text-slate-300 uppercase tracking-wider text-[10px]">
                     {t.corrections.kind[c.kind]}
                   </span>
                 </div>

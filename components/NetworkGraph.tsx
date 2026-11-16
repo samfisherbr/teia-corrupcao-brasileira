@@ -1650,7 +1650,7 @@ export default function NetworkGraph({
           className={`relative inline-block w-8 h-[18px] rounded-full transition-colors duration-300 ${enabled25d ? 'bg-cyan-500/85' : 'bg-slate-700'}`}
         >
           <span
-            className={`absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-slate-50 shadow transition-transform duration-300 ${enabled25d ? 'translate-x-[14px]' : ''}`}
+            className={`absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-slate-50 shadow-sm transition-transform duration-300 ${enabled25d ? 'translate-x-[14px]' : ''}`}
           />
         </span>
         <span className={enabled25d ? 'text-cyan-200' : 'text-slate-400'}>2.5D</span>
@@ -1661,27 +1661,27 @@ export default function NetworkGraph({
       <div className="flex items-center space-x-1.5 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 shadow-xl">
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}
-          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded-sm transition-colors"
           aria-label={t.graph.zoomIn}
         >
           <Plus className="w-4 h-4" />
         </button>
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() / 1.2, 400)}
-          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded-sm transition-colors"
           aria-label={t.graph.zoomOut}
         >
           <Minus className="w-4 h-4" />
         </button>
         <button
           onClick={() => graphRef.current?.zoomToFit(400, fitPadding)}
-          className="px-2.5 py-1.5 md:py-1 hover:bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-mono rounded transition-colors"
+          className="px-2.5 py-1.5 md:py-1 hover:bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-mono rounded-sm transition-colors"
         >
           {t.graph.recenter}
         </button>
         <button
           onClick={toggleFullscreen}
-          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
+          className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded-sm transition-colors"
           aria-label={t.graph.fullscreen}
         >
           <Maximize className="w-4 h-4" />
@@ -1722,23 +1722,23 @@ export default function NetworkGraph({
                   {t.graph.legalInfo}
                 </div>
                 {/* Só no celular: em telas ≥ 768px o cabeçalho já tem o botão "Dossiês". */}
-                <Link href={href('/esquemas')} className="md:hidden flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                <Link href={href('/esquemas')} className="md:hidden flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
                   <FileText className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
                   <span>{t.graph.menuDossiers}</span>
                 </Link>
-                <Link href={href('/correcoes')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                <Link href={href('/correcoes')} className="flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
                   <RotateCcwClock className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
                   <span>{t.common.correctionsAndUpdates}</span>
                 </Link>
-                <Link href={href('/about')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                <Link href={href('/about')} className="flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
                   <Info className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
                   <span>{t.graph.menuAbout}</span>
                 </Link>
-                <Link href={href('/privacy')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                <Link href={href('/privacy')} className="flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
                   <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
                   <span>{t.common.privacyPolicy}</span>
                 </Link>
-                <Link href={href('/terms')} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                <Link href={href('/terms')} className="flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
                   <Scale className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
                   <span>{t.common.termsOfUse}</span>
                 </Link>

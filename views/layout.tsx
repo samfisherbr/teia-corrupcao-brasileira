@@ -25,7 +25,7 @@ import { I18nProvider } from '@/components/I18nProvider';
 /**
  * Fonte Inter, servida pelo próprio site (next/font baixa os arquivos no build;
  * o navegador não acessa o Google). Expõe a variável --font-inter, que
- * `font-sans` (tailwind.config.js) e app/globals.css usam. `latin` cobre os
+ * `font-sans` (@theme em app/globals.css) e app/globals.css usam. `latin` cobre os
  * acentos do português e do espanhol.
  */
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' });
