@@ -33,6 +33,8 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
+      # ESLint: erros reprovam o CI; avisos (ex.: `any` no código do grafo) não.
+      - run: npm run lint
       # Build do Cloudflare Pages (roda o `next build` por dentro).
       - run: npx @cloudflare/next-on-pages
       # Relatório de traduções pendentes: informativo, não reprova o CI

@@ -52,6 +52,9 @@ export function layoutMetadata(locale: Locale): Metadata {
 export default function LocaleLayout({ locale, children }: { locale: Locale; children: React.ReactNode }) {
   return (
     <html lang={LOCALE_INFO[locale].tag} className={`dark h-full w-full ${inter.variable}`}>
+      {/* <head> no layout raiz é o jeito certo no App Router; a regra
+          no-head-element vale para o Pages Router (_document). */}
+      {/* eslint-disable-next-line @next/next/no-head-element */}
       <head>
         {/* Script do Google AdSense (o código fornecido pelo AdSense). */}
         <script

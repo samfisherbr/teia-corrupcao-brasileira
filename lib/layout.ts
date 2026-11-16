@@ -32,7 +32,7 @@
  */
 import { forceCollide, forceManyBody, forceX, forceY } from 'd3-force';
 import type { GraphLink, GraphNode, NodeType } from '@/types/graph';
-import { NODE_STYLE, getLinkEnds, getNodeRadius } from '@/lib/graphConfig';
+import { getLinkEnds, getNodeRadius } from '@/lib/graphConfig';
 
 /* ---------------------------------------------------------------------------
  * PARÂMETROS AJUSTÁVEIS
@@ -221,7 +221,7 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
   // A ordem é calculada uma vez e reaproveitada enquanto todos os partidos
   // visíveis já estiverem nela: filtros e o slider de ano não reembaralham o
   // núcleo (e não pagam a busca de novo a cada passo).
-  let order = [...parties];
+  const order = [...parties];
   const known = cachedPartyOrder && parties.every((p) => cachedPartyOrder!.includes(p.id));
   if (known) {
     const rank = new Map(cachedPartyOrder!.map((id, i) => [id, i]));

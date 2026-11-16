@@ -36,7 +36,7 @@ export const runtime = 'edge';
 
 // Tipagem mínima do D1 (troque por `@cloudflare/workers-types` se preferir
 // adicioná-lo como devDependency).
-interface D1PreparedStatement {}
+type D1PreparedStatement = object;
 interface D1Database {
   prepare(sql: string): D1PreparedStatement;
   batch<T = Record<string, unknown>>(stmts: D1PreparedStatement[]): Promise<{ results: T[] }[]>;

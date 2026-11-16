@@ -126,7 +126,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
       add(targetId, sourceId);
     });
     return map;
-  }, [graphData.links, t]);
+  }, [graphData.links]);
 
   // ===========================================================================
   // INFOGRÁFICO 1 — RANKING DE CENTRALIDADE POR PARTIDO
