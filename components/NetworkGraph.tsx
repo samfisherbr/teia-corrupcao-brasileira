@@ -28,6 +28,7 @@ import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink } f
 import { createIsoState, depthOf, fullIsoOffset, morphForZoom, project, resolveLifts, setMorph, unprojectGround, zoomForFull25D } from '@/lib/iso';
 import { drawFloor, drawGroundMarks, getGlossSprite, getSphereSprite, SPHERE_PHOTO_INSET } from '@/components/graph25d';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { resizedPhotoUrl } from '@/lib/photoUrl';
 import { useI18n } from '@/components/I18nProvider';
 
 // A biblioteca usa `window`, então só carrega no navegador (ssr: false).
@@ -906,25 +907,32 @@ export default function NetworkGraph({
     urls.forEach((url) => {
       if (imgCacheRef.current.has(url) || pendingRef.current.has(url) || failedRef.current.has(url)) return;
       pendingRef.current.add(url);
-      const img = new Image();
-      img.crossOrigin = 'anonymous'; // necessário para desenhar no canvas sem "contaminá-lo"
-      img.decoding = 'async';
-      img.onload = () => {
-        pendingRef.current.delete(url);
-        const sprite = makePhotoSprite(img);
-        if (!sprite) {
+      // Pede a versão reduzida pelo Cloudflare (lib/photoUrl.ts); se ela falhar
+      // (preview, transformações desligadas), tenta a foto original uma vez.
+      const load = (src: string, fallback: string | null) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous'; // necessário para desenhar no canvas sem "contaminá-lo"
+        img.decoding = 'async';
+        img.onload = () => {
+          pendingRef.current.delete(url);
+          const sprite = makePhotoSprite(img);
+          if (!sprite) {
+            failedRef.current.add(url);
+            return;
+          }
+          imgCacheRef.current.set(url, sprite);
+          requestRedraw();
+        };
+        // Falhou (também a original): fica só o círculo de vidro, e a foto não é pedida de novo.
+        img.onerror = () => {
+          if (fallback) return load(fallback, null);
+          pendingRef.current.delete(url);
           failedRef.current.add(url);
-          return;
-        }
-        imgCacheRef.current.set(url, sprite);
-        requestRedraw();
+        };
+        img.src = src;
       };
-      // Falhou: fica só o círculo de vidro, e a foto não é pedida de novo.
-      img.onerror = () => {
-        pendingRef.current.delete(url);
-        failedRef.current.add(url);
-      };
-      img.src = url;
+      const resized = resizedPhotoUrl(url);
+      load(resized ?? url, resized ? url : null);
     });
   }, [graphData.nodes, graphRef]);
 

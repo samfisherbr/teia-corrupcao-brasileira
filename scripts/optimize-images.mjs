@@ -4,6 +4,11 @@
  * OTIMIZA AS FOTOS DO R2 — `npm run images:optimize` (simulação)
  *                          `npm run images:optimize -- --apply` (executa)
  * ============================================================================
+ * OPCIONAL desde que o site passou a pedir as fotos já reduzidas pelo
+ * Cloudflare (lib/photoUrl.ts, Image Transformations): fotos novas podem ser
+ * enviadas em qualquer tamanho. Este script continua útil para encolher o
+ * próprio arquivo no R2 (ex.: se as transformações forem desligadas).
+ *
  * As fotos dos nós ficam no bucket R2 `teia-imagens` (img.teiadacorrupcao.io)
  * e o grafo baixa TODAS ao abrir a página inicial. Fotos enviadas no tamanho
  * original (até 2,5 MB cada) somavam ~23 MB por visita. O grafo desenha cada

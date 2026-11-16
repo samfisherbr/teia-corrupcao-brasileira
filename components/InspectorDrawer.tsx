@@ -27,6 +27,7 @@ import { useI18n } from '@/components/I18nProvider';
 import { GraphNode, GraphLink, GraphData, NodeType, LinkStatus, LinkType } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, LINK_TYPE_STYLE, FALLBACK_COLOR, getLinkEnds, getLinkKey, entityChipStyle, badgeStyle } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
+import { resizedPhotoUrl } from '@/lib/photoUrl';
 
 /** Ordem das seções de conexões = ordem da legenda do grafo. */
 const SECTION_ORDER = Object.keys(NODE_STYLE) as NodeType[];
@@ -59,6 +60,8 @@ export default function InspectorDrawer({
   const { t, locale, href } = useI18n();
   const nodeById = React.useMemo(() => new Map(fullNodes.map((n) => [n.id, n])), [fullNodes]);
   const [brokenImage, setBrokenImage] = React.useState<string | null>(null);
+  // Foto cuja versão reduzida (lib/photoUrl.ts) falhou: mostra a original.
+  const [resizeFailed, setResizeFailed] = React.useState<string | null>(null);
 
   // Conexões da entidade selecionada, agrupadas pelo tipo da outra ponta.
   const connectionSections = React.useMemo(() => {
@@ -126,11 +129,19 @@ export default function InspectorDrawer({
           <div className="flex items-start space-x-4">
             {selectedNode.image_url && brokenImage !== selectedNode.image_url ? (
               <img
-                src={selectedNode.image_url}
+                src={
+                  (resizeFailed !== selectedNode.image_url && resizedPhotoUrl(selectedNode.image_url)) ||
+                  selectedNode.image_url
+                }
                 alt={selectedNode.label}
                 loading="lazy"
                 referrerPolicy="no-referrer"
-                onError={() => setBrokenImage(selectedNode.image_url)}
+                onError={(e) => {
+                  const original = selectedNode.image_url!;
+                  // 1ª falha na versão reduzida → tenta a original; falha na original → sem foto.
+                  if (e.currentTarget.src !== original && resizeFailed !== original) setResizeFailed(original);
+                  else setBrokenImage(original);
+                }}
                 className="w-16 h-16 rounded-xl object-cover border border-slate-700 shadow-md flex-shrink-0"
               />
             ) : (
