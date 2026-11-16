@@ -1621,7 +1621,7 @@ export default function NetworkGraph({
 
       {/* CANTO INFERIOR ESQUERDO — interruptor 2.5D em cima, controles de câmera
           embaixo, os dois na mesma margem esquerda. */}
-      <div className="absolute bottom-6 left-4 md:left-6 z-20 flex flex-col items-start gap-2 select-none">
+      <div data-ad-avoid="left" className="absolute bottom-6 left-4 md:left-6 z-20 flex flex-col items-start gap-2 select-none">
       {/* INTERRUPTOR 2.5D — liga/desliga a transição para 2.5D ao aproximar
           (ver MODO 2.5D no topo do arquivo). Não fica salvo entre visitas. */}
       <button
@@ -1692,8 +1692,10 @@ export default function NetworkGraph({
           Posição (bottom-6) e altura do botão iguais às dos controles de câmera,
           para os dois ficarem alinhados na base: o py-3.5/md:py-3 do botão
           reproduz a altura da caixa de câmera (46px no celular, 42px no desktop).
-          Se mudar o padding de um, mude o do outro. */}
-      <div className="absolute bottom-6 right-4 md:right-6 z-20 flex flex-col items-end gap-2">
+          Se mudar o padding de um, mude o do outro.
+          data-ad-avoid (aqui e no canto esquerdo): o anúncio da base (AdBanner)
+          se centraliza no espaço ENTRE esses dois grupos e só aparece se couber. */}
+      <div data-ad-avoid="right" className="absolute bottom-6 right-4 md:right-6 z-20 flex flex-col items-end gap-2">
         <LanguageSwitcher path="/" variant="floating" className="sm:hidden" />
 
         <div ref={legalMenuRef} className="flex flex-col items-end">
