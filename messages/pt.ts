@@ -242,7 +242,9 @@ export const pt = {
     mechanism: 'Funcionamento do esquema',
     who: 'Quem aparece no caso: papel, situação jurídica e fonte',
     whoNote:
-      'Cada item é um vínculo documentado com o esquema, com a situação jurídica daquele vínculo. Investigação ou denúncia não equivale a condenação, e anulação de condenação não equivale a absolvição.',
+      'Cada item é uma pessoa, empresa ou partido ligado ao esquema. Quando há mais de um fato documentado, eles aparecem em ordem cronológica, cada um com a sua situação jurídica e a sua fonte. Investigação ou denúncia não equivale a condenação, e anulação de condenação não equivale a absolvição.',
+    /** Quantos fatos (vínculos) a entidade tem no esquema; só aparece com 2 ou mais. */
+    factsCount: (n: number) => `${n} fatos`,
     amountCited: 'Valor citado:',
     source: 'Fonte:',
     statusCheckedOn: 'Situação conferida em',

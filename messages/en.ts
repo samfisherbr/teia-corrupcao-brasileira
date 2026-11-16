@@ -220,7 +220,9 @@ export const en: Messages = {
     mechanism: 'How the scheme worked',
     who: 'Who appears in the case: role, legal status and source',
     whoNote:
-      'Each item is a documented link to the scheme, shown with the legal status of that link. An investigation or a charge is not a conviction, and the annulment of a conviction is not an acquittal.',
+      'Each item is a person, company or party linked to the scheme. When more than one fact is documented, they are listed in chronological order, each with its own legal status and source. An investigation or a charge is not a conviction, and the annulment of a conviction is not an acquittal.',
+    /** Quantos fatos (vínculos) a entidade tem no esquema; só aparece com 2 ou mais. */
+    factsCount: (n: number) => `${n} facts`,
     amountCited: 'Amount cited:',
     source: 'Source:',
     statusCheckedOn: 'Status checked on',
