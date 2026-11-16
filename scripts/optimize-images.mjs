@@ -22,8 +22,10 @@
  *   - `npm i --no-save sharp` (biblioteca de imagens; fora do package.json para
  *     não pesar no build do Pages);
  *   - acesso à API do Cloudflare: variável CLOUDFLARE_API_TOKEN com permissão
- *     de D1 Edit e R2 Edit nesta conta (nas sessões do Claude Code na nuvem o
- *     proxy já autentica as chamadas a api.cloudflare.com).
+ *     de D1 Edit e R2 Edit nesta conta. Nas sessões do Claude Code na nuvem o
+ *     proxy já autentica as chamadas a api.cloudflare.com, mas o fetch do Node
+ *     só passa pelo proxy com NODE_USE_ENV_PROXY=1:
+ *       NODE_USE_ENV_PROXY=1 npm run images:optimize -- --apply
  *
  * FOTO NOVA (para quem insere dados): prefira já enviar ao R2 em .webp ≤ 256 px
  * com `Cache-Control: public, max-age=2592000`; ou rode este script depois.
