@@ -478,6 +478,8 @@ export default function NetworkGraph({
     // "pularia" para o que passasse por baixo dele.
     suppressHoverUntilRef.current = Date.now() + SWITCH_ANIM_MS + 300;
     clearHoverRef.current();
+    // Um enquadramento de seleção em andamento disputaria a câmera com esta animação.
+    cancelFocusAnim();
     const next = !enabled25dRef.current;
     enabled25dRef.current = next;
     setEnabled25d(next);
@@ -519,7 +521,7 @@ export default function NetworkGraph({
       if (t < 1) switchAnimRef.current = requestAnimationFrame(step);
     };
     switchAnimRef.current = requestAnimationFrame(step);
-  }, [requestFrame, graphRef, applyMorph]);
+  }, [requestFrame, graphRef, applyMorph, cancelFocusAnim]);
 
   useEffect(() => () => {
     cancelAnimationFrame(switchAnimRef.current);
@@ -1286,6 +1288,8 @@ export default function NetworkGraph({
    *       a da frente cobrir a de trás) e, por cima de tudo, os rótulos.
    *     Ordem completa: chão → sombras → linhas (biblioteca) → esferas → rótulos.
    * ----------------------------------------------------------------------- */
+  const groundMarksRef = useRef<{ x: number; y: number; z: number; r: number; color: string; alpha: number }[]>([]);
+  const depthOrderRef = useRef<any[]>([]);
   const renderFramePre = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     const st = isoRef.current;
     const { width, height } = dimensionsRef.current;
@@ -1301,37 +1305,39 @@ export default function NetworkGraph({
     if (!on) return;
     const spreadK = (SPREAD_25D - 1) * st.m;
     drawFloor(ctx, st, globalScale, { x: spreadCentreRef.current.x, y: spreadCentreRef.current.y, k: spreadK });
-    drawGroundMarks(
-      ctx,
-      st,
-      globalScale,
-      graphData.nodes
-        .filter((n: any) => typeof n.x === 'number')
-        .map((n: any) => {
-          const [x, y] = spreadXY(n);
-          return {
-          x,
-          y,
-          z: nodeLift(n),
-          r: getNodeRadius(n.type, n),
-          color: NODE_STYLE[n.type as NodeType]?.color ?? FALLBACK_COLOR,
-          alpha: nodeAlpha(n, globalScale) * (isNodeLit(n.id) ? 1 : 0.6),
-          };
-        }),
-    );
+    // Reaproveita os mesmos objetos a cada quadro (sem lixo para o coletor).
+    const marks = groundMarksRef.current;
+    let count = 0;
+    for (const n of graphData.nodes as any[]) {
+      if (typeof n.x !== 'number') continue;
+      const [x, y] = spreadXY(n);
+      const it = marks[count] ?? (marks[count] = { x: 0, y: 0, z: 0, r: 0, color: '', alpha: 0 });
+      it.x = x;
+      it.y = y;
+      it.z = nodeLift(n);
+      it.r = getNodeRadius(n.type, n);
+      it.color = NODE_STYLE[n.type as NodeType]?.color ?? FALLBACK_COLOR;
+      it.alpha = nodeAlpha(n, globalScale) * (isNodeLit(n.id) ? 1 : 0.6);
+      count++;
+    }
+    marks.length = count;
+    drawGroundMarks(ctx, st, globalScale, marks);
   }, [graphData.nodes, nodeAlpha, isNodeLit, applyMorph, spreadXY]);
 
   const renderFramePost = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     const st = isoRef.current;
     if (st.m > 0) {
-      const sorted = graphData.nodes
-        .filter((n: any) => typeof n.x === 'number')
-        .map((n: any) => {
-          const [x, y] = spreadXY(n);
-          return { n, d: depthOf(st, x, y, nodeLift(n)) };
-        })
-        .sort((a, b) => a.d - b.d);
-      for (const { n } of sorted) {
+      // Profundidade guardada no próprio nó e lista reaproveitada entre quadros.
+      const order = depthOrderRef.current;
+      order.length = 0;
+      for (const n of graphData.nodes as any[]) {
+        if (typeof n.x !== 'number') continue;
+        const [x, y] = spreadXY(n);
+        n.__depth = depthOf(st, x, y, nodeLift(n));
+        order.push(n);
+      }
+      order.sort((a, b) => a.__depth - b.__depth);
+      for (const n of order) {
         const [x, y] = pos(n);
         drawNodeAt(n, ctx, globalScale, x, y, st.m);
       }

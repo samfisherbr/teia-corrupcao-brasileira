@@ -19,7 +19,7 @@ export const CONTACT_EMAIL = 'teiadacorrupcao@gmail.com';
  * Data (AAAA-MM-DD) da última revisão dos textos legais — atualize ao mudá-los.
  * As páginas escrevem a data por extenso no idioma de cada uma.
  */
-export const LEGAL_LAST_UPDATED = '2026-11-03';
+export const LEGAL_LAST_UPDATED = '2026-11-16';
 
 /**
  * ID de editor do Google AdSense (público: aparece no HTML de toda página).

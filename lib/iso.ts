@@ -46,6 +46,8 @@ export const zoomForFull25D = (viewMin: number) => viewMin / SPAN_FULL;
 
 /** m (0..1) para um zoom e o menor lado da tela, com curva suave nas pontas. */
 export function morphForZoom(k: number, viewMin: number): number {
+  // Contêiner sem tamanho (oculto) ou zoom inválido: fica no 2D (evita NaN).
+  if (!(viewMin > 0) || !(k > 0)) return 0;
   const k0 = viewMin / SPAN_FLAT;
   const k1 = viewMin / SPAN_FULL;
   const t = Math.min(1, Math.max(0, (k - k0) / (k1 - k0)));
@@ -89,7 +91,7 @@ export function unprojectGround(st: IsoState, px: number, py: number): [number, 
  * em coordenadas do espaço projetado (as da biblioteca). Devolve true se mudou.
  */
 export function setMorph(st: IsoState, mRaw: number, cx: number, cy: number): boolean {
-  const m = mRaw < M_EPS ? 0 : mRaw;
+  const m = !Number.isFinite(mRaw) || mRaw < M_EPS ? 0 : Math.min(1, mRaw);
   if (m === st.m) return false;
   const [vx, vy] = unprojectGround(st, cx, cy);
   const M = matrixFor(m);

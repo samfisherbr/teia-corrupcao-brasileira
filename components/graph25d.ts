@@ -184,6 +184,8 @@ export function drawFloor(
     minX = Math.min(minX, gx); maxX = Math.max(maxX, gx);
     minY = Math.min(minY, gy); maxY = Math.max(maxY, gy);
   }
+  // Projeção degenerada (não deveria acontecer): não desenha, em vez de laçar sem fim.
+  if (![minX, maxX, minY, maxY].every(Number.isFinite)) return;
   let step = GRID_STEP;
   while ((maxX - minX) / step > GRID_MAX_LINES || (maxY - minY) / step > GRID_MAX_LINES) step *= 2;
   const major = step * GRID_MAJOR_EVERY;

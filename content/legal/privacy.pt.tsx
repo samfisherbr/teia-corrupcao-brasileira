@@ -33,11 +33,13 @@ export default function PrivacyPt() {
       <section className="space-y-3 border-t border-slate-800/80 pt-6">
         <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
           <Cookie className="w-4 h-4 text-cyan-400" />
-          2. Cookies e publicidade de terceiros (Google AdSense)
+          2. Cookies, armazenamento local e publicidade de terceiros (Google AdSense)
         </h2>
         <p>
-          A {SITE_NAME} pode usar cookies para guardar preferências de navegação e para exibir anúncios. Os cookies de
-          publicidade são definidos por terceiros, conforme abaixo.
+          A {SITE_NAME} pode usar cookies e o armazenamento local do navegador (localStorage) para guardar
+          preferências de navegação — por exemplo, se a visão 2.5D do grafo fica ligada ou desligada — e cookies para
+          exibir anúncios. Essas preferências ficam somente no seu aparelho: não são enviadas a nenhum servidor nem
+          usadas para identificar você. Os cookies de publicidade são definidos por terceiros, conforme abaixo.
         </p>
         <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-3 text-xs text-slate-300">
           <p className="font-semibold text-slate-100 uppercase tracking-wider font-mono text-[11px]">
@@ -90,8 +92,9 @@ export default function PrivacyPt() {
           notícias e tribunais). Recomendamos consultar as políticas de privacidade desses serviços.
         </p>
         <p>
-          Você pode desativar os cookies nas configurações do seu navegador. Instruções específicas estão disponíveis
-          nos sites de cada navegador.
+          Você pode desativar os cookies e apagar os dados guardados pelo site no seu aparelho (inclusive o
+          armazenamento local) nas configurações do seu navegador. Instruções específicas estão disponíveis nos sites
+          de cada navegador.
         </p>
       </section>
 

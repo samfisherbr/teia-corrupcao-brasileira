@@ -41,11 +41,14 @@ export default function PrivacyEs() {
       <section className="space-y-3 border-t border-slate-800/80 pt-6">
         <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
           <Cookie className="w-4 h-4 text-cyan-400" />
-          2. Cookies y publicidad de terceros (Google AdSense)
+          2. Cookies, almacenamiento local y publicidad de terceros (Google AdSense)
         </h2>
         <p>
-          {SITE_NAME} puede utilizar cookies para guardar preferencias de navegación y para mostrar anuncios. Las
-          cookies de publicidad las establecen terceros, como se indica a continuación.
+          {SITE_NAME} puede utilizar cookies y el almacenamiento local del navegador (localStorage) para guardar
+          preferencias de navegación — por ejemplo, si la vista 2.5D del grafo está activada o desactivada — y cookies
+          para mostrar anuncios. Estas preferencias permanecen solo en su dispositivo: no se envían a ningún servidor ni
+          se utilizan para identificarle. Las cookies de publicidad las establecen terceros, como se indica a
+          continuación.
         </p>
         <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-3 text-xs text-slate-300">
           <p className="font-semibold text-slate-100 uppercase tracking-wider font-mono text-[11px]">
@@ -98,8 +101,9 @@ export default function PrivacyEs() {
           portales de noticias y tribunales). Recomendamos consultar las políticas de privacidad de esos servicios.
         </p>
         <p>
-          Puede desactivar las cookies en la configuración de su navegador. Las instrucciones específicas están
-          disponibles en el sitio web de cada navegador.
+          Puede desactivar las cookies y borrar los datos que el sitio guarda en su dispositivo (incluido el
+          almacenamiento local) en la configuración de su navegador. Las instrucciones específicas están disponibles en
+          el sitio web de cada navegador.
         </p>
       </section>
 

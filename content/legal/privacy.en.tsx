@@ -40,11 +40,13 @@ export default function PrivacyEn() {
       <section className="space-y-3 border-t border-slate-800/80 pt-6">
         <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
           <Cookie className="w-4 h-4 text-cyan-400" />
-          2. Cookies and third-party advertising (Google AdSense)
+          2. Cookies, local storage and third-party advertising (Google AdSense)
         </h2>
         <p>
-          {SITE_NAME} may use cookies to store browsing preferences and to display advertisements. Advertising cookies
-          are set by third parties, as described below.
+          {SITE_NAME} may use cookies and the browser&apos;s local storage (localStorage) to store browsing
+          preferences — for example, whether the graph&apos;s 2.5D view is switched on or off — and cookies to display
+          advertisements. These preferences stay on your device only: they are not sent to any server or used to
+          identify you. Advertising cookies are set by third parties, as described below.
         </p>
         <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-3 text-xs text-slate-300">
           <p className="font-semibold text-slate-100 uppercase tracking-wider font-mono text-[11px]">
@@ -97,8 +99,8 @@ export default function PrivacyEn() {
           and courts). We recommend consulting the privacy policies of those services.
         </p>
         <p>
-          You can disable cookies in your browser settings. Specific instructions are available on each browser&apos;s
-          website.
+          You can disable cookies and clear the data the site stores on your device (including local storage) in your
+          browser settings. Specific instructions are available on each browser&apos;s website.
         </p>
       </section>
 
