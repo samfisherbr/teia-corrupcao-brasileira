@@ -1473,6 +1473,33 @@ export default function NetworkGraph({
   );
 
   /* -------------------------------------------------------------------------
+   * 8d. MENU "TERMOS & PRIVACIDADE" — abre/fecha com clique no botão. Aberto,
+   *     um clique/toque em qualquer lugar fora do botão e da lista o fecha
+   *     (o clique segue normalmente para o que estiver embaixo, ex.: o grafo),
+   *     assim como Esc (devolvendo o foco ao botão).
+   * ----------------------------------------------------------------------- */
+  const [legalOpen, setLegalOpen] = useState(false);
+  const legalMenuRef = useRef<HTMLDivElement>(null);
+  const legalButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!legalOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!legalMenuRef.current?.contains(e.target as Node)) setLegalOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setLegalOpen(false);
+      legalButtonRef.current?.focus();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [legalOpen]);
+
+  /* -------------------------------------------------------------------------
    * 9. TELA CHEIA — protegido para iOS Safari (sem API) e promessas rejeitadas
    * ----------------------------------------------------------------------- */
   const toggleFullscreen = () => {
@@ -1654,8 +1681,10 @@ export default function NetworkGraph({
 
           1. SELETOR DE IDIOMA (só no celular, < 640px; em telas maiores ele fica
              no cabeçalho). Fica logo acima do botão "Termos & Privacidade".
-          2. MENU LEGAL — abre com o mouse (hover) e também com toque/teclado
-             (focus-within). A lista de links abre ENTRE o botão e o seletor de
+          2. MENU LEGAL — abre e fecha com clique/toque no botão (igual no
+             desktop e no celular); também fecha com clique/toque fora do botão
+             e da lista, com Esc ou ao escolher um link (ver legalOpen).
+             A lista de links abre ENTRE o botão e o seletor de
              idioma e ocupa espaço de verdade (a altura anima de 0 até o tamanho
              dela, via grid-rows 0fr → 1fr), então o seletor sobe junto e
              continua visível com o menu aberto — sem altura fixa no código.
@@ -1667,10 +1696,14 @@ export default function NetworkGraph({
       <div className="absolute bottom-6 right-4 md:right-6 z-20 flex flex-col items-end gap-2">
         <LanguageSwitcher path="/" variant="floating" className="sm:hidden" />
 
-        <div className="group flex flex-col items-end">
-          <div className="grid grid-rows-[0fr] opacity-0 group-hover:grid-rows-[1fr] group-hover:opacity-100 group-focus-within:grid-rows-[1fr] group-focus-within:opacity-100 transition-all duration-200">
+        <div ref={legalMenuRef} className="flex flex-col items-end">
+          {/* Fechada: altura 0, transparente e `invisible` (fora do Tab e do clique). */}
+          <div
+            id="legal-menu"
+            className={`grid transition-all duration-200 ${legalOpen ? 'grid-rows-[1fr] opacity-100 visible' : 'grid-rows-[0fr] opacity-0 invisible'}`}
+          >
             <div className="overflow-hidden min-h-0">
-              <div className="mb-2 w-52 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl flex flex-col space-y-1 text-xs">
+              <div onClick={() => setLegalOpen(false)} className="mb-2 w-52 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg p-2 shadow-2xl flex flex-col space-y-1 text-xs">
                 <div className="px-2 py-1 text-[10px] font-mono text-muted uppercase tracking-wider border-b border-slate-800/80 mb-1">
                   {t.graph.legalInfo}
                 </div>
@@ -1700,13 +1733,18 @@ export default function NetworkGraph({
           </div>
 
           <button
-            className="flex items-center space-x-2 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-3.5 md:py-3 text-xs leading-4 text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none"
+            ref={legalButtonRef}
+            type="button"
+            onClick={() => setLegalOpen((o) => !o)}
+            className={`flex items-center space-x-2 bg-surface-field/95 backdrop-blur-md border rounded-lg px-3 py-3.5 md:py-3 text-xs leading-4 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none ${legalOpen ? 'text-cyan-400 border-slate-700/80' : 'text-slate-300 border-slate-800'}`}
             aria-label={t.graph.legalMenuAria}
             aria-haspopup="true"
+            aria-expanded={legalOpen}
+            aria-controls="legal-menu"
           >
             <FileText className="w-4 h-4 text-cyan-400" />
             <span className="font-mono text-xs hidden sm:inline">{t.graph.termsAndPrivacy}</span>
-            <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 group-focus-within:rotate-180 transition-transform duration-200" />
+            <ChevronUp className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${legalOpen ? 'rotate-180' : ''}`} />
           </button>
         </div>
       </div>
