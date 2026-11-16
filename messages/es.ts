@@ -111,6 +111,7 @@ export const es: Messages = {
     menuAbout: 'Quiénes somos',
     legalMenuAria: 'Menú de páginas legales',
     termsAndPrivacy: 'Términos y privacidad',
+    toggle25dAria: 'Vista 2.5D al acercar',
   },
 
   inspector: {

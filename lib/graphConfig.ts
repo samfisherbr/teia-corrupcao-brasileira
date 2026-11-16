@@ -21,6 +21,8 @@ import type { GraphLink, GraphNode, LinkStatus, LinkType, NodeType } from '@/typ
  *  - labelPx    tamanho do rótulo em PIXELS DE TELA (não muda com o zoom)
  *  - minZoom    zoom mínimo para o rótulo aparecer (0 = sempre). Valores menores
  *               mostram o rótulo mais cedo ao afastar a câmera.
+ *  - lift       altura (unidades do grafo) em que a esfera flutua no modo 2.5D
+ *               (lib/iso.ts). Partidos ficam no chão; esquemas, no alto.
  *
  * Os NOMES de cada tipo ("Partido", "Party"…) ficam nos textos de cada idioma:
  * `nodeType` em messages/pt.ts, en.ts e es.ts. A ordem das chaves aqui é a
@@ -31,13 +33,13 @@ import type { GraphLink, GraphNode, LinkStatus, LinkType, NodeType } from '@/typ
  */
 export const NODE_STYLE: Record<
   NodeType,
-  { color: string; radius: number; labelColor: string; labelPx: number; minZoom: number }
+  { color: string; radius: number; labelColor: string; labelPx: number; minZoom: number; lift: number }
 > = {
-  scheme:     { color: '#ff00c8', radius: 100, labelColor: '#ff5ce0', labelPx: 13, minZoom: 0 },
-  party:      { color: '#4b48ff', radius: 70,  labelColor: '#a5a3ff', labelPx: 12, minZoom: 0.12 },
-  company:    { color: '#878787', radius: 70,  labelColor: '#c4c4c4', labelPx: 11, minZoom: 0.3 },
-  politician: { color: '#00eeff', radius: 40,  labelColor: '#a5f3fc', labelPx: 11, minZoom: 0.45 },
-  operator:   { color: '#ffffff', radius: 40,  labelColor: '#e2e8f0', labelPx: 11, minZoom: 0.45 },
+  scheme:     { color: '#ff00c8', radius: 100, labelColor: '#ff5ce0', labelPx: 13, minZoom: 0,    lift: 260 },
+  party:      { color: '#4b48ff', radius: 70,  labelColor: '#a5a3ff', labelPx: 12, minZoom: 0.12, lift: 0 },
+  company:    { color: '#878787', radius: 70,  labelColor: '#c4c4c4', labelPx: 11, minZoom: 0.3,  lift: 110 },
+  politician: { color: '#00eeff', radius: 40,  labelColor: '#a5f3fc', labelPx: 11, minZoom: 0.45, lift: 170 },
+  operator:   { color: '#ffffff', radius: 40,  labelColor: '#e2e8f0', labelPx: 11, minZoom: 0.45, lift: 170 },
 };
 
 /**

@@ -25,6 +25,8 @@ import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, P
 import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, getLinkEnds } from '@/lib/graphConfig';
 import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink } from '@/lib/layout';
+import { createIsoState, depthOf, fullIsoOffset, morphForZoom, project, setMorph, unprojectGround, zoomForFull25D } from '@/lib/iso';
+import { drawFloor, drawGroundMarks, getGlossSprite, getSphereSprite, SPHERE_PHOTO_INSET } from '@/components/graph25d';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useI18n } from '@/components/I18nProvider';
 
@@ -108,6 +110,8 @@ function useHoverPointer() {
 /** Espessura das linhas em unidades do grafo: normal / selecionada. */
 const LINK_WIDTH = 4;
 const LINK_WIDTH_SELECTED = 8;
+/** Folga da área de clique das linhas (padrão linkHoverPrecision da biblioteca). */
+const LINK_HOVER_PRECISION = 4;
 
 /**
  * FOCO + CONTEXTO: ao passar o mouse num nó (ou selecionar um nó ou uma
@@ -149,6 +153,32 @@ const FOCUS_MAX_ZOOM = 1.2;
 const BOTTOM_CONTROLS_PX = 80;
 /** Largura do painel de detalhes no desktop (md:w-96 = 384px em InspectorDrawer). */
 const DRAWER_WIDTH_PX = 384;
+
+/**
+ * MODO 2.5D (interruptor acima dos controles de câmera; ver lib/iso.ts).
+ * Ligado, a teia passa a 2.5D ao aproximar — seja pela roda/pinça, seja
+ * pelo enquadramento automático da seleção — e volta ao 2D ao afastar.
+ *   SWITCH_ANIM_MS          — duração da animação ao ligar/desligar.
+ *   FOCUS25D_MS             — duração do enquadramento da seleção no 2.5D.
+ *   FOCUS25D_MAX_ZOOM       — zoom máximo desse enquadramento (2D: FOCUS_MAX_ZOOM).
+ *                             Menor que no 2D: cabem mais vizinhos na tela.
+ *   FOCUS25D_FIT_SHARE      — fração dos vizinhos que precisa caber; os mais
+ *                             distantes (ligados a outros casos, longe) podem
+ *                             ficar fora, para o zoom não despencar por causa deles.
+ *   FOCUS25D_LABEL_ALLOWANCE — espaço (unid. do grafo) abaixo de cada esfera para o rótulo.
+ * Sem preferência salva: a escolha vale só para a visita atual. Com
+ * "reduzir movimento" ligado no sistema, o interruptor já começa desligado.
+ */
+const SWITCH_ANIM_MS = 500;
+const FOCUS25D_MS = 900;
+const FOCUS25D_MAX_ZOOM = 0.9;
+const FOCUS25D_FIT_SHARE = 0.75;
+const FOCUS25D_LABEL_ALLOWANCE = 50;
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+/** Altura de uma entidade no 2.5D (NODE_STYLE.lift). */
+const nodeLift = (node: any) => NODE_STYLE[node?.type as NodeType]?.lift ?? 0;
+const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 /**
  * VIDRO FOSCO (entidades sem foto que não são esquemas), desenhado sobre um
@@ -301,6 +331,75 @@ export default function NetworkGraph({
   }, [graphRef]);
 
   /* -------------------------------------------------------------------------
+   * 0a. MODO 2.5D — estado da projeção (lib/iso.ts)
+   *     isoRef      — projeção atual (muda a cada quadro de zoom; ref, sem re-render)
+   *     switchTRef  — animação do interruptor (0 = desligado, 1 = ligado)
+   *     active25d   — há algo de 2.5D na tela (m > 0)? Só muda ao cruzar o
+   *                   limiar; desliga arrasto de nós e partículas no 2.5D.
+   * ----------------------------------------------------------------------- */
+  const [enabled25d, setEnabled25d] = useState(true);
+  const enabled25dRef = useRef(true);
+  const isoRef = useRef(createIsoState());
+  const switchTRef = useRef(1);
+  const switchAnimRef = useRef(0);
+  const focusAnimRef = useRef(0);
+  const [active25d, setActive25d] = useState(false);
+  // clearHover é definido mais abaixo (seção 0); o ref evita depender da ordem.
+  const clearHoverRef = useRef<() => void>(() => {});
+  const active25dRef = useRef(false);
+  const dimensionsRef = useRef(dimensions);
+  dimensionsRef.current = dimensions;
+
+  useEffect(() => {
+    if (window.matchMedia(REDUCED_MOTION_QUERY).matches) {
+      enabled25dRef.current = false;
+      switchTRef.current = 0;
+      setEnabled25d(false);
+    }
+  }, []);
+
+  /** Posição desenhada de um nó: projetada no 2.5D; no 2D, o próprio x/y. */
+  const pos = useCallback((n: any): [number, number] => project(isoRef.current, n.x, n.y, nodeLift(n)), []);
+
+  /** Pede um redesenho (zoom(zoom atual) só marca o canvas; não mexe na câmera). */
+  const requestFrame = useCallback(() => {
+    const fg = graphRef.current;
+    const k = fg?.zoom?.();
+    if (typeof k === 'number') fg.zoom(k);
+  }, [graphRef]);
+
+  const cancelFocusAnim = useCallback(() => {
+    cancelAnimationFrame(focusAnimRef.current);
+    focusAnimRef.current = 0;
+  }, []);
+
+  const toggle25d = useCallback(() => {
+    // A teia se move sob o cursor parado: sem isso o destaque de hover
+    // "pularia" para o que passasse por baixo dele.
+    suppressHoverUntilRef.current = Date.now() + SWITCH_ANIM_MS + 300;
+    clearHoverRef.current();
+    const next = !enabled25dRef.current;
+    enabled25dRef.current = next;
+    setEnabled25d(next);
+    cancelAnimationFrame(switchAnimRef.current);
+    const from = switchTRef.current;
+    const to = next ? 1 : 0;
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / SWITCH_ANIM_MS);
+      switchTRef.current = from + (to - from) * easeInOutCubic(t);
+      requestFrame();
+      if (t < 1) switchAnimRef.current = requestAnimationFrame(step);
+    };
+    switchAnimRef.current = requestAnimationFrame(step);
+  }, [requestFrame]);
+
+  useEffect(() => () => {
+    cancelAnimationFrame(switchAnimRef.current);
+    cancelAnimationFrame(focusAnimRef.current);
+  }, []);
+
+  /* -------------------------------------------------------------------------
    * 0. FOCO + CONTEXTO — quem está em destaque (ver FADED_ALPHA)
    *    Vem só da seleção (toque/clique), igual no celular e no desktop:
    *    nó selecionado > linha selecionada. Passar o mouse não destaca.
@@ -330,6 +429,7 @@ export default function NetworkGraph({
     setHoverNodeId(null);
     setHoverLink(null);
   }, []);
+  clearHoverRef.current = clearHover;
 
   // O que está em foco: nó (com vizinhos) ou linha (só as duas pontas).
   // Prioridade: nó sob o mouse > linha sob o mouse > nó selecionado > linha selecionada.
@@ -451,6 +551,89 @@ export default function NetworkGraph({
    *     acima dos controles de câmera (igual no celular e no desktop).
    *     Quando o painel de detalhes abre no desktop (ocupa DRAWER_WIDTH_PX à
    *     direita), a câmera desliza para a esquerda; ao fechar, volta. */
+  /**
+   * 4c. ENQUADRAR O FOCO NO 2.5D — animação própria (a da biblioteca anda em
+   *     linha reta no espaço projetado, que muda durante a transição).
+   *     A cada quadro: zoom → projeção do momento → câmera sobre o ponto do
+   *     caminho entre o centro atual e o item selecionado (em coordenadas do
+   *     mundo, com a altura). Termina com o item no centro, acima dos
+   *     controles e, com o painel aberto no desktop, à esquerda dele.
+   *
+   *     Zoom final: o necessário para caber FOCUS25D_FIT_SHARE dos vizinhos
+   *     (os mais distantes podem ficar fora), entre o zoom em que o 2.5D fica
+   *     completo e FOCUS25D_MAX_ZOOM.
+   */
+  function startFocus25d(lit: Set<string>) {
+    const g = graphRef.current;
+    if (!g) return;
+    cancelFocusAnim();
+    const st = isoRef.current;
+    const { width, height } = dimensionsRef.current;
+    const viewMin = Math.min(width, height);
+
+    // Ponto focal (mundo): o nó, ou o meio da linha.
+    let fx: number, fy: number, fz: number;
+    let centreId: string | null = null;
+    if (selectedNode) {
+      const n: any = nodeById.get(selectedNode.id);
+      if (!n || typeof n.x !== 'number') return;
+      centreId = n.id;
+      fx = n.x; fy = n.y; fz = nodeLift(n);
+    } else if (selectedLink) {
+      const { sourceId, targetId } = getLinkEnds(selectedLink);
+      const a: any = nodeById.get(sourceId);
+      const b: any = nodeById.get(targetId);
+      if (!a || !b || typeof a.x !== 'number' || typeof b.x !== 'number') return;
+      fx = (a.x + b.x) / 2; fy = (a.y + b.y) / 2; fz = (nodeLift(a) + nodeLift(b)) / 2;
+    } else return;
+
+    // Espaço útil: tira o painel (desktop, aberto) e a faixa dos controles.
+    const drawer = !isMobile && detailsOpenRef.current ? DRAWER_WIDTH_PX : 0;
+    const pad = Math.min(60, 0.08 * viewMin);
+    const halfW = (width - drawer) / 2 - pad;
+    const halfH = (height - BOTTOM_CONTROLS_PX) / 2 - pad;
+
+    // Zoom que cada vizinho exige para caber (no 2.5D completo).
+    const needs: number[] = [];
+    lit.forEach((id) => {
+      if (id === centreId) return;
+      const n: any = nodeById.get(id);
+      if (!n || typeof n.x !== 'number') return;
+      const r = getNodeRadius(n.type, n);
+      const [ox, oy] = fullIsoOffset(n.x - fx, n.y - fy, nodeLift(n) - fz);
+      const kx = halfW / (Math.abs(ox) + r);
+      const ky = halfH / (Math.abs(oy) + r + FOCUS25D_LABEL_ALLOWANCE);
+      needs.push(Math.min(kx, ky));
+    });
+    needs.sort((a, b) => a - b);
+    const kFull = zoomForFull25D(viewMin);
+    const kMax = Math.max(kFull, FOCUS25D_MAX_ZOOM);
+    const kFit = needs.length ? needs[Math.floor((1 - FOCUS25D_FIT_SHARE) * needs.length)] : kMax;
+    const kEnd = Math.min(kMax, Math.max(kFull, kFit));
+
+    const k0 = g.zoom();
+    const c0 = g.centerAt();
+    const [w0x, w0y] = unprojectGround(st, c0.x, c0.y);
+    const offX = drawer / 2;
+    const offY = BOTTOM_CONTROLS_PX / 2;
+    const start = performance.now();
+    suppressHoverUntilRef.current = Date.now() + FOCUS25D_MS + 700;
+
+    const step = (now: number) => {
+      const gg = graphRef.current;
+      if (!gg) return;
+      const e = easeInOutCubic(Math.min(1, (now - start) / FOCUS25D_MS));
+      const k = Math.exp(Math.log(k0) + (Math.log(kEnd) - Math.log(k0)) * e);
+      gg.zoom(k);
+      const c = gg.centerAt();
+      setMorph(st, morphForZoom(k, viewMin) * switchTRef.current, c.x, c.y);
+      const [px, py] = project(st, w0x + (fx - w0x) * e, w0y + (fy - w0y) * e, fz * e);
+      gg.centerAt(px + (offX * e) / k, py + (offY * e) / k);
+      focusAnimRef.current = e < 1 ? requestAnimationFrame(step) : 0;
+    };
+    focusAnimRef.current = requestAnimationFrame(step);
+  }
+
   const selectionKey = selectedNode ? `n:${selectedNode.id}` : selectedLink ? `l:${getLinkKey(selectedLink)}` : '';
   useEffect(() => {
     const fg = graphRef.current;
@@ -468,6 +651,13 @@ export default function NetworkGraph({
       const { sourceId, targetId } = getLinkEnds(selectedLink);
       lit.add(sourceId);
       lit.add(targetId);
+    }
+    if (enabled25dRef.current) {
+      const t0 = setTimeout(() => startFocus25d(lit), 50);
+      return () => {
+        clearTimeout(t0);
+        cancelFocusAnim();
+      };
     }
     // zoomToFit enquadra os CENTROS dos nós; a margem extra = maior raio do
     // grupo × zoom máximo, para os círculos inteiros caberem na tela.
@@ -564,77 +754,108 @@ export default function NetworkGraph({
   /* -------------------------------------------------------------------------
    * 6. DESENHO DOS CÍRCULOS (sem texto — o texto vem no passo 8)
    * ----------------------------------------------------------------------- */
-  const drawNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+  /** Opacidade de um nó: foco + contexto e brilho por zoom (ver FADED_ALPHA / BRIGHT_ZOOM). */
+  const nodeAlpha = useCallback((node: any, globalScale: number) => {
+    if (!isNodeLit(node.id)) return FADED_ALPHA;
+    if (!hasFocus && node.type !== 'scheme') {
+      return zoomBrightness(globalScale, BRIGHT_ZOOM[node.type as keyof typeof BRIGHT_ZOOM] ?? 0.6);
+    }
+    return 1;
+  }, [isNodeLit, hasFocus]);
+
+  /**
+   * Desenha um nó em (x, y). m = quanto 2.5D (0..1): o disco plano some
+   * (opacidade 1 − m) enquanto a esfera aparece (opacidade m) no mesmo lugar
+   * e com o mesmo tamanho e cor. A foto continua sempre de frente.
+   */
+  const drawNodeAt = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number, x: number, y: number, m: number) => {
     const isSelected = selectedNode?.id === node.id;
     const color = NODE_STYLE[node.type as NodeType]?.color ?? '#00f0ff';
     const size = getNodeRadius(node.type, node);
-    const lit = isNodeLit(node.id);
     const isFocusCentre = focusIds.has(node.id);
     const isScheme = node.type === 'scheme';
-
-    // Opacidade: fora do foco → FADED_ALPHA; sem foco, entidades comuns acendem
-    // conforme o zoom (ver BRIGHT_ZOOM).
-    let alpha = lit ? 1 : FADED_ALPHA;
-    if (lit && !hasFocus && !isScheme) {
-      alpha = zoomBrightness(globalScale, BRIGHT_ZOOM[node.type as keyof typeof BRIGHT_ZOOM] ?? 0.6);
-    }
+    const alpha = nodeAlpha(node, globalScale);
+    const photo = !isScheme && node.image_url ? imgCacheRef.current.get(node.image_url) : undefined;
 
     ctx.save();
     ctx.globalAlpha = alpha;
 
     // Brilho externo. Sufixo hex = opacidade: '44' ≈ 27% (selecionado), '18' ≈ 9%.
     ctx.beginPath();
-    ctx.arc(node.x, node.y, size + 8, 0, 2 * Math.PI);
+    ctx.arc(x, y, size + 8, 0, 2 * Math.PI);
     ctx.fillStyle = `${color}${isSelected || isFocusCentre ? '44' : '18'}`;
     ctx.fill();
 
-    // Disco interno. Esquemas: círculo SÓLIDO na cor do tipo.
+    // Disco plano (2D). Esquemas: círculo SÓLIDO na cor do tipo.
     // Demais entidades: fundo PRETO sólido e, por cima,
     //   - com foto: a foto, um pouco recuada (anel preto em volta);
     //   - sem foto: o vidro fosco no tom do tipo (ver drawFrostedGlass).
     // Foto e vidro são sprites prontos (ver SPRITES no topo do arquivo).
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
-    if (isScheme) {
-      ctx.fillStyle = color;
-      ctx.fill();
-    } else {
-      const photo = node.image_url ? imgCacheRef.current.get(node.image_url) : undefined;
-      if (photo) {
+    if (m < 1) {
+      ctx.globalAlpha = alpha * (1 - m);
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, 2 * Math.PI);
+      if (isScheme) {
+        ctx.fillStyle = color;
+        ctx.fill();
+      } else if (photo) {
         ctx.fillStyle = '#000000';
         ctx.fill();
         const r = size * IMAGE_INSET;
-        ctx.drawImage(photo, node.x - r, node.y - r, r * 2, r * 2);
+        ctx.drawImage(photo, x - r, y - r, r * 2, r * 2);
       } else {
         const glass = getGlassSprite(size, color);
         if (glass) {
-          ctx.drawImage(glass, node.x - size, node.y - size, size * 2, size * 2);
+          ctx.drawImage(glass, x - size, y - size, size * 2, size * 2);
         } else {
           ctx.fillStyle = '#000000';
           ctx.fill();
-          drawFrostedGlass(ctx, node.x, node.y, size, color);
+          drawFrostedGlass(ctx, x, y, size, color);
         }
       }
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
+    }
+
+    // Esfera (2.5D): sprite sombreado; com foto, a foto vai DENTRO do vidro,
+    // sempre de frente para quem olha, com um reflexo por cima.
+    if (m > 0) {
+      ctx.globalAlpha = alpha * m;
+      const sphere = getSphereSprite(color, isScheme ? 'solid' : 'glass');
+      if (sphere) ctx.drawImage(sphere, x - size, y - size, size * 2, size * 2);
+      if (photo) {
+        const r = size * SPHERE_PHOTO_INSET;
+        ctx.drawImage(photo, x - r, y - r, r * 2, r * 2);
+        const gloss = getGlossSprite();
+        if (gloss) ctx.drawImage(gloss, x - size, y - size, size * 2, size * 2);
+      }
     }
 
     // Borda colorida por cima. Dividir por globalScale mantém a espessura
     // constante na tela, independentemente do zoom.
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, 2 * Math.PI);
     ctx.strokeStyle = isSelected && isScheme ? '#ffffff' : color;
     ctx.lineWidth = (isSelected ? 3 : 1.8) / globalScale;
     ctx.stroke();
 
     ctx.restore();
-  }, [selectedNode, isNodeLit, focusIds, hasFocus]);
+  }, [selectedNode, focusIds, nodeAlpha]);
+
+  // Chamado pela biblioteca para cada nó. No 2.5D não desenha nada aqui: as
+  // esferas são pintadas depois, de trás para frente (ver renderFramePost).
+  const drawNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    if (isoRef.current.m > 0) return;
+    drawNodeAt(node, ctx, globalScale, node.x, node.y, 0);
+  }, [drawNodeAt]);
 
   // Área de clique = raio desenhado + folga (antes era menor que o círculo).
   const paintPointerArea = useCallback((node: any, color: string, ctx: CanvasRenderingContext2D) => {
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(node.x, node.y, getNodeRadius(node.type, node) + CLICK_PADDING, 0, 2 * Math.PI);
+    const [x, y] = pos(node);
+    ctx.arc(x, y, getNodeRadius(node.type, node) + CLICK_PADDING, 0, 2 * Math.PI);
     ctx.fill();
-  }, []);
+  }, [pos]);
 
   /* -------------------------------------------------------------------------
    * 7. DESENHO DAS LINHAS
@@ -650,6 +871,9 @@ export default function NetworkGraph({
     const end = link.target;
     // Nos primeiros quadros o d3 ainda pode não ter trocado ids por objetos.
     if (typeof start !== 'object' || typeof end !== 'object' || typeof start.x !== 'number' || typeof end.x !== 'number') return;
+    // Pontas na posição desenhada (projetada no 2.5D).
+    const [sx, sy] = pos(start);
+    const [ex, ey] = pos(end);
 
     const style = statusStyle(link.status);
     const color = style?.color ?? FALLBACK_COLOR;
@@ -658,8 +882,8 @@ export default function NetworkGraph({
 
     // A linha vai só até a BORDA de cada círculo (não entra nem atravessa o
     // círculo): encurta cada ponta pelo raio do nó + metade da borda.
-    const dx = end.x - start.x;
-    const dy = end.y - start.y;
+    const dx = ex - sx;
+    const dy = ey - sy;
     const len = Math.hypot(dx, dy);
     const border = 1 / safeScale;
     const r0 = getNodeRadius(start.type, start) + border;
@@ -673,8 +897,8 @@ export default function NetworkGraph({
     // com partidos e empresas (LINK_BRIGHT_ZOOM).
     ctx.globalAlpha = !isLinkLit(link) ? FADED_LINK_ALPHA : hasFocus ? 1 : zoomBrightness(safeScale, LINK_BRIGHT_ZOOM);
     ctx.beginPath();
-    ctx.moveTo(start.x + ux * r0, start.y + uy * r0);
-    ctx.lineTo(end.x - ux * r1, end.y - uy * r1);
+    ctx.moveTo(sx + ux * r0, sy + uy * r0);
+    ctx.lineTo(ex - ux * r1, ey - uy * r1);
 
     // Passada 1: aura translúcida mais larga.
     ctx.strokeStyle = `${color}44`;
@@ -687,7 +911,24 @@ export default function NetworkGraph({
     ctx.setLineDash(style?.dashed ? [12, 10] : []);
     ctx.stroke();
     ctx.restore();
-  }, [isLinkSelected, isLinkLit, hasFocus]);
+  }, [isLinkSelected, isLinkLit, hasFocus, pos]);
+
+  // Área de clique da linha: a mesma da biblioteca (largura + folga), mas
+  // entre as posições desenhadas — no 2.5D a linha não está mais em x/y.
+  const paintLinkPointerArea = useCallback((link: any, color: string, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const start = link.source;
+    const end = link.target;
+    if (typeof start !== 'object' || typeof end !== 'object' || typeof start.x !== 'number' || typeof end.x !== 'number') return;
+    const [sx, sy] = pos(start);
+    const [ex, ey] = pos(end);
+    const w = isLinkSelected(link) ? LINK_WIDTH_SELECTED : LINK_WIDTH;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = (w + LINK_HOVER_PRECISION) / (globalScale || 1) + 2;
+    ctx.stroke();
+  }, [pos, isLinkSelected]);
 
   /* -------------------------------------------------------------------------
    * 8. RÓTULOS — desenhados DEPOIS de tudo (onRenderFramePost), então ficam
@@ -779,7 +1020,7 @@ export default function NetworkGraph({
     const scale = globalScale > 0 ? globalScale : 1;
     const placed: { x0: number; x1: number; y0: number; y1: number }[] = [];
     const pad = 3 / scale;
-    const toDraw: { node: any; lines: string[]; y: number; fontSize: number; px: number; weight: number }[] = [];
+    const toDraw: { node: any; lines: string[]; x: number; y: number; fontSize: number; px: number; weight: number }[] = [];
 
     ctx.save();
     ctx.textAlign = 'center';
@@ -816,23 +1057,24 @@ export default function NetworkGraph({
       }
       const { lines, widthPx } = wrapped;
 
-      const y = node.y + getNodeRadius(node.type, node) + 6 / scale;
+      const [nx, ny] = pos(node);
+      const y = ny + getNodeRadius(node.type, node) + 6 / scale;
       const lineStep = fontSize * LABEL_LINE_HEIGHT;
       const extraLine = node.type === 'politician' && node.party && (scale >= 1 || isSelected || (hasFocus && litIds.has(node.id))) ? 1 : 0;
       const box = {
-        x0: node.x - widthPx / 2 / scale - pad,
-        x1: node.x + widthPx / 2 / scale + pad,
+        x0: nx - widthPx / 2 / scale - pad,
+        x1: nx + widthPx / 2 / scale + pad,
         y0: y - pad,
         y1: y + (lines.length + extraLine) * lineStep + pad,
       };
       const mustShow = isSelected || focusIds.has(node.id);
       if (!mustShow && placed.some((b) => box.x0 < b.x1 && box.x1 > b.x0 && box.y0 < b.y1 && box.y1 > b.y0)) continue;
       placed.push(box);
-      toDraw.push({ node, lines, y, fontSize, px, weight });
+      toDraw.push({ node, lines, x: nx, y, fontSize, px, weight });
     }
 
     // Desenha do menos para o mais importante (o centro do foco fica por cima).
-    for (const { node, lines, y, fontSize, px, weight } of toDraw.reverse()) {
+    for (const { node, lines, x, y, fontSize, px, weight } of toDraw.reverse()) {
       const style = NODE_STYLE[node.type as NodeType];
       const isSelected = selectedNode?.id === node.id;
       const lineStep = fontSize * LABEL_LINE_HEIGHT;
@@ -841,8 +1083,8 @@ export default function NetworkGraph({
       ctx.strokeStyle = BG_COLOR;
       ctx.fillStyle = isSelected || focusIds.has(node.id) ? '#ffffff' : style?.labelColor ?? '#cbd5e1';
       lines.forEach((line, i) => {
-        ctx.strokeText(line, node.x, y + i * lineStep);
-        ctx.fillText(line, node.x, y + i * lineStep);
+        ctx.strokeText(line, x, y + i * lineStep);
+        ctx.fillText(line, x, y + i * lineStep);
       });
 
       // Linha extra com a sigla do partido (políticos, com zoom próximo).
@@ -850,14 +1092,68 @@ export default function NetworkGraph({
         const subSize = (px - 1) / scale;
         ctx.font = `400 ${subSize}px Inter, system-ui, sans-serif`;
         const y2 = y + (lines.length - 1) * lineStep + fontSize + 2 / scale;
-        ctx.strokeText(`(${node.party})`, node.x, y2);
+        ctx.strokeText(`(${node.party})`, x, y2);
         ctx.fillStyle = isSelected ? '#e0f2fe' : '#94a3b8';
-        ctx.fillText(`(${node.party})`, node.x, y2);
+        ctx.fillText(`(${node.party})`, x, y2);
       }
     }
     ctx.restore();
     positionDetailsButtonRef.current(scale);
-  }, [labelOrder, selectedNode, wrapLabel, hasFocus, focusIds, litIds]);
+  }, [labelOrder, selectedNode, wrapLabel, hasFocus, focusIds, litIds, pos]);
+
+  /* -------------------------------------------------------------------------
+   * 8a. QUADRO NO 2.5D
+   *     Antes (renderFramePre): atualiza a projeção para o zoom atual e pinta
+   *       o chão, as linhas de construção, as sombras e as hastes.
+   *     Depois (renderFramePost): pinta as esferas de trás para frente (para
+   *       a da frente cobrir a de trás) e, por cima de tudo, os rótulos.
+   *     Ordem completa: chão → sombras → linhas (biblioteca) → esferas → rótulos.
+   * ----------------------------------------------------------------------- */
+  const renderFramePre = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const st = isoRef.current;
+    const { width, height } = dimensionsRef.current;
+    const m = morphForZoom(globalScale, Math.min(width, height)) * switchTRef.current;
+    // Centro da tela no espaço projetado (o mesmo da biblioteca).
+    const c = ctx.getTransform().inverse().transformPoint({ x: ctx.canvas.width / 2, y: ctx.canvas.height / 2 });
+    setMorph(st, m, c.x, c.y);
+    const on = st.m > 0;
+    if (on !== active25dRef.current) {
+      active25dRef.current = on;
+      setActive25d(on);
+    }
+    if (!on) return;
+    drawFloor(ctx, st, globalScale);
+    drawGroundMarks(
+      ctx,
+      st,
+      globalScale,
+      graphData.nodes
+        .filter((n: any) => typeof n.x === 'number')
+        .map((n: any) => ({
+          x: n.x,
+          y: n.y,
+          z: nodeLift(n),
+          r: getNodeRadius(n.type, n),
+          color: NODE_STYLE[n.type as NodeType]?.color ?? FALLBACK_COLOR,
+          alpha: nodeAlpha(n, globalScale) * (isNodeLit(n.id) ? 1 : 0.6),
+        })),
+    );
+  }, [graphData.nodes, nodeAlpha, isNodeLit]);
+
+  const renderFramePost = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const st = isoRef.current;
+    if (st.m > 0) {
+      const sorted = graphData.nodes
+        .filter((n: any) => typeof n.x === 'number')
+        .map((n: any) => ({ n, d: depthOf(st, n.x, n.y, nodeLift(n)) }))
+        .sort((a, b) => a.d - b.d);
+      for (const { n } of sorted) {
+        const [x, y] = pos(n);
+        drawNodeAt(n, ctx, globalScale, x, y, st.m);
+      }
+    }
+    drawLabels(ctx, globalScale);
+  }, [graphData.nodes, pos, drawNodeAt, drawLabels]);
 
   /* -------------------------------------------------------------------------
    * 8b. BOTÃO FLUTUANTE "Exibir detalhes" — aparece acima do item selecionado
@@ -882,15 +1178,16 @@ export default function NetworkGraph({
     let r = 0;
     if (selectedNode) {
       const n: any = nodeById.get(selectedNode.id);
-      gx = n?.x;
-      gy = n?.y;
+      if (n && typeof n.x === 'number') [gx, gy] = pos(n);
       r = getNodeRadius(n?.type, n);
     } else if (selectedLink) {
       const s: any = typeof selectedLink.source === 'object' ? selectedLink.source : nodeById.get(selectedLink.source as string);
       const t: any = typeof selectedLink.target === 'object' ? selectedLink.target : nodeById.get(selectedLink.target as string);
-      if (s && t) {
-        gx = (s.x + t.x) / 2;
-        gy = (s.y + t.y) / 2;
+      if (s && t && typeof s.x === 'number' && typeof t.x === 'number') {
+        const [ax, ay] = pos(s);
+        const [bx, by] = pos(t);
+        gx = (ax + bx) / 2;
+        gy = (ay + by) / 2;
       }
     }
     if (typeof gx !== 'number' || typeof gy !== 'number') {
@@ -928,7 +1225,11 @@ export default function NetworkGraph({
     [showPartyLinks, hasFocus, isLinkLit]
   );
   // Partículas animadas (quantidade por status em STATUS_STYLE.particles).
-  const linkParticles = useCallback((link: any) => (isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0), [isLinkLit]);
+  // No 2.5D, sem partículas: a biblioteca as desenha em x/y (no plano), não na linha projetada.
+  const linkParticles = useCallback(
+    (link: any) => (!active25d && isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0),
+    [isLinkLit, active25d]
+  );
   const linkParticleColor = useCallback((link: any) => statusColor(link.status), []);
   // Hover (só com mouse; ver HOVER_POINTER_QUERY e suppressHoverUntilRef).
   const handleNodeHover = useCallback(
@@ -963,8 +1264,8 @@ export default function NetworkGraph({
       ref={containerRef}
       className="relative w-full h-full flex-1 bg-surface-canvas overflow-hidden"
       // Qualquer interação manual cancela o reenquadramento automático.
-      onWheel={() => { userMovedCameraRef.current = true; }}
-      onPointerDown={() => { userMovedCameraRef.current = true; }}
+      onWheel={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
+      onPointerDown={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
       // Cursor saiu do grafo: some o destaque de hover.
       onMouseLeave={clearHover}
     >
@@ -977,9 +1278,14 @@ export default function NetworkGraph({
         // Desenho customizado (passos 6–8)
         nodeCanvasObject={drawNode}
         nodePointerAreaPaint={paintPointerArea}
+        linkPointerAreaPaint={paintLinkPointerArea}
         linkCanvasObjectMode={LINK_CANVAS_MODE}
         linkCanvasObject={drawLink}
-        onRenderFramePost={drawLabels}
+        onRenderFramePre={renderFramePre}
+        onRenderFramePost={renderFramePost}
+        // No 2.5D o arrasto de nós fica desligado: o ponteiro está no espaço
+        // projetado e o nó "pularia" para outra posição no plano.
+        enableNodeDrag={!active25d}
         // No modo 'replace' a cor/tracejado vêm de drawLink; linkWidth ainda
         // define a área de clique da linha, por isso acompanha a espessura.
         linkWidth={linkWidth}
@@ -1061,9 +1367,34 @@ export default function NetworkGraph({
         </div>
       </div>
 
+      {/* CANTO INFERIOR ESQUERDO — interruptor 2.5D em cima, controles de câmera
+          embaixo, os dois na mesma margem esquerda. */}
+      <div className="absolute bottom-6 left-4 md:left-6 z-20 flex flex-col items-start gap-2 select-none">
+      {/* INTERRUPTOR 2.5D — liga/desliga a transição para 2.5D ao aproximar
+          (ver MODO 2.5D no topo do arquivo). Não fica salvo entre visitas. */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled25d}
+        aria-label={t.graph.toggle25dAria}
+        title={t.graph.toggle25dAria}
+        onClick={toggle25d}
+        className="flex items-center gap-2 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg pl-2 pr-3 py-2.5 md:py-2 shadow-xl text-xs font-mono font-semibold hover:border-slate-700/80 transition-colors"
+      >
+        <span
+          aria-hidden="true"
+          className={`relative inline-block w-8 h-[18px] rounded-full transition-colors duration-300 ${enabled25d ? 'bg-cyan-500/85' : 'bg-slate-700'}`}
+        >
+          <span
+            className={`absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-slate-50 shadow transition-transform duration-300 ${enabled25d ? 'translate-x-[14px]' : ''}`}
+          />
+        </span>
+        <span className={enabled25d ? 'text-cyan-200' : 'text-slate-400'}>2.5D</span>
+      </button>
+
       {/* CONTROLES DE CÂMERA — o fator 1.2 é o "passo" de cada clique de zoom.
           Alinhados na base com o MENU LEGAL (mesmo bottom-6 e mesma altura). */}
-      <div className="absolute bottom-6 left-4 md:left-6 flex items-center space-x-1.5 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 z-20 shadow-xl select-none">
+      <div className="flex items-center space-x-1.5 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 shadow-xl">
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}
           className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded transition-colors"
@@ -1091,6 +1422,7 @@ export default function NetworkGraph({
         >
           <Maximize className="w-4 h-4" />
         </button>
+      </div>
       </div>
 
       {/* CANTO INFERIOR DIREITO — duas peças empilhadas, alinhadas à direita:

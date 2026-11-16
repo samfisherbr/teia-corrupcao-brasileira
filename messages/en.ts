@@ -111,6 +111,7 @@ export const en: Messages = {
     menuAbout: 'About us',
     legalMenuAria: 'Legal pages menu',
     termsAndPrivacy: 'Terms & Privacy',
+    toggle25dAria: '2.5D view when zooming in',
   },
 
   inspector: {
