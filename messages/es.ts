@@ -221,7 +221,9 @@ export const es: Messages = {
     mechanism: 'Funcionamiento de la trama',
     who: 'Quién aparece en el caso: papel, situación judicial y fuente',
     whoNote:
-      'Cada elemento es un vínculo documentado con la trama, con la situación judicial de ese vínculo. Una investigación o una acusación no equivale a una condena, y la anulación de una condena no equivale a una absolución.',
+      'Cada elemento es una persona, empresa o partido vinculado a la trama. Cuando hay más de un hecho documentado, aparecen en orden cronológico, cada uno con su propia situación judicial y su fuente. Una investigación o una acusación no equivale a una condena, y la anulación de una condena no equivale a una absolución.',
+    /** Quantos fatos (vínculos) a entidade tem no esquema; só aparece com 2 ou mais. */
+    factsCount: (n: number) => `${n} hechos`,
     amountCited: 'Importe citado:',
     source: 'Fuente:',
     statusCheckedOn: 'Situación comprobada el',

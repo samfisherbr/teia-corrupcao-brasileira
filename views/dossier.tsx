@@ -9,10 +9,11 @@
  *
  * Conteúdo: título e resumo vêm do banco (nó `scheme`); impacto, contexto,
  * funcionamento, situação jurídica e fontes vêm de data/schemeDetails.ts;
- * a lista "Quem aparece no caso" vem dos vínculos do banco — cada entidade
- * com o papel, o STATUS JURÍDICO, o ano e a FONTE daquele vínculo (é o que
- * sustenta cada citação; no grafo isso só aparece ao clicar numa linha),
- * agrupada por tipo como as "Conexões Mapeadas" do painel lateral.
+ * a lista "Quem aparece no caso" vem dos vínculos do banco — um cartão por
+ * entidade e, dentro dele, cada vínculo (fato) com o papel, o STATUS JURÍDICO,
+ * o ano e a FONTE daquele vínculo (é o que sustenta cada citação; no grafo
+ * isso só aparece ao clicar numa linha), em ordem cronológica; os cartões
+ * ficam agrupados por tipo como as "Conexões Mapeadas" do painel lateral.
  * Sem banco, a página sai só com o dossiê e o título de reserva. Esquema
  * desconhecido → 404.
  *
@@ -93,33 +94,32 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+/** Os vínculos de uma mesma entidade com o esquema (um por fato documentado), em ordem cronológica. */
+interface EntityGroup {
+  entity: SchemeConnection['entity'];
+  facts: SchemeConnection[];
+}
+
+/** "1994–1997", "1995" ou null (nenhum fato com ano). */
+function yearSpan(facts: SchemeConnection[]): string | null {
+  const years = facts.map((f) => f.year).filter((y): y is number => !!y);
+  if (years.length === 0) return null;
+  const min = Math.min(...years);
+  const max = Math.max(...years);
+  return min === max ? String(min) : `${min}–${max}`;
+}
+
 /**
- * Um vínculo do esquema, no mesmo cartão das "Conexões Mapeadas" do painel
- * lateral (InspectorDrawer): borda esquerda na cor do tipo, nome + ano no topo
- * e o papel abaixo. Por ser a página de referência, o texto não é cortado e o
- * cartão traz ainda a situação jurídica, o valor citado e a fonte do vínculo.
+ * Corpo de um fato (um vínculo): papel, valor citado, situação jurídica,
+ * fonte e data da conferência. Cada fato mantém a SUA situação e a SUA fonte —
+ * agrupar por entidade não pode misturar o status de um fato com o de outro.
  */
-function ConnectionItem({ c, t, locale }: { c: SchemeConnection; t: Messages; locale: Locale }) {
-  const typeColor = NODE_STYLE[c.entity.type]?.color ?? FALLBACK_COLOR;
+function FactBody({ c, t, locale }: { c: SchemeConnection; t: Messages; locale: Locale }) {
   const st = STATUS_STYLE[c.status];
   const reviewed = formatDate(c.reviewed_at, locale);
   const amount = localizeAmountText(c.amount, locale);
   return (
-    <li
-      className="p-3 bg-slate-950 border border-slate-800 border-l-2 rounded-lg space-y-2"
-      style={{ borderLeftColor: typeColor }}
-    >
-      <div className="flex justify-between items-start gap-2">
-        <span className="text-sm font-medium text-slate-200">
-          {c.entity.label}
-          {c.entity.party && c.entity.type === 'politician' && (
-            <span className="ml-1 font-mono text-muted">({c.entity.party})</span>
-          )}
-        </span>
-        <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 tabular-nums">
-          {c.year || t.common.notAvailable}
-        </span>
-      </div>
+    <div className="space-y-2">
       {c.relation && <p className="text-sm text-slate-400 leading-relaxed">{c.relation}</p>}
       {amount && (
         <p className="text-xs text-slate-400">
@@ -151,25 +151,86 @@ function ConnectionItem({ c, t, locale }: { c: SchemeConnection; t: Messages; lo
           </span>
         )}
       </p>
+    </div>
+  );
+}
+
+/**
+ * Uma entidade do esquema, no mesmo cartão das "Conexões Mapeadas" do painel
+ * lateral (InspectorDrawer): borda esquerda na cor do tipo, nome no topo e o
+ * período (ano do primeiro ao último fato) à direita.
+ *
+ * O banco guarda um vínculo por fato (a história processual fica em vínculos
+ * separados — ver migrations/0005), então a mesma entidade pode ter vários.
+ * Aqui eles viram UM cartão: com um só fato, o corpo aparece direto; com
+ * vários, uma linha do tempo em ordem cronológica, cada fato com o seu ano,
+ * situação jurídica e fonte. Nada é resumido nem omitido.
+ */
+function EntityItem({ g, t, locale }: { g: EntityGroup; t: Messages; locale: Locale }) {
+  const typeColor = NODE_STYLE[g.entity.type]?.color ?? FALLBACK_COLOR;
+  const span = yearSpan(g.facts);
+  const multi = g.facts.length > 1;
+  return (
+    <li
+      className="p-3 bg-slate-950 border border-slate-800 border-l-2 rounded-lg space-y-2"
+      style={{ borderLeftColor: typeColor }}
+    >
+      <div className="flex justify-between items-start gap-2">
+        <span className="text-sm font-medium text-slate-200">
+          {g.entity.label}
+          {g.entity.party && g.entity.type === 'politician' && (
+            <span className="ml-1 font-mono text-muted">({g.entity.party})</span>
+          )}
+        </span>
+        <span className="shrink-0 flex items-center gap-1.5">
+          {multi && <span className="text-[10px] font-mono text-muted">{t.dossier.factsCount(g.facts.length)}</span>}
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 tabular-nums">
+            {span ?? t.common.notAvailable}
+          </span>
+        </span>
+      </div>
+      {multi ? (
+        <ol className="space-y-3 border-l border-slate-800 ml-1">
+          {g.facts.map((c) => (
+            <li key={c.key} className="relative pl-4 space-y-1">
+              <span
+                className="absolute -left-[4.5px] top-1 w-2 h-2 rounded-full"
+                style={{ backgroundColor: typeColor }}
+                aria-hidden="true"
+              />
+              <p className="text-[11px] font-mono font-semibold text-slate-300 tabular-nums">
+                {c.year || t.common.notAvailable}
+              </p>
+              <FactBody c={c} t={t} locale={locale} />
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <FactBody c={g.facts[0]} t={t} locale={locale} />
+      )}
     </li>
   );
 }
 
 /**
- * Vínculos agrupados por tipo da entidade (Partidos, Empresas, Políticos…),
- * com o mesmo cabeçalho de seção do painel lateral: ícone, nome no plural na
- * cor do tipo e a contagem. `connections` já chega ordenado por tipo.
+ * Entidades agrupadas por tipo (Partidos, Empresas, Políticos…), com o mesmo
+ * cabeçalho de seção do painel lateral: ícone, nome no plural na cor do tipo
+ * e a contagem — de ENTIDADES, não de vínculos. `connections` já chega
+ * ordenado por tipo, nome e ano, então os fatos de cada entidade ficam
+ * juntos e em ordem cronológica.
  */
 function ConnectionSections({ connections, t, locale }: { connections: SchemeConnection[]; t: Messages; locale: Locale }) {
-  const groups = new Map<NodeType, SchemeConnection[]>();
+  const groups = new Map<NodeType, Map<string, EntityGroup>>();
   for (const c of connections) {
-    const list = groups.get(c.entity.type);
-    if (list) list.push(c);
-    else groups.set(c.entity.type, [c]);
+    let byEntity = groups.get(c.entity.type);
+    if (!byEntity) groups.set(c.entity.type, (byEntity = new Map()));
+    const g = byEntity.get(c.entity.id);
+    if (g) g.facts.push(c);
+    else byEntity.set(c.entity.id, { entity: c.entity, facts: [c] });
   }
   return (
     <div className="space-y-4">
-      {[...groups].map(([type, items]) => {
+      {[...groups].map(([type, byEntity]) => {
         const st = NODE_STYLE[type];
         const Icon = NODE_ICONS[type];
         const color = st?.color ?? FALLBACK_COLOR;
@@ -183,12 +244,12 @@ function ConnectionSections({ connections, t, locale }: { connections: SchemeCon
               {Icon && <Icon size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />}
               <span>{sectionTitle}</span>
               <span className="ml-auto px-1.5 py-0.5 rounded border text-[10px] leading-none" style={entityChipStyle(type)}>
-                {items.length}
+                {byEntity.size}
               </span>
             </h3>
             <ul className="space-y-2">
-              {items.map((c) => (
-                <ConnectionItem key={c.key} c={c} t={t} locale={locale} />
+              {[...byEntity.values()].map((g) => (
+                <EntityItem key={g.entity.id} g={g} t={t} locale={locale} />
               ))}
             </ul>
           </section>
