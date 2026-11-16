@@ -27,10 +27,22 @@ import { SITE_DOMAIN } from '@/lib/site';
 const RESIZE_ENABLED = true;
 /** Origem das fotos que podem ser redimensionadas (mesma zona do site). */
 const PHOTO_HOST = 'img.teiadacorrupcao.io';
-const RESIZE_OPTIONS = 'width=256,height=256,fit=scale-down,format=auto,quality=80,onerror=redirect';
+const COMMON = 'format=auto,quality=80,onerror=redirect';
+/**
+ * Pessoas (políticos e operadores): quadrado de 256 px recortado em volta do
+ * rosto (detecção de rosto do Cloudflare; zoom 0 = mais fundo, 1 = só o rosto).
+ * Sem rosto detectado, o recorte é pelo centro.
+ */
+const FACE_OPTIONS = `width=256,height=256,fit=cover,gravity=face,zoom=0.3,${COMMON}`;
+/** Logos e demais (partidos, empresas, esquemas): imagem inteira, sem recorte, até 256 px. */
+const WHOLE_OPTIONS = `width=256,height=256,fit=scale-down,${COMMON}`;
+const FACE_TYPES = new Set(['politician', 'operator']);
 
-/** Versão reduzida da foto, ou null se não se aplica (outro domínio, preview, dev). */
-export function resizedPhotoUrl(url: string | null | undefined): string | null {
+/**
+ * Versão reduzida da foto, ou null se não se aplica (outro domínio, SVG,
+ * preview, dev). `nodeType` decide o recorte: rosto (pessoas) ou imagem inteira.
+ */
+export function resizedPhotoUrl(url: string | null | undefined, nodeType?: string | null): string | null {
   if (!RESIZE_ENABLED || !url || typeof window === 'undefined') return null;
   if (window.location.hostname !== SITE_DOMAIN) return null;
   try {
@@ -41,5 +53,5 @@ export function resizedPhotoUrl(url: string | null | undefined): string | null {
   } catch {
     return null;
   }
-  return `/cdn-cgi/image/${RESIZE_OPTIONS}/${url}`;
+  return `/cdn-cgi/image/${FACE_TYPES.has(nodeType ?? '') ? FACE_OPTIONS : WHOLE_OPTIONS}/${url}`;
 }

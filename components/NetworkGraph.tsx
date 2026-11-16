@@ -903,8 +903,12 @@ export default function NetworkGraph({
         if (typeof k === 'number') fg.zoom(k);
       });
     };
-    const urls = new Set(graphData.nodes.map((n) => n.image_url).filter((u): u is string => !!u));
-    urls.forEach((url) => {
+    // url → tipo do nó (o tipo decide o recorte: rosto para pessoas, inteiro para logos).
+    const urls = new Map<string, string>();
+    graphData.nodes.forEach((n) => {
+      if (n.image_url && !urls.has(n.image_url)) urls.set(n.image_url, n.type);
+    });
+    urls.forEach((nodeType, url) => {
       if (imgCacheRef.current.has(url) || pendingRef.current.has(url) || failedRef.current.has(url)) return;
       pendingRef.current.add(url);
       // Pede a versão reduzida pelo Cloudflare (lib/photoUrl.ts); se ela falhar
@@ -931,7 +935,7 @@ export default function NetworkGraph({
         };
         img.src = src;
       };
-      const resized = resizedPhotoUrl(url);
+      const resized = resizedPhotoUrl(url, nodeType);
       load(resized ?? url, resized ? url : null);
     });
   }, [graphData.nodes, graphRef]);

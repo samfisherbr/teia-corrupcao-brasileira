@@ -130,7 +130,7 @@ export default function InspectorDrawer({
             {selectedNode.image_url && brokenImage !== selectedNode.image_url ? (
               <img
                 src={
-                  (resizeFailed !== selectedNode.image_url && resizedPhotoUrl(selectedNode.image_url)) ||
+                  (resizeFailed !== selectedNode.image_url && resizedPhotoUrl(selectedNode.image_url, selectedNode.type)) ||
                   selectedNode.image_url
                 }
                 alt={selectedNode.label}
