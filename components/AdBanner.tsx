@@ -1,13 +1,14 @@
 'use client';
 
 /**
- * ADBANNER — bloco de anúncio do Google AdSense (728×90, só em telas ≥ 1536px).
+ * ADBANNER — bloco de anúncio do Google AdSense (728×90, só em telas ≥ 1552px).
  * Por que 1536px: o bloco fica centralizado na base do grafo, entre os
  * controles de câmera (esquerda) e o menu "Termos & Privacidade" (direita).
- * Abaixo disso (área do grafo = tela − barra lateral de 320px < ~1216px) ele
- * ficava POR CIMA desses botões e roubava os cliques. Ao mudar o tamanho do
- * bloco ou desses controles, confira a folga e ajuste AD_MIN_WIDTH_QUERY e a
- * classe `2xl:flex` juntos (2xl do Tailwind = 1536px).
+ * Abaixo disso (área do grafo = tela − barra lateral de 300px < 1252px) ele
+ * fica POR CIMA desses botões e rouba os cliques. Medido: com 1552px sobram
+ * ~8px até a caixa de câmera (o lado mais apertado). Ao mudar a largura do
+ * bloco, da barra lateral ou desses controles, meça de novo e ajuste
+ * AD_MIN_WIDTH_QUERY e a classe `min-[1552px]:flex` juntos.
  * O script do AdSense é carregado uma vez para o site todo em app/layout.tsx;
  * este componente só desenha o bloco e pede o anúncio.
  * IDs em lib/site.ts (ADSENSE_CLIENT e ADSENSE_SLOTS.banner, bloco "Network graph").
@@ -18,8 +19,8 @@
 import React, { useEffect, useRef } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
-/** Mesma largura mínima da classe `2xl:flex` do contêiner (ver acima). */
-const AD_MIN_WIDTH_QUERY = '(min-width: 1536px)';
+/** Mesma largura mínima da classe `min-[1552px]:flex` do contêiner (ver acima). */
+const AD_MIN_WIDTH_QUERY = '(min-width: 1552px)';
 
 declare global {
   interface Window {
@@ -37,7 +38,7 @@ export default function AdBanner({ adClient, adSlot }: AdBannerProps) {
   const { t } = useI18n();
 
   useEffect(() => {
-    // O bloco só existe em telas ≥ 1536px (`hidden 2xl:flex`). Pedir o anúncio
+    // O bloco só existe em telas ≥ 1552px (`hidden min-[1552px]:flex`). Pedir o anúncio
     // com o bloco oculto (celular, notebook) faz o AdSense lançar erro ("No slot size
     // for availableWidth=0") e gasta uma requisição à toa — então o pedido
     // só sai quando a tela é larga (inclusive se a janela for alargada depois).
@@ -59,7 +60,7 @@ export default function AdBanner({ adClient, adSlot }: AdBannerProps) {
 
   return (
     <>
-      <div className="hidden 2xl:flex absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+      <div className="hidden min-[1552px]:flex absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
         <div className="w-[728px] h-[90px] bg-surface-field/90 border border-slate-800 rounded-lg backdrop-blur-md flex items-center justify-center overflow-hidden shadow-2xl relative">
           <ins
             className="adsbygoogle"

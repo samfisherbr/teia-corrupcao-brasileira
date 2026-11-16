@@ -7,7 +7,7 @@
  * Busca, controle de ano, filtros por tipo e por status, índice de esquemas
  * e contadores. Não guarda estado próprio: tudo vem de app/page.tsx por props.
  *
- * Largura: `w-80` no <aside>. Para mostrar no celular, troque `hidden md:flex`
+ * Largura: `w-[300px]` no <aside> (a folga do anúncio em AdBanner.tsx depende dela). Para mostrar no celular, troque `hidden md:flex`
  * por `flex` (e trate o espaço, ex. como gaveta).
  * Altura máxima do índice de esquemas: `max-h-40` (≈160px) mais abaixo.
  * ============================================================================
@@ -84,7 +84,7 @@ export default function SidebarControls({
   const { t, href } = useI18n();
 
   return (
-    <aside className="hidden md:flex w-80 bg-surface-sidebar border-r border-slate-800/80 flex-col z-20 shadow-xl h-full">
+    <aside className="hidden md:flex w-[300px] shrink-0 bg-surface-sidebar border-r border-slate-800/80 flex-col z-20 shadow-xl h-full">
       
       {/* Cabeçalho */}
       <div className="p-4 border-b border-slate-800/80 flex items-center space-x-3">
