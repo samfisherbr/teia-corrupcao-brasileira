@@ -25,7 +25,7 @@ import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, P
 import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, getLinkEnds } from '@/lib/graphConfig';
 import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink } from '@/lib/layout';
-import { createIsoState, depthOf, fullIsoOffset, morphForZoom, project, setMorph, unprojectGround, zoomForFull25D } from '@/lib/iso';
+import { createIsoState, depthOf, fullIsoOffset, morphForZoom, project, resolveLifts, setMorph, unprojectGround, zoomForFull25D } from '@/lib/iso';
 import { drawFloor, drawGroundMarks, getGlossSprite, getSphereSprite, SPHERE_PHOTO_INSET } from '@/components/graph25d';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useI18n } from '@/components/I18nProvider';
@@ -176,8 +176,16 @@ const FOCUS25D_FIT_SHARE = 0.75;
 const FOCUS25D_LABEL_ALLOWANCE = 50;
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
-/** Altura de uma entidade no 2.5D (NODE_STYLE.lift). */
-const nodeLift = (node: any) => NODE_STYLE[node?.type as NodeType]?.lift ?? 0;
+/** Altura-base do tipo (NODE_STYLE.lift). */
+const baseLift = (node: any) => NODE_STYLE[node?.type as NodeType]?.lift ?? 0;
+/**
+ * Altura usada no 2.5D: a ajustada para não haver esferas escondidas
+ * (resolveLifts em lib/iso.ts, guardada em __lift) ou, antes do 1º cálculo,
+ * a do tipo.
+ */
+const nodeLift = (node: any) => (typeof node?.__lift === 'number' ? node.__lift : baseLift(node));
+/** Duração da animação quando as alturas são recalculadas com o 2.5D na tela. */
+const LIFT_ANIM_MS = 500;
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 /**
@@ -346,6 +354,8 @@ export default function NetworkGraph({
   const [active25d, setActive25d] = useState(false);
   // clearHover é definido mais abaixo (seção 0); o ref evita depender da ordem.
   const clearHoverRef = useRef<() => void>(() => {});
+  /** Ponto (mundo, com altura) do item selecionado: o nó, ou o meio da linha. Atualizado a cada render. */
+  const selectionPointRef = useRef<() => { x: number; y: number; z: number } | null>(() => null);
   const active25dRef = useRef(false);
   const dimensionsRef = useRef(dimensions);
   dimensionsRef.current = dimensions;
@@ -385,14 +395,36 @@ export default function NetworkGraph({
     const from = switchTRef.current;
     const to = next ? 1 : 0;
     const start = performance.now();
+    // Com algo selecionado, ele fica PARADO na tela durante a animação (o
+    // resto gira/achata em volta dele): guarda onde ele está agora, em px.
+    const fg0 = graphRef.current;
+    const pin = selectionPointRef.current();
+    let pinScreen: { x: number; y: number } | null = null;
+    if (fg0 && pin) {
+      const [px, py] = project(isoRef.current, pin.x, pin.y, pin.z);
+      pinScreen = fg0.graph2ScreenCoords(px, py);
+    }
     const step = (now: number) => {
       const t = Math.min(1, (now - start) / SWITCH_ANIM_MS);
       switchTRef.current = from + (to - from) * easeInOutCubic(t);
-      requestFrame();
+      const fg = graphRef.current;
+      const p = selectionPointRef.current();
+      if (fg && p && pinScreen) {
+        // Aplica a projeção deste passo e põe a câmera de modo que o ponto
+        // selecionado continue em pinScreen.
+        const k = fg.zoom();
+        const { width, height } = dimensionsRef.current;
+        const c = fg.centerAt();
+        setMorph(isoRef.current, morphForZoom(k, Math.min(width, height)) * switchTRef.current, c.x, c.y);
+        const [px, py] = project(isoRef.current, p.x, p.y, p.z);
+        fg.centerAt(px - (pinScreen.x - width / 2) / k, py - (pinScreen.y - height / 2) / k);
+      } else {
+        requestFrame();
+      }
       if (t < 1) switchAnimRef.current = requestAnimationFrame(step);
     };
     switchAnimRef.current = requestAnimationFrame(step);
-  }, [requestFrame]);
+  }, [requestFrame, graphRef]);
 
   useEffect(() => () => {
     cancelAnimationFrame(switchAnimRef.current);
@@ -702,9 +734,41 @@ export default function NetworkGraph({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detailsOpen]);
 
+  /**
+   * 4d. ALTURAS AUTOMÁTICAS NO 2.5D — quando a física se acomoda (ao abrir,
+   *     ao mudar filtros, depois de arrastar), recalcula a altura de cada
+   *     entidade para nenhuma ficar escondida atrás de outra (resolveLifts em
+   *     lib/iso.ts). Se o 2.5D estiver na tela, as esferas deslizam até a
+   *     nova altura em LIFT_ANIM_MS; no 2D, só passa a valer.
+   */
+  const liftAnimRef = useRef(0);
+  const recomputeLifts = useCallback(() => {
+    const nodes = graphData.nodes.filter((n: any) => typeof n.x === 'number') as any[];
+    if (!nodes.length) return;
+    const { lifts } = resolveLifts(
+      nodes.map((n) => ({ x: n.x, y: n.y, r: getNodeRadius(n.type, n), base: baseLift(n) })),
+    );
+    cancelAnimationFrame(liftAnimRef.current);
+    if (isoRef.current.m === 0) {
+      nodes.forEach((n, i) => { n.__lift = lifts[i]; });
+      return;
+    }
+    const from = nodes.map((n) => nodeLift(n));
+    const start = performance.now();
+    const step = (now: number) => {
+      const e = easeInOutCubic(Math.min(1, (now - start) / LIFT_ANIM_MS));
+      nodes.forEach((n, i) => { n.__lift = from[i] + (lifts[i] - from[i]) * e; });
+      requestFrame();
+      if (e < 1) liftAnimRef.current = requestAnimationFrame(step);
+    };
+    liftAnimRef.current = requestAnimationFrame(step);
+  }, [graphData.nodes, requestFrame]);
+  useEffect(() => () => cancelAnimationFrame(liftAnimRef.current), []);
+
   const handleEngineStop = useCallback(() => {
+    recomputeLifts();
     if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
-  }, [graphRef, fitPadding]);
+  }, [graphRef, fitPadding, recomputeLifts]);
 
   /* -------------------------------------------------------------------------
    * 5. IMAGENS — pré-carrega fotos dos nós (ex.: Wikimedia Commons)
@@ -1163,6 +1227,21 @@ export default function NetworkGraph({
    * ----------------------------------------------------------------------- */
   const detailsBtnRef = useRef<HTMLButtonElement>(null);
   const nodeById = useMemo(() => new Map(graphData.nodes.map((n: any) => [n.id, n])), [graphData.nodes]);
+
+  selectionPointRef.current = () => {
+    if (selectedNode) {
+      const n: any = nodeById.get(selectedNode.id);
+      return n && typeof n.x === 'number' ? { x: n.x, y: n.y, z: nodeLift(n) } : null;
+    }
+    if (selectedLink) {
+      const { sourceId, targetId } = getLinkEnds(selectedLink);
+      const a: any = nodeById.get(sourceId);
+      const b: any = nodeById.get(targetId);
+      if (!a || !b || typeof a.x !== 'number' || typeof b.x !== 'number') return null;
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (nodeLift(a) + nodeLift(b)) / 2 };
+    }
+    return null;
+  };
   const showDetailsButton = !detailsOpen && (!!selectedNode || !!selectedLink);
 
   function positionDetailsButton(scale: number) {
