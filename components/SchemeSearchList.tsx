@@ -63,7 +63,7 @@ export default function SchemeSearchList({ items }: { items: SchemeListItem[] })
               if (e.key === 'Escape') setQuery('');
             }}
             aria-describedby="esquemas-search-count"
-            className="w-full bg-surface-field border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-sm text-slate-200 placeholder-muted focus:outline-none focus:border-cyan-500 [&::-webkit-search-cancel-button]:hidden"
+            className="w-full bg-surface-field border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-sm text-slate-200 placeholder-muted focus:outline-hidden focus:border-cyan-500 [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button
@@ -71,7 +71,7 @@ export default function SchemeSearchList({ items }: { items: SchemeListItem[] })
               onClick={() => setQuery('')}
               aria-label={t.common.clearSearch}
               title={t.common.clearSearch}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-muted hover:text-slate-200 hover:bg-slate-800"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-sm text-muted hover:text-slate-200 hover:bg-slate-800"
             >
               <X size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
             </button>
@@ -112,7 +112,7 @@ export default function SchemeSearchList({ items }: { items: SchemeListItem[] })
               >
                 <div className="flex items-center gap-2">
                   <span
-                    className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded border"
+                    className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded-sm border"
                     style={entityChipStyle('scheme')}
                   >
                     {t.schemesIndex.badge}

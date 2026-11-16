@@ -128,6 +128,10 @@ export default function InspectorDrawer({
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           <div className="flex items-start space-x-4">
             {selectedNode.image_url && brokenImage !== selectedNode.image_url ? (
+              // <img> de propósito: a foto já sai redimensionada pelo Cloudflare
+              // (lib/photoUrl.ts), com volta ao original se falhar — o <Image> do
+              // Next precisaria de um binding IMAGES à parte no Cloudflare.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={
                   (resizeFailed !== selectedNode.image_url && resizedPhotoUrl(selectedNode.image_url, selectedNode.type)) ||
@@ -142,11 +146,11 @@ export default function InspectorDrawer({
                   if (e.currentTarget.src !== original && resizeFailed !== original) setResizeFailed(original);
                   else setBrokenImage(original);
                 }}
-                className="w-16 h-16 rounded-xl object-cover border border-slate-700 shadow-md flex-shrink-0"
+                className="w-16 h-16 rounded-xl object-cover border border-slate-700 shadow-md shrink-0"
               />
             ) : (
               <div
-                className="w-16 h-16 rounded-xl border flex items-center justify-center font-bold text-xl flex-shrink-0"
+                className="w-16 h-16 rounded-xl border flex items-center justify-center font-bold text-xl shrink-0"
                 style={entityChipStyle(selectedNode.type)}
               >
                 {(selectedNode.label || '?').charAt(0)}
@@ -156,13 +160,13 @@ export default function InspectorDrawer({
               <h2 className="text-base font-bold text-slate-100 leading-snug">{selectedNode.label}</h2>
               <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                 <span
-                  className="px-2 py-0.5 rounded border text-[10px] font-semibold uppercase tracking-wider"
+                  className="px-2 py-0.5 rounded-sm border text-[10px] font-semibold uppercase tracking-wider"
                   style={entityChipStyle(selectedNode.type)}
                 >
                   {t.nodeType[selectedNode.type as NodeType]?.label || selectedNode.type}
                 </span>
                 {selectedNode.party && (
-                  <span className="bg-slate-800 border border-slate-700 text-slate-300 text-xs px-2 py-0.5 rounded font-mono">
+                  <span className="bg-slate-800 border border-slate-700 text-slate-300 text-xs px-2 py-0.5 rounded-sm font-mono">
                     {selectedNode.party}
                   </span>
                 )}
@@ -224,7 +228,7 @@ export default function InspectorDrawer({
                     {Icon && <Icon size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />}
                     <span>{sectionTitle}</span>
                     <span
-                      className="ml-auto px-1.5 py-0.5 rounded border text-[10px] leading-none"
+                      className="ml-auto px-1.5 py-0.5 rounded-sm border text-[10px] leading-none"
                       style={entityChipStyle(key)}
                     >
                       {items.length}
@@ -246,7 +250,7 @@ export default function InspectorDrawer({
                               <span className="ml-1 font-mono text-muted">({other.party})</span>
                             )}
                           </span>
-                          <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                          <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-slate-900 text-slate-400 border border-slate-800">
                             {link.year || t.common.notAvailable}
                           </span>
                         </div>
@@ -281,7 +285,7 @@ export default function InspectorDrawer({
                 </span>
               </button>
 
-              <ArrowRight className="w-4 h-4 text-slate-600 flex-shrink-0" />
+              <ArrowRight className="w-4 h-4 text-slate-600 shrink-0" />
 
               {/* Destino */}
               <button
@@ -303,7 +307,7 @@ export default function InspectorDrawer({
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <span>{t.inspector.category}</span>
                 <span
-                  className="font-bold font-mono uppercase tracking-wide px-2 py-0.5 rounded border text-[10px]"
+                  className="font-bold font-mono uppercase tracking-wide px-2 py-0.5 rounded-sm border text-[10px]"
                   style={badgeStyle(typeStyle)}
                 >
                   {t.linkType[selectedLink.type as LinkType]}
@@ -315,7 +319,7 @@ export default function InspectorDrawer({
             <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
               <span>{t.inspector.legalStatus}</span>
               <span 
-                className="font-bold font-mono uppercase tracking-wide px-2 py-0.5 rounded border text-[10px]"
+                className="font-bold font-mono uppercase tracking-wide px-2 py-0.5 rounded-sm border text-[10px]"
                 style={badgeStyle(statusStyle)}
               >
                 {t.status[selectedLink.status as LinkStatus] ?? selectedLink.status}
@@ -369,7 +373,7 @@ export default function InspectorDrawer({
                 className="flex items-center justify-between p-3 bg-blue-950/30 border border-blue-900/50 rounded-lg text-xs text-blue-400 hover:bg-blue-900/40 transition-colors"
               >
                 <span className="truncate mr-2 font-mono">{selectedLink.source_url}</span>
-                <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                <ExternalLink className="w-4 h-4 shrink-0" />
               </a>
             </div>
           )}

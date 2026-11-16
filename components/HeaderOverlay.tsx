@@ -126,7 +126,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
       add(targetId, sourceId);
     });
     return map;
-  }, [graphData.links, t]);
+  }, [graphData.links]);
 
   // ===========================================================================
   // INFOGRÁFICO 1 — RANKING DE CENTRALIDADE POR PARTIDO
@@ -365,7 +365,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
 
             {/* Global Aggregated Metrics Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-sm flex items-center justify-between">
+              <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-xs flex items-center justify-between">
                 <div>
                   <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
                     {t.infographics.mappedVolume}
@@ -379,7 +379,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 </div>
               </div>
 
-              <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-sm flex items-center justify-between">
+              <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-xs flex items-center justify-between">
                 <div>
                   <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
                     {t.infographics.registeredSchemes}
@@ -393,7 +393,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 </div>
               </div>
 
-              <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-sm flex items-center justify-between">
+              <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-xs flex items-center justify-between">
                 <div>
                   <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
                     {t.infographics.activeConnections}
@@ -418,7 +418,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                       <BarChart3 className="w-5 h-5" style={{ color: NODE_STYLE.party.labelColor }} />
                       {t.infographics.rankingTitle}
                     </h2>
-                    <span className="shrink-0 whitespace-nowrap text-[11px] font-mono border px-2 py-0.5 rounded" style={entityChipStyle('party')}>
+                    <span className="shrink-0 whitespace-nowrap text-[11px] font-mono border px-2 py-0.5 rounded-sm" style={entityChipStyle('party')}>
                       {t.infographics.rankingBadge}
                     </span>
                   </div>
@@ -468,7 +468,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                       <Layers className="w-5 h-5 text-amber-400" />
                       {t.infographics.flowTitle}
                     </h2>
-                    <span className="text-[11px] font-mono bg-amber-950/80 text-amber-300 border border-amber-800/50 px-2 py-0.5 rounded">
+                    <span className="text-[11px] font-mono bg-amber-950/80 text-amber-300 border border-amber-800/50 px-2 py-0.5 rounded-sm">
                       {t.infographics.flowBadge}
                     </span>
                   </div>
@@ -478,7 +478,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-6 my-2">
-                  <div className="relative w-36 h-36 flex-shrink-0 flex items-center justify-center">
+                  <div className="relative w-36 h-36 shrink-0 flex items-center justify-center">
                     <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
                       {operationalFlowMetrics.categories.map((cat, idx) => {
                         const strokeDasharray = `${cat.percentage} ${100 - cat.percentage}`;
@@ -549,7 +549,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                     <TrendingUp className="w-5 h-5 text-emerald-400" />
                     {t.infographics.heatmapTitle}
                   </h2>
-                  <span className="text-[11px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800/50 px-2.5 py-0.5 rounded">
+                  <span className="text-[11px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800/50 px-2.5 py-0.5 rounded-sm">
                     {t.infographics.total} {financialTreemapData.formattedGrandTotal}
                   </span>
                 </div>
@@ -574,7 +574,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                     return (
                       <div
                         key={item.id}
-                        className={`p-5 rounded-xl border bg-gradient-to-br ${colorStyle} flex flex-col justify-between space-y-3 transition-all hover:scale-[1.01]`}
+                        className={`p-5 rounded-xl border bg-linear-to-br ${colorStyle} flex flex-col justify-between space-y-3 transition-all hover:scale-[1.01]`}
                       >
                         <div className="space-y-1">
                           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
@@ -643,7 +643,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                       if (e.key === 'Escape') setGlossaryQuery('');
                     }}
                     aria-describedby="glossary-search-count"
-                    className="w-full bg-surface-field border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-sm text-slate-200 placeholder-muted focus:outline-none focus:border-cyan-500 [&::-webkit-search-cancel-button]:hidden"
+                    className="w-full bg-surface-field border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-sm text-slate-200 placeholder-muted focus:outline-hidden focus:border-cyan-500 [&::-webkit-search-cancel-button]:hidden"
                   />
                   {glossaryQuery && (
                     <button
@@ -651,7 +651,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                       onClick={() => setGlossaryQuery('')}
                       aria-label={t.common.clearSearch}
                       title={t.common.clearSearch}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-muted hover:text-slate-200 hover:bg-slate-800"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-sm text-muted hover:text-slate-200 hover:bg-slate-800"
                     >
                       <X size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
                     </button>
@@ -707,7 +707,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                               <span
-                                className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded border"
+                                className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded-sm border"
                                 style={entityChipStyle('scheme')}
                               >
                                 {t.nodeType.scheme.label}
@@ -729,7 +729,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                               {isExpanded ? <ChevronUp size={16} className="w-4 h-4 shrink-0" /> : <ChevronDown size={16} className="w-4 h-4 shrink-0" />}
                             </button>
                           </div>
-                          <h2 className="text-2xl font-bold text-white mt-2 break-words">{scheme.label}</h2>
+                          <h2 className="text-2xl font-bold text-white mt-2 wrap-break-word">{scheme.label}</h2>
                         </div>
 
                         <p className="text-sm text-slate-300 leading-relaxed font-sans">

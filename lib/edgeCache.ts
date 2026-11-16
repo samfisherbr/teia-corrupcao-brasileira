@@ -20,7 +20,7 @@
  * Mudou o FORMATO do que é guardado (campos, consultas)? Troque CACHE_VERSION:
  * as cópias antigas deixam de ser lidas.
  */
-import { getRequestContext } from '@cloudflare/next-on-pages';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { SITE_DOMAIN } from '@/lib/site';
 
 const CACHE_VERSION = 'v1';
@@ -45,7 +45,7 @@ const edgeCache = (): Cache | undefined =>
 /** Mantém a tarefa viva depois da resposta (ctx.waitUntil), quando houver contexto. */
 function waitUntil(p: Promise<unknown>) {
   try {
-    const { ctx } = getRequestContext() as unknown as { ctx?: { waitUntil(p: Promise<unknown>): void } };
+    const { ctx } = getCloudflareContext() as unknown as { ctx?: { waitUntil(p: Promise<unknown>): void } };
     ctx?.waitUntil?.(p);
   } catch {
     // Fora do Cloudflare: a promessa segue sozinha.

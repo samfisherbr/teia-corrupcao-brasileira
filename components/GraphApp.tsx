@@ -400,7 +400,7 @@ export default function GraphApp() {
 
 
   return (
-    <div className="relative h-[100dvh] w-full bg-surface-canvas text-slate-100 font-sans overflow-hidden flex flex-col">
+    <div className="relative h-dvh w-full bg-surface-canvas text-slate-100 font-sans overflow-hidden flex flex-col">
       <HeaderBar activePage={activePage} setActivePage={setActivePage} />
 
       {/* Filtro de ano no celular (a barra lateral some < 768px). Oculto com
@@ -451,11 +451,11 @@ export default function GraphApp() {
               <span className="text-red-400 font-mono text-sm mb-2">{t.app.loadFailed}</span>
               <p className="text-slate-300 text-xs max-w-lg mb-2 leading-relaxed">{error.message}</p>
               {error.detail && (
-                <code className="text-[11px] text-muted max-w-lg mb-4 break-words">{error.detail}</code>
+                <code className="text-[11px] text-muted max-w-lg mb-4 wrap-break-word">{error.detail}</code>
               )}
               <button
                 onClick={() => setReloadKey((k) => k + 1)}
-                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-200 rounded border border-slate-700"
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-200 rounded-sm border border-slate-700"
               >
                 {t.common.tryAgain}
               </button>

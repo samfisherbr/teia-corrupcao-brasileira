@@ -6,4 +6,4 @@ Aplicação interativa em React / Next.js com D3 e React-Force-Graph para visual
 - **Next.js (App Router)**
 - **Tailwind CSS & Lucide Icons**
 - **React-Force-Graph-2D & D3-Force**
-- **Cloudflare D1 Database & Cloudflare Pages (Wrangler)**
+- **Cloudflare D1 Database & Cloudflare Workers (OpenNext + Wrangler)**

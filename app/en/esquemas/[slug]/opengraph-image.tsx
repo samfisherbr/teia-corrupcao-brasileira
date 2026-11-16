@@ -2,7 +2,7 @@
 import { dossierOgImage } from '@/views/dossier-og-image';
 import { OG_SIZE } from '@/lib/ogImage';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 export const alt = 'Teia da Corrupção';
 export const size = OG_SIZE;
 export const contentType = 'image/png';

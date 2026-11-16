@@ -16,7 +16,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
   }, [error]);
 
   return (
-    <div className="h-[100dvh] w-full bg-surface-canvas text-slate-200 font-sans flex flex-col items-center justify-center gap-4 p-6 text-center">
+    <div className="h-dvh w-full bg-surface-canvas text-slate-200 font-sans flex flex-col items-center justify-center gap-4 p-6 text-center">
       <span className="text-red-400 font-mono text-sm">{t.error.title}</span>
       <p className="text-sm text-slate-400 max-w-md leading-relaxed">{t.error.body}</p>
       {error.digest && <code className="text-[11px] text-muted">ref.: {error.digest}</code>}

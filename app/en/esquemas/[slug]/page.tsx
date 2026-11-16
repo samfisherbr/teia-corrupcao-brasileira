@@ -1,7 +1,8 @@
 // GERADO por scripts/gen-locale-routes.mjs — não edite; mude views/ e rode `npm run gen:routes`.
 import DossierView, { dossierMetadata } from '@/views/dossier';
 
-export const runtime = 'edge';
+// Lê o D1 a cada visita.
+export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ slug: string }> };
 

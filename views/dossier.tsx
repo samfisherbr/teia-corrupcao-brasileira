@@ -2,7 +2,7 @@
  * Página de dossiê de um esquema (/esquemas/<slug>, /en/esquemas/<slug>,
  * /es/esquemas/<slug> — o slug é o mesmo nos três idiomas).
  *
- * Renderizada no servidor a cada visita (runtime edge, lê o D1), para que o
+ * Renderizada no servidor a cada visita (Worker do Cloudflare, lê o D1), para que o
  * Google e outros robôs leiam o texto inteiro: o grafo da página inicial é
  * desenhado num <canvas> e o Glossário só aparece depois de um clique, então
  * nenhum dos dois é legível para eles.
@@ -129,7 +129,7 @@ function FactBody({ c, t, locale }: { c: SchemeConnection; t: Messages; locale: 
       )}
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
         <span
-          className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded border"
+          className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-sm border"
           style={badgeStyle(st)}
         >
           {t.status[c.status] ?? c.status}
@@ -184,7 +184,7 @@ function EntityItem({ g, t, locale }: { g: EntityGroup; t: Messages; locale: Loc
         </span>
         <span className="shrink-0 flex items-center gap-1.5">
           {multi && <span className="text-[10px] font-mono text-muted">{t.dossier.factsCount(g.facts.length)}</span>}
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 tabular-nums">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-slate-900 text-slate-400 border border-slate-800 tabular-nums">
             {span ?? t.common.notAvailable}
           </span>
         </span>
@@ -243,7 +243,7 @@ function ConnectionSections({ connections, t, locale }: { connections: SchemeCon
             >
               {Icon && <Icon size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />}
               <span>{sectionTitle}</span>
-              <span className="ml-auto px-1.5 py-0.5 rounded border text-[10px] leading-none" style={entityChipStyle(type)}>
+              <span className="ml-auto px-1.5 py-0.5 rounded-sm border text-[10px] leading-none" style={entityChipStyle(type)}>
                 {byEntity.size}
               </span>
             </h3>
@@ -314,7 +314,7 @@ export default async function DossierView({ locale, slug }: { locale: Locale; sl
 
         <header className="space-y-3 border-b border-slate-800 pb-6">
           <span
-            className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded border"
+            className="inline-block whitespace-nowrap text-[10px] font-mono font-bold tracking-widest uppercase px-2.5 py-1 rounded-sm border"
             style={entityChipStyle('scheme')}
           >
             {t.nodeType.scheme.label}

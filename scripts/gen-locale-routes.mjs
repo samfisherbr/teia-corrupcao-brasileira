@@ -20,8 +20,9 @@
  *   - idioma novo: acrescente em LOCALES (aqui e em lib/i18n.ts) e rode.
  *
  * Por que pastas fixas em vez de uma pasta dinâmica app/[locale]: o
- * Cloudflare Pages (next-on-pages) não aceita páginas estáticas debaixo de
- * um trecho dinâmico do endereço — o build falha.
+ * adaptador antigo do Cloudflare (next-on-pages) não aceitava páginas
+ * estáticas debaixo de um trecho dinâmico do endereço — o build falhava. Com o
+ * OpenNext essa restrição não existe mais, mas a estrutura continua valendo.
  * ============================================================================
  */
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -62,7 +63,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   'correcoes/page.tsx': staticPage('corrections', 'correctionsMetadata', 'CorrectionsView'),
   'esquemas/page.tsx': (l) => `${HEADER}import SchemesIndexView, { schemesIndexMetadata } from '@/views/schemes-index';
 
-export const runtime = 'edge';
+// Lê o D1 a cada visita: sem isto o Next geraria a página no build, sem banco.
+export const dynamic = 'force-dynamic';
 export const metadata = schemesIndexMetadata('${l}');
 
 export default function Page() {
@@ -71,7 +73,8 @@ export default function Page() {
 `,
   'esquemas/[slug]/page.tsx': (l) => `${HEADER}import DossierView, { dossierMetadata } from '@/views/dossier';
 
-export const runtime = 'edge';
+// Lê o D1 a cada visita.
+export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -86,7 +89,7 @@ export default async function Page({ params }: Props) {
   'esquemas/[slug]/opengraph-image.tsx': (l) => `${HEADER}import { dossierOgImage } from '@/views/dossier-og-image';
 import { OG_SIZE } from '@/lib/ogImage';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 export const alt = 'Teia da Corrupção';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
@@ -111,8 +114,6 @@ export default function Image() {
   // Qualquer endereço que não seja uma página cai aqui e vira 404 dentro do
   // layout do idioma (assim a página "não encontrada" sai no idioma certo).
   '[...rest]/page.tsx': () => `${HEADER}import { notFound } from 'next/navigation';
-
-export const runtime = 'edge';
 
 export default function CatchAll() {
   notFound();

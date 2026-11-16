@@ -25,7 +25,7 @@ import { I18nProvider } from '@/components/I18nProvider';
 /**
  * Fonte Inter, servida pelo próprio site (next/font baixa os arquivos no build;
  * o navegador não acessa o Google). Expõe a variável --font-inter, que
- * `font-sans` (tailwind.config.js) e app/globals.css usam. `latin` cobre os
+ * `font-sans` (@theme em app/globals.css) e app/globals.css usam. `latin` cobre os
  * acentos do português e do espanhol.
  */
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' });
@@ -52,6 +52,9 @@ export function layoutMetadata(locale: Locale): Metadata {
 export default function LocaleLayout({ locale, children }: { locale: Locale; children: React.ReactNode }) {
   return (
     <html lang={LOCALE_INFO[locale].tag} className={`dark h-full w-full ${inter.variable}`}>
+      {/* <head> no layout raiz é o jeito certo no App Router; a regra
+          no-head-element vale para o Pages Router (_document). */}
+      {/* eslint-disable-next-line @next/next/no-head-element */}
       <head>
         {/* Script do Google AdSense (o código fornecido pelo AdSense). */}
         <script
