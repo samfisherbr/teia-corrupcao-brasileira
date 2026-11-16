@@ -34,7 +34,10 @@ export function resizedPhotoUrl(url: string | null | undefined): string | null {
   if (!RESIZE_ENABLED || !url || typeof window === 'undefined') return null;
   if (window.location.hostname !== SITE_DOMAIN) return null;
   try {
-    if (new URL(url).hostname !== PHOTO_HOST) return null;
+    const u = new URL(url);
+    if (u.hostname !== PHOTO_HOST) return null;
+    // SVG (logos de partido) já é leve e o Cloudflare não redimensiona: vai direto.
+    if (u.pathname.toLowerCase().endsWith('.svg')) return null;
   } catch {
     return null;
   }
