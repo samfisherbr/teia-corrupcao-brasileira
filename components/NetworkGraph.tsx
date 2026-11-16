@@ -175,6 +175,28 @@ const FOCUS25D_MAX_ZOOM = 0.9;
 const FOCUS25D_FIT_SHARE = 0.75;
 const FOCUS25D_LABEL_ALLOWANCE = 50;
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+/**
+ * Preferência do interruptor, guardada SÓ no navegador do visitante
+ * (localStorage: não é cookie e não vai para nenhum servidor). '1' = ligado,
+ * '0' = desligado; sem valor salvo, vale o padrão (ligado, ou desligado com
+ * "reduzir movimento").
+ */
+const VIEW25D_STORAGE_KEY = 'teia.view25d';
+
+/**
+ * AFASTAR OS GRUPOS NO 2.5D — cada esquema e as suas entidades diretas
+ * (as "luas") se afastam dos outros grupos, como um bloco, para os sistemas
+ * não se embolarem no chão achatado do isométrico. Só no DESENHO: a física e
+ * o 2D não mudam, e o afastamento cresce junto com a transição (0 no 2D).
+ *   SPREAD_25D — distância entre grupos no 2.5D completo ÷ distância no 2D.
+ * O afastamento é a partir do grupo que está no centro da tela (ou do item
+ * selecionado) quando o 2.5D começa: esse grupo fica parado e os outros se
+ * afastam dele. Entidades de vários esquemas ficam no meio deles; os
+ * partidos se movem juntos, como o núcleo.
+ */
+const SPREAD_25D = 1.4;
+/** Chave especial em schemesOfRef com a lista de todos os esquemas. */
+const SCHEMES_KEY = '__schemes__';
 
 /** Altura-base do tipo (NODE_STYLE.lift). */
 const baseLift = (node: any) => NODE_STYLE[node?.type as NodeType]?.lift ?? 0;
@@ -355,21 +377,89 @@ export default function NetworkGraph({
   // clearHover é definido mais abaixo (seção 0); o ref evita depender da ordem.
   const clearHoverRef = useRef<() => void>(() => {});
   /** Ponto (mundo, com altura) do item selecionado: o nó, ou o meio da linha. Atualizado a cada render. */
-  const selectionPointRef = useRef<() => { x: number; y: number; z: number } | null>(() => null);
+  const selectionPointRef = useRef<(m?: number) => { x: number; y: number; z: number } | null>(() => null);
+  /** Âncora de grupo do item selecionado (ver groupAnchor), ou null. */
+  const selectionAnchorRef = useRef<() => [number, number] | null>(() => null);
   const active25dRef = useRef(false);
   const dimensionsRef = useRef(dimensions);
   dimensionsRef.current = dimensions;
 
+  // Preferência salva (só neste navegador) > "reduzir movimento" > ligado.
   useEffect(() => {
-    if (window.matchMedia(REDUCED_MOTION_QUERY).matches) {
-      enabled25dRef.current = false;
-      switchTRef.current = 0;
-      setEnabled25d(false);
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem(VIEW25D_STORAGE_KEY);
+    } catch {
+      // armazenamento bloqueado (ex.: janela anônima restrita): usa o padrão
     }
+    const on = saved === '1' ? true : saved === '0' ? false : !window.matchMedia(REDUCED_MOTION_QUERY).matches;
+    enabled25dRef.current = on;
+    switchTRef.current = on ? 1 : 0;
+    setEnabled25d(on);
   }, []);
 
-  /** Posição desenhada de um nó: projetada no 2.5D; no 2D, o próprio x/y. */
-  const pos = useCallback((n: any): [number, number] => project(isoRef.current, n.x, n.y, nodeLift(n)), []);
+  /* Afastamento dos grupos (ver SPREAD_25D). schemesOfRef: id do nó → os
+   * esquemas a que ele está ligado (preenchido na seção 0, onde está a lista
+   * de vizinhos). spreadCentreRef: ponto a partir do qual os grupos se afastam. */
+  const schemesOfRef = useRef(new Map<string, any[]>());
+  const spreadCentreRef = useRef({ x: 0, y: 0 });
+
+  /** Ponto que representa o grupo do nó: o esquema, a média dos seus esquemas, o núcleo (partidos) ou ele mesmo. */
+  const groupAnchor = useCallback((n: any): [number, number] => {
+    if (n.type === 'scheme') return [n.x, n.y];
+    if (n.type === 'party') return [0, 0];
+    const schemes = schemesOfRef.current.get(n.id);
+    if (!schemes || schemes.length === 0) return [n.x, n.y];
+    let x = 0, y = 0, c = 0;
+    for (const sc of schemes) {
+      if (typeof sc.x !== 'number') continue;
+      x += sc.x; y += sc.y; c++;
+    }
+    return c ? [x / c, y / c] : [n.x, n.y];
+  }, []);
+
+  /** Posição no chão já com o afastamento dos grupos, para um m (padrão: o atual). */
+  const spreadXY = useCallback((n: any, m: number = isoRef.current.m): [number, number] => {
+    if (m === 0) return [n.x, n.y];
+    const k = (SPREAD_25D - 1) * m;
+    const [ax, ay] = groupAnchor(n);
+    const c = spreadCentreRef.current;
+    return [n.x + k * (ax - c.x), n.y + k * (ay - c.y)];
+  }, [groupAnchor]);
+
+  /** Posição desenhada de um nó: projetada (e com grupos afastados) no 2.5D; no 2D, o próprio x/y. */
+  const pos = useCallback((n: any): [number, number] => {
+    const [x, y] = spreadXY(n);
+    return project(isoRef.current, x, y, nodeLift(n));
+  }, [spreadXY]);
+
+  /**
+   * Escolhe de onde os grupos se afastam, ao ENTRAR no 2.5D: o grupo do item
+   * selecionado ou, sem seleção, o esquema (ou o núcleo) mais perto do centro
+   * da tela. Fica fixo enquanto houver 2.5D na tela.
+   */
+  const chooseSpreadCentre = useCallback((cx: number, cy: number) => {
+    const sel = selectionAnchorRef.current();
+    if (sel) {
+      spreadCentreRef.current = { x: sel[0], y: sel[1] };
+      return;
+    }
+    let best: [number, number] = [0, 0];
+    let bestD = Math.hypot(cx, cy);
+    for (const sc of schemesOfRef.current.get(SCHEMES_KEY) ?? []) {
+      if (typeof sc.x !== 'number') continue;
+      const d = Math.hypot(sc.x - cx, sc.y - cy);
+      if (d < bestD) { bestD = d; best = [sc.x, sc.y]; }
+    }
+    spreadCentreRef.current = { x: best[0], y: best[1] };
+  }, []);
+
+  /** setMorph + escolha do centro do afastamento ao sair do 2D. Use sempre esta. */
+  const applyMorph = useCallback((m: number, cx: number, cy: number) => {
+    const st = isoRef.current;
+    if (st.m === 0 && m >= 1e-3) chooseSpreadCentre(cx, cy);
+    setMorph(st, m, cx, cy);
+  }, [chooseSpreadCentre]);
 
   /** Pede um redesenho (zoom(zoom atual) só marca o canvas; não mexe na câmera). */
   const requestFrame = useCallback(() => {
@@ -391,6 +481,11 @@ export default function NetworkGraph({
     const next = !enabled25dRef.current;
     enabled25dRef.current = next;
     setEnabled25d(next);
+    try {
+      window.localStorage.setItem(VIEW25D_STORAGE_KEY, next ? '1' : '0');
+    } catch {
+      // sem armazenamento: a escolha vale só para esta visita
+    }
     cancelAnimationFrame(switchAnimRef.current);
     const from = switchTRef.current;
     const to = next ? 1 : 0;
@@ -408,14 +503,14 @@ export default function NetworkGraph({
       const t = Math.min(1, (now - start) / SWITCH_ANIM_MS);
       switchTRef.current = from + (to - from) * easeInOutCubic(t);
       const fg = graphRef.current;
-      const p = selectionPointRef.current();
-      if (fg && p && pinScreen) {
+      if (fg && pinScreen) {
         // Aplica a projeção deste passo e põe a câmera de modo que o ponto
         // selecionado continue em pinScreen.
         const k = fg.zoom();
         const { width, height } = dimensionsRef.current;
         const c = fg.centerAt();
-        setMorph(isoRef.current, morphForZoom(k, Math.min(width, height)) * switchTRef.current, c.x, c.y);
+        applyMorph(morphForZoom(k, Math.min(width, height)) * switchTRef.current, c.x, c.y);
+        const p = selectionPointRef.current() ?? { x: 0, y: 0, z: 0 };
         const [px, py] = project(isoRef.current, p.x, p.y, p.z);
         fg.centerAt(px - (pinScreen.x - width / 2) / k, py - (pinScreen.y - height / 2) / k);
       } else {
@@ -424,7 +519,7 @@ export default function NetworkGraph({
       if (t < 1) switchAnimRef.current = requestAnimationFrame(step);
     };
     switchAnimRef.current = requestAnimationFrame(step);
-  }, [requestFrame, graphRef]);
+  }, [requestFrame, graphRef, applyMorph]);
 
   useEffect(() => () => {
     cancelAnimationFrame(switchAnimRef.current);
@@ -448,6 +543,25 @@ export default function NetworkGraph({
     }
     return map;
   }, [graphData.links]);
+
+  // Esquemas de cada nó (para o afastamento dos grupos no 2.5D).
+  const schemesOf = useMemo(() => {
+    const byId = new Map<string, any>(graphData.nodes.map((n: any) => [n.id, n]));
+    const out = new Map<string, any[]>();
+    for (const n of graphData.nodes as any[]) {
+      if (n.type === 'scheme' || n.type === 'party') continue;
+      const list: any[] = [];
+      adjacency.get(n.id)?.forEach((id) => {
+        const other = byId.get(id);
+        if (other?.type === 'scheme') list.push(other);
+      });
+      out.set(n.id, list);
+    }
+    // Os próprios esquemas entram como candidatos a centro (chooseSpreadCentre).
+    out.set(SCHEMES_KEY, (graphData.nodes as any[]).filter((n) => n.type === 'scheme'));
+    return out;
+  }, [graphData.nodes, adjacency]);
+  schemesOfRef.current = schemesOf;
 
   // Hover (só com mouse): nó ou linha sob o cursor. Tem prioridade sobre a
   // seleção enquanto o cursor estiver em cima; ao sair, volta o destaque da
@@ -603,21 +717,17 @@ export default function NetworkGraph({
     const { width, height } = dimensionsRef.current;
     const viewMin = Math.min(width, height);
 
-    // Ponto focal (mundo): o nó, ou o meio da linha.
-    let fx: number, fy: number, fz: number;
-    let centreId: string | null = null;
-    if (selectedNode) {
-      const n: any = nodeById.get(selectedNode.id);
-      if (!n || typeof n.x !== 'number') return;
-      centreId = n.id;
-      fx = n.x; fy = n.y; fz = nodeLift(n);
-    } else if (selectedLink) {
-      const { sourceId, targetId } = getLinkEnds(selectedLink);
-      const a: any = nodeById.get(sourceId);
-      const b: any = nodeById.get(targetId);
-      if (!a || !b || typeof a.x !== 'number' || typeof b.x !== 'number') return;
-      fx = (a.x + b.x) / 2; fy = (a.y + b.y) / 2; fz = (nodeLift(a) + nodeLift(b)) / 2;
-    } else return;
+    // Ponto focal: o nó, ou o meio da linha — já com o afastamento dos
+    // grupos como ficará no 2.5D completo (m = 1). Vindo do 2D, o afastamento
+    // passa a partir do grupo selecionado (ele fica parado; os outros se afastam).
+    if (st.m === 0) {
+      const c = g.centerAt();
+      chooseSpreadCentre(c.x, c.y);
+    }
+    const focus = selectionPointRef.current(1);
+    if (!focus) return;
+    const { x: fx, y: fy, z: fz } = focus;
+    const centreId: string | null = selectedNode ? selectedNode.id : null;
 
     // Espaço útil: tira o painel (desktop, aberto) e a faixa dos controles.
     const drawer = !isMobile && detailsOpenRef.current ? DRAWER_WIDTH_PX : 0;
@@ -632,7 +742,8 @@ export default function NetworkGraph({
       const n: any = nodeById.get(id);
       if (!n || typeof n.x !== 'number') return;
       const r = getNodeRadius(n.type, n);
-      const [ox, oy] = fullIsoOffset(n.x - fx, n.y - fy, nodeLift(n) - fz);
+      const [nx, ny] = spreadXY(n, 1);
+      const [ox, oy] = fullIsoOffset(nx - fx, ny - fy, nodeLift(n) - fz);
       const kx = halfW / (Math.abs(ox) + r);
       const ky = halfH / (Math.abs(oy) + r + FOCUS25D_LABEL_ALLOWANCE);
       needs.push(Math.min(kx, ky));
@@ -658,8 +769,10 @@ export default function NetworkGraph({
       const k = Math.exp(Math.log(k0) + (Math.log(kEnd) - Math.log(k0)) * e);
       gg.zoom(k);
       const c = gg.centerAt();
-      setMorph(st, morphForZoom(k, viewMin) * switchTRef.current, c.x, c.y);
-      const [px, py] = project(st, w0x + (fx - w0x) * e, w0y + (fy - w0y) * e, fz * e);
+      applyMorph(morphForZoom(k, viewMin) * switchTRef.current, c.x, c.y);
+      // O ponto focal com o afastamento DESTE passo (cresce junto com m).
+      const p = selectionPointRef.current() ?? focus;
+      const [px, py] = project(st, w0x + (p.x - w0x) * e, w0y + (p.y - w0y) * e, p.z * e);
       gg.centerAt(px + (offX * e) / k, py + (offY * e) / k);
       focusAnimRef.current = e < 1 ? requestAnimationFrame(step) : 0;
     };
@@ -1179,37 +1292,44 @@ export default function NetworkGraph({
     const m = morphForZoom(globalScale, Math.min(width, height)) * switchTRef.current;
     // Centro da tela no espaço projetado (o mesmo da biblioteca).
     const c = ctx.getTransform().inverse().transformPoint({ x: ctx.canvas.width / 2, y: ctx.canvas.height / 2 });
-    setMorph(st, m, c.x, c.y);
+    applyMorph(m, c.x, c.y);
     const on = st.m > 0;
     if (on !== active25dRef.current) {
       active25dRef.current = on;
       setActive25d(on);
     }
     if (!on) return;
-    drawFloor(ctx, st, globalScale);
+    const spreadK = (SPREAD_25D - 1) * st.m;
+    drawFloor(ctx, st, globalScale, { x: spreadCentreRef.current.x, y: spreadCentreRef.current.y, k: spreadK });
     drawGroundMarks(
       ctx,
       st,
       globalScale,
       graphData.nodes
         .filter((n: any) => typeof n.x === 'number')
-        .map((n: any) => ({
-          x: n.x,
-          y: n.y,
+        .map((n: any) => {
+          const [x, y] = spreadXY(n);
+          return {
+          x,
+          y,
           z: nodeLift(n),
           r: getNodeRadius(n.type, n),
           color: NODE_STYLE[n.type as NodeType]?.color ?? FALLBACK_COLOR,
           alpha: nodeAlpha(n, globalScale) * (isNodeLit(n.id) ? 1 : 0.6),
-        })),
+          };
+        }),
     );
-  }, [graphData.nodes, nodeAlpha, isNodeLit]);
+  }, [graphData.nodes, nodeAlpha, isNodeLit, applyMorph, spreadXY]);
 
   const renderFramePost = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     const st = isoRef.current;
     if (st.m > 0) {
       const sorted = graphData.nodes
         .filter((n: any) => typeof n.x === 'number')
-        .map((n: any) => ({ n, d: depthOf(st, n.x, n.y, nodeLift(n)) }))
+        .map((n: any) => {
+          const [x, y] = spreadXY(n);
+          return { n, d: depthOf(st, x, y, nodeLift(n)) };
+        })
         .sort((a, b) => a.d - b.d);
       for (const { n } of sorted) {
         const [x, y] = pos(n);
@@ -1217,7 +1337,7 @@ export default function NetworkGraph({
       }
     }
     drawLabels(ctx, globalScale);
-  }, [graphData.nodes, pos, drawNodeAt, drawLabels]);
+  }, [graphData.nodes, pos, drawNodeAt, drawLabels, spreadXY]);
 
   /* -------------------------------------------------------------------------
    * 8b. BOTÃO FLUTUANTE "Exibir detalhes" — aparece acima do item selecionado
@@ -1228,17 +1348,37 @@ export default function NetworkGraph({
   const detailsBtnRef = useRef<HTMLButtonElement>(null);
   const nodeById = useMemo(() => new Map(graphData.nodes.map((n: any) => [n.id, n])), [graphData.nodes]);
 
-  selectionPointRef.current = () => {
+  selectionPointRef.current = (m?: number) => {
     if (selectedNode) {
       const n: any = nodeById.get(selectedNode.id);
-      return n && typeof n.x === 'number' ? { x: n.x, y: n.y, z: nodeLift(n) } : null;
+      if (!n || typeof n.x !== 'number') return null;
+      const [x, y] = spreadXY(n, m);
+      return { x, y, z: nodeLift(n) };
     }
     if (selectedLink) {
       const { sourceId, targetId } = getLinkEnds(selectedLink);
       const a: any = nodeById.get(sourceId);
       const b: any = nodeById.get(targetId);
       if (!a || !b || typeof a.x !== 'number' || typeof b.x !== 'number') return null;
-      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (nodeLift(a) + nodeLift(b)) / 2 };
+      const [ax, ay] = spreadXY(a, m);
+      const [bx, by] = spreadXY(b, m);
+      return { x: (ax + bx) / 2, y: (ay + by) / 2, z: (nodeLift(a) + nodeLift(b)) / 2 };
+    }
+    return null;
+  };
+  selectionAnchorRef.current = () => {
+    if (selectedNode) {
+      const n: any = nodeById.get(selectedNode.id);
+      return n && typeof n.x === 'number' ? groupAnchor(n) : null;
+    }
+    if (selectedLink) {
+      const { sourceId, targetId } = getLinkEnds(selectedLink);
+      const a: any = nodeById.get(sourceId);
+      const b: any = nodeById.get(targetId);
+      if (!a || !b || typeof a.x !== 'number' || typeof b.x !== 'number') return null;
+      const [ax, ay] = groupAnchor(a);
+      const [bx, by] = groupAnchor(b);
+      return [(ax + bx) / 2, (ay + by) / 2];
     }
     return null;
   };

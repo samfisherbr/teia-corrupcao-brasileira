@@ -166,7 +166,13 @@ function groundCircle(ctx: CanvasRenderingContext2D, st: IsoState, cx: number, c
  * início do quadro, por baixo de tudo, com opacidade = m.
  * `ctx` já vem com a transformação de zoom/arrasto da biblioteca.
  */
-export function drawFloor(ctx: CanvasRenderingContext2D, st: IsoState, globalScale: number) {
+export function drawFloor(
+  ctx: CanvasRenderingContext2D,
+  st: IsoState,
+  globalScale: number,
+  /** Afastamento dos grupos (SPREAD_25D): as linhas de construção acompanham — ponto p → p + k·(p − centro). */
+  spread: { x: number; y: number; k: number } = { x: 0, y: 0, k: 0 },
+) {
   if (st.m <= 0) return;
   // Área visível no chão: os 4 cantos da tela "desprojetados".
   const inv = ctx.getTransform().inverse();
@@ -208,12 +214,16 @@ export function drawFloor(ctx: CanvasRenderingContext2D, st: IsoState, globalSca
     ctx.stroke();
   }
 
-  // Linhas de construção: diagonais pelo núcleo + órbitas.
-  const ext = Math.max(Math.abs(x0), Math.abs(x1), Math.abs(y0), Math.abs(y1), LANE_FAR * 1.4);
+  // Linhas de construção: diagonais pelo núcleo + órbitas (com o núcleo e
+  // os raios afastados junto com os grupos).
+  const ox = -spread.k * spread.x;
+  const oy = -spread.k * spread.y;
+  const grow = 1 + spread.k;
+  const ext = Math.max(Math.abs(x0), Math.abs(x1), Math.abs(y0), Math.abs(y1), LANE_FAR * 1.4) * grow + Math.hypot(ox, oy);
   ctx.beginPath();
   for (const [dx, dy] of [[1, 1], [1, -1]]) {
-    const [ax, ay] = project(st, -ext * dx, -ext * dy, 0);
-    const [bx, by] = project(st, ext * dx, ext * dy, 0);
+    const [ax, ay] = project(st, ox - ext * dx, oy - ext * dy, 0);
+    const [bx, by] = project(st, ox + ext * dx, oy + ext * dy, 0);
     ctx.moveTo(ax, ay);
     ctx.lineTo(bx, by);
   }
@@ -222,7 +232,7 @@ export function drawFloor(ctx: CanvasRenderingContext2D, st: IsoState, globalSca
   ctx.strokeStyle = CONSTRUCTION;
   ctx.setLineDash([6 * px, 6 * px]);
   for (const r of [CORE_RADIUS, LANE_NEAR, LANE_FAR]) {
-    groundCircle(ctx, st, 0, 0, r);
+    groundCircle(ctx, st, ox, oy, r * grow);
     ctx.stroke();
   }
   ctx.restore();
