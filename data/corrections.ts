@@ -39,6 +39,17 @@ export interface Correction {
 export const CORRECTIONS: Correction[] = [
   {
     date: '2026-11-17',
+    scheme: 'esquema_operacao_porto_seguro',
+    kind: 'correcao',
+    summary:
+      'Fonte trocada: a reportagem do G1 de 2012 sobre a deflagração da operação saiu do ar (erro 404) e foi substituída pela cronologia do UOL de 3 de dezembro de 2012, que registra a operação de 23 de novembro de 2012 e as exonerações de Rosemary Noronha e José Weber.',
+    translations: {
+      en: 'Source replaced: the 2012 G1 report on the launch of the operation went offline (404 error) and was replaced with the UOL timeline of 3 December 2012, which records the operation of 23 November 2012 and the dismissals of Rosemary Noronha and José Weber.',
+      es: 'Fuente sustituida: el reportaje de G1 de 2012 sobre el inicio de la operación dejó de estar disponible (error 404) y se sustituyó por la cronología de UOL del 3 de diciembre de 2012, que recoge la operación del 23 de noviembre de 2012 y las destituciones de Rosemary Noronha y José Weber.',
+    },
+  },
+  {
+    date: '2026-11-17',
     scheme: 'esquema_operacao_navalha',
     kind: 'correcao',
     summary:
