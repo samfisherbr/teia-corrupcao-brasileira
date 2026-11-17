@@ -38,6 +38,28 @@ export interface Correction {
 
 export const CORRECTIONS: Correction[] = [
   {
+    date: '2026-11-17',
+    scheme: 'esquema_banco_master_inss',
+    kind: 'correcao',
+    summary:
+      'Revisão completa do caso. Ibaneis Rocha constava como "Sob investigação"; não foi localizada investigação formal aberta (o STJ apenas encaminhou à PGR um pedido da oposição), e o vínculo passou a "Fatos documentados", com a negativa dele. O vínculo do BRB também passou de "Sob investigação" a "Fatos documentados": as fontes tratam o banco como a parte lesada, e os indiciados são pessoas. O impacto citava R$ 12,2 bilhões e uma projeção de até R$ 51 bilhões sem fonte verificada; a cifra de R$ 51 bilhões foi retirada, e o texto passou a usar os números do relatório da PF: R$ 17,5 bilhões em carteiras cedidas ao BRB, fraude em pelo menos R$ 12 bilhões e prejuízo mínimo de R$ 2,7 bilhões. Fontes fracas (Brasil Paralelo, Sintrajufe, ND Mais, Gazeta do Paraná) foram substituídas, o ano da saída de Augusto Lima do Master foi corrigido para 2024 e os resumos das pessoas deixaram de citar estágio processual. Foi registrada a liquidação do Master pelo Banco Central, em 18/11/2025.',
+    translations: {
+      en: 'Full review of the case. Ibaneis Rocha was listed as "Under investigation"; no formal investigation was found (the STJ only forwarded an opposition request to the PGR), and the link is now "Documented facts", with his denial. BRB\'s link has also moved from "Under investigation" to "Documented facts": the sources treat the bank as the injured party, and those named as suspects are individuals. The impact section cited R$ 12.2 billion and an unverified projection of up to R$ 51 billion; the R$ 51 billion figure has been removed and the text now uses the Federal Police report\'s figures: R$ 17.5 billion in portfolios assigned to BRB, fraud in at least R$ 12 billion and a minimum loss of R$ 2.7 billion. Weak sources (Brasil Paralelo, Sintrajufe, ND Mais, Gazeta do Paraná) were replaced, the year Augusto Lima left Master was corrected to 2024 and the summaries of the people involved no longer mention procedural stages. The Central Bank\'s liquidation of Master on 18 November 2025 has been recorded.',
+      es: 'Revisión completa del caso. Ibaneis Rocha figuraba como "En investigación"; no se localizó ninguna investigación formal abierta (el STJ solo remitió a la PGR una petición de la oposición), y el vínculo pasó a "Hechos documentados", con su negativa. El vínculo del BRB también pasó de "En investigación" a "Hechos documentados": las fuentes tratan al banco como la parte perjudicada, y los imputados son personas. El impacto citaba 12.200 millones de reales y una proyección de hasta 51.000 millones sin fuente verificada; la cifra de 51.000 millones se ha retirado y el texto usa ahora los datos del informe de la Policía Federal: 17.500 millones de reales en carteras cedidas al BRB, fraude en al menos 12.000 millones y un perjuicio mínimo de 2.700 millones. Se sustituyeron fuentes débiles (Brasil Paralelo, Sintrajufe, ND Mais, Gazeta do Paraná), se corrigió a 2024 el año de la salida de Augusto Lima del Master y los resúmenes de las personas dejaron de mencionar etapas procesales. Se registró la liquidación del Master por el Banco Central el 18 de noviembre de 2025.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_banco_master_inss',
+    kind: 'atualizacao',
+    summary:
+      'Situação jurídica atualizada até 17/11/2026: a PGR defendeu no STF, em 11/11/2026, a manutenção da prisão preventiva de Daniel Vorcaro; Paulo Henrique Costa está preso desde abril de 2026, e o vínculo dele passou a trazer o indiciamento e a posição da defesa; o INSS retinha, em janeiro de 2026, cerca de R$ 2 bilhões de 254 mil contratos de consignado do Master; Augusto Lima foi registrado como criador do Credcesta, em 2018. Até esta data não foi localizada denúncia da PGR.',
+    translations: {
+      en: 'Legal status updated to 17 November 2026: on 11 November 2026 the PGR told the STF that Daniel Vorcaro should remain in pre-trial detention; Paulo Henrique Costa has been in custody since April 2026, and his link now records the police report and his defence\'s position; in January 2026 the INSS was withholding about R$ 2 billion from 254,000 Master payroll-loan contracts; Augusto Lima has been recorded as the creator of Credcesta, in 2018. No PGR indictment had been found by this date.',
+      es: 'Situación jurídica actualizada a 17 de noviembre de 2026: el 11 de noviembre de 2026 la PGR defendió ante el STF que Daniel Vorcaro siga en prisión preventiva; Paulo Henrique Costa está en prisión desde abril de 2026, y su vínculo recoge ahora la imputación y la posición de su defensa; en enero de 2026 el INSS retenía cerca de 2.000 millones de reales de 254.000 contratos de préstamos del Master; se registró a Augusto Lima como creador de Credcesta, en 2018. Hasta esa fecha no se había localizado ninguna acusación de la PGR.',
+    },
+  },
+  {
     date: '2026-11-15',
     scheme: 'esquema_trt_sp',
     kind: 'correcao',
