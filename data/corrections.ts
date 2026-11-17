@@ -39,6 +39,182 @@ export interface Correction {
 export const CORRECTIONS: Correction[] = [
   {
     date: '2026-11-17',
+    scheme: 'esquema_operacao_navalha',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: o vínculo de Zuleido Veras passou de "Fatos documentados" para "Condenações anuladas", com registro da decisão do TRF-5 de 2018 e do recurso do MPF; fontes de outros vínculos foram trocadas por páginas que sustentam o estágio afirmado; a Wikipédia saiu da lista de fontes; resumos de pessoas e empresas deixaram de citar acusações e passaram a dizer só quem elas são.',
+    translations: {
+      en: 'Case review: Zuleido Veras\'s link moved from "Documented facts" to "Convictions annulled", recording the 2018 TRF-5 decision and the MPF appeal; sources for other links were replaced with pages that support the stage stated; Wikipedia was removed from the list of sources; summaries of people and companies no longer mention accusations and now state only who they are.',
+      es: 'Revisión del caso: el vínculo de Zuleido Veras pasó de "Hechos documentados" a "Condenas anuladas", con la decisión del TRF-5 de 2018 y el recurso del MPF; se sustituyeron fuentes de otros vínculos por páginas que sostienen la fase afirmada; Wikipedia salió de la lista de fuentes; los resúmenes de personas y empresas dejaron de citar acusaciones y ahora solo dicen quiénes son.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_caixa_pandora',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: o vínculo da Call Tecnologia passou de "Fatos documentados" para "Condenados (cabe recurso)", por condenação em ação de improbidade (esfera cível), com a posição da defesa de Arruda; a cifra do vínculo de Durval Barbosa e o destaque do dossiê, antes R$ 600 milhões sem fonte que os sustentasse, passaram a citar a estimativa mínima de R$ 110 milhões da PGR; resumos de pessoas e empresas foram neutralizados.',
+    translations: {
+      en: 'Case review: Call Tecnologia\'s link moved from "Documented facts" to "Convicted (subject to appeal)", for a conviction in an administrative misconduct (civil) case, with Arruda\'s defence position; the figure on Durval Barbosa\'s link and the dossier highlight, previously R$ 600 million without a supporting source, now cite the PGR\'s minimum estimate of R$ 110 million; summaries of people and companies were made neutral.',
+      es: 'Revisión del caso: el vínculo de Call Tecnologia pasó de "Hechos documentados" a "Condenados (cabe recurso)", por una condena en una acción de improbidad (vía civil), con la posición de la defensa de Arruda; la cifra del vínculo de Durval Barbosa y el dato destacado del dosier, antes 600 millones de reales sin fuente que los sostuviera, ahora citan la estimación mínima de 110 millones de la PGR; se neutralizaron los resúmenes de personas y empresas.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_operacao_porto_seguro',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: o vínculo da Tecondi passou de "Fatos documentados" para "Sob investigação", por ação de improbidade do MPF de 2013, com a resposta da empresa; o destaque do dossiê, antes de R$ 1,3 bilhão a R$ 2 bilhões sem fonte localizada, passou a ser o pedido de devolução de R$ 38 milhões feito pelo MPF; resumos foram neutralizados.',
+    translations: {
+      en: 'Case review: Tecondi\'s link moved from "Documented facts" to "Under investigation", for a 2013 MPF administrative misconduct suit, with the company\'s response; the dossier highlight, previously R$ 1.3 billion to R$ 2 billion with no source found, is now the MPF\'s request to recover R$ 38 million; summaries were made neutral.',
+      es: 'Revisión del caso: el vínculo de Tecondi pasó de "Hechos documentados" a "En investigación", por una acción de improbidad del MPF de 2013, con la respuesta de la empresa; el dato destacado del dosier, antes de 1.300 a 2.000 millones de reales sin fuente localizada, pasa a ser la petición del MPF de devolver 38 millones; se neutralizaron los resúmenes.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_trensalao',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: cifras em dólares ganharam a nota de conversão exigida e valores em reais corrigidos pela cotação média de 2014; cifras sem fonte específica em vínculos de empresas foram retiradas; o vínculo de Robson Marinho passou a citar sua volta ao TCE-SP em 2021; resumos foram neutralizados.',
+    translations: {
+      en: 'Case review: dollar amounts gained the required conversion note and real amounts were corrected at the 2014 average rate; figures without a specific source on company links were removed; Robson Marinho\'s link now cites his return to the TCE-SP in 2021; summaries were made neutral.',
+      es: 'Revisión del caso: las cifras en dólares recibieron la nota de conversión exigida y los importes en reales se corrigieron al tipo medio de 2014; se retiraron cifras sin fuente específica en vínculos de empresas; el vínculo de Robson Marinho ahora cita su regreso al TCE-SP en 2021; se neutralizaron los resúmenes.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_lava_jato',
+    kind: 'atualizacao',
+    summary:
+      'Revisão do caso: o vínculo de José Dirceu passou de "Condenados (cabe recurso)" para "Condenações anuladas", porque o STF anulou em 2024 atos de duas ações penais contra ele (o texto anterior dizia que a pena estava prescrita); a fonte do vínculo de Renato Duque passou a registrar o julgamento interrompido no STF em novembro de 2025; a multa da Odebrecht passou a citar a decisão do STF de 2023 sobre as provas do acordo.',
+    translations: {
+      en: 'Case review: José Dirceu\'s link moved from "Convicted (subject to appeal)" to "Convictions annulled", because the STF annulled acts in two criminal cases against him in 2024 (the previous text said the sentence was time-barred); the source for Renato Duque\'s link now records the STF ruling interrupted in November 2025; the Odebrecht fine now cites the STF\'s 2023 decision on the evidence from the agreement.',
+      es: 'Revisión del caso: el vínculo de José Dirceu pasó de "Condenados (cabe recurso)" a "Condenas anuladas", porque el STF anuló en 2024 actos de dos procesos penales contra él (el texto anterior decía que la pena había prescrito); la fuente del vínculo de Renato Duque ahora registra el juicio interrumpido en el STF en noviembre de 2025; la multa de Odebrecht ahora cita la decisión del STF de 2023 sobre las pruebas del acuerdo.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_operacao_zelotes',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: os vínculos de José Ricardo da Silva e da MMC passaram de "Sob investigação" para "Absolvidos", com a decisão do TRF-1 de 2020, que condenou por advocacia administrativa o ex-diretor do Senado Fernando Mesquita; o do Bradesco passou a registrar o arquivamento da ação contra seu presidente em 2017; o de Guido Mantega passou a explicar que a ação foi encerrada por prescrição em 2025, o que não é absolvição; cifras atribuídas a pessoas e empresas sem fonte específica foram retiradas; resumos foram neutralizados. O vínculo direto da consultoria S3 Gestão com o esquema, sem fonte que o sustentasse, foi retirado.',
+    translations: {
+      en: 'Case review: the links of José Ricardo da Silva and MMC moved from "Under investigation" to "Acquitted", with the 2020 TRF-1 decision, which convicted former Senate director Fernando Mesquita of advocacia administrativa; Bradesco\'s now records the 2017 closure of the case against its chairman; Guido Mantega\'s link now explains that the case was closed as time-barred in 2025, which is not an acquittal; figures attributed to people and companies without a specific source were removed; summaries were made neutral. The direct link between the consultancy S3 Gestão and the scheme, which had no supporting source, was removed.',
+      es: 'Revisión del caso: los vínculos de José Ricardo da Silva y de MMC pasaron de "En investigación" a "Absueltos", con la decisión del TRF-1 de 2020, que condenó por advocacia administrativa al exdirector del Senado Fernando Mesquita; el de Bradesco ahora registra el archivo del proceso contra su presidente en 2017; el de Guido Mantega ahora explica que el proceso se cerró por prescripción en 2025, lo que no es una absolución; se retiraron cifras atribuidas a personas y empresas sin fuente específica; se neutralizaron los resúmenes. Se retiró el vínculo directo de la consultora S3 Gestão con la trama, que no tenía fuente que lo sostuviera.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_operacao_greenfield',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: Guilherme Lacerda, João Vaccari Neto e Carlos Caser passaram a ter o registro de que se tornaram réus em 2017, com fonte própria; os vínculos de Joesley e Wesley Batista passaram de "Fatos documentados" para "Sob investigação" e deixaram de atribuir a eles o acordo de leniência de R$ 10,3 bilhões, que é da empresa J&F; o bloqueio global de R$ 8 bilhões deixou de ser atribuído à Funcef e à Petros; foi incluída a revisão da multa da J&F; resumos foram neutralizados. Geddel Vieira Lima e o PMDB saíram do grafo do caso, porque as fontes lidas não registram investigação formal de Geddel na Greenfield.',
+    translations: {
+      en: 'Case review: Guilherme Lacerda, João Vaccari Neto and Carlos Caser now record that they became defendants in 2017, with their own source; the links for Joesley and Wesley Batista moved from "Documented facts" to "Under investigation" and no longer attribute to them the R$ 10.3 billion leniency agreement, which belongs to the company J&F; the global R$ 8 billion asset freeze is no longer attributed to Funcef and Petros; the review of J&F\'s fine was added; summaries were made neutral. Geddel Vieira Lima and the PMDB were removed from the case graph, because the sources read record no formal investigation of Geddel in Greenfield.',
+      es: 'Revisión del caso: Guilherme Lacerda, João Vaccari Neto y Carlos Caser ahora registran que pasaron a ser acusados en 2017, con fuente propia; los vínculos de Joesley y Wesley Batista pasaron de "Hechos documentados" a "En investigación" y dejaron de atribuirles el acuerdo de clemencia de 10.300 millones de reales, que es de la empresa J&F; el bloqueo global de 8.000 millones dejó de atribuirse a Funcef y Petros; se añadió la revisión de la multa de J&F; se neutralizaron los resúmenes. Geddel Vieira Lima y el PMDB salieron del grafo del caso, porque las fuentes consultadas no registran ninguna investigación formal de Geddel en Greenfield.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_jbs_mala_rocha_loures',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: o dossiê dizia que Rodrigo Rocha Loures foi absolvido no caso da mala, o que não foi localizado em nenhuma fonte; o texto passou a dizer que a sentença não foi localizada. O vínculo de Michel Temer passou a citar o arquivamento pelo TRF-1 em 2021 e a decisão do ministro Fachin de 2024; o de Aécio Neves, a absolvição de 2022 confirmada pelo TRF-3; a cifra de Joesley Batista passou a ser a das doações declaradas na delação, como alegação do colaborador; resumos foram neutralizados.',
+    translations: {
+      en: 'Case review: the dossier said Rodrigo Rocha Loures had been acquitted in the bag case, which was not found in any source; the text now says the judgment was not found. Michel Temer\'s link now cites the TRF-1\'s closure of the case in 2021 and Justice Fachin\'s 2024 decision; Aécio Neves\'s, the 2022 acquittal upheld by the TRF-3; Joesley Batista\'s figure is now the donations declared in his plea deal, as a cooperating witness\'s allegation; summaries were made neutral.',
+      es: 'Revisión del caso: el dosier decía que Rodrigo Rocha Loures había sido absuelto en el caso de la maleta, algo que no se localizó en ninguna fuente; el texto ahora dice que no se ha localizado la sentencia. El vínculo de Michel Temer ahora cita el archivo del TRF-1 en 2021 y la decisión del magistrado Fachin de 2024; el de Aécio Neves, la absolución de 2022 confirmada por el TRF-3; la cifra de Joesley Batista pasa a ser la de las donaciones declaradas en la delación, como alegación del delator; se neutralizaron los resúmenes.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_operacao_cadeia_velha',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: os vínculos de Paulo Melo e Edson Albertassi passaram de "Absolvidos" para "Condenações anuladas", porque o arquivamento de 2023 foi da ação de improbidade, não da ação penal, cujos atos decisórios o TRF-2 anulou em 2022; o dossiê dizia que as acusações penais tinham sido arquivadas. Os vínculos de Picciani, Barata Filho, Lélis Teixeira e Felipe Picciani passaram a ter o ano e a fonte da anulação; as cifras passaram a ser identificadas como alegações da acusação.',
+    translations: {
+      en: 'Case review: the links of Paulo Melo and Edson Albertassi moved from "Acquitted" to "Convictions annulled", because the 2023 closure concerned the administrative misconduct suit, not the criminal case, whose decisions the TRF-2 annulled in 2022; the dossier said the criminal charges had been dropped. The links of Picciani, Barata Filho, Lélis Teixeira and Felipe Picciani now carry the year and source of the annulment; the figures are now identified as prosecution allegations.',
+      es: 'Revisión del caso: los vínculos de Paulo Melo y Edson Albertassi pasaron de "Absueltos" a "Condenas anuladas", porque el archivo de 2023 fue de la acción de improbidad, no del proceso penal, cuyos actos decisorios anuló el TRF-2 en 2022; el dosier decía que se habían archivado las acusaciones penales. Los vínculos de Picciani, Barata Filho, Lélis Teixeira y Felipe Picciani ahora tienen el año y la fuente de la anulación; las cifras pasan a identificarse como alegaciones de la acusación.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_caso_queiroz_rachadinhas',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: o dossiê dizia que a denúncia foi anulada; o TJ-RJ a rejeitou por falta de justa causa em 2022, a pedido do MP, sem impedir nova investigação, e em 2025 o ministro Gilmar Mendes negou recursos para reabrir o caso. As cifras de desvio saíram dos vínculos de pessoas e foram mantidas no dossiê como alegações da acusação; o resumo de Flávio Bolsonaro deixou de citar a acusação.',
+    translations: {
+      en: 'Case review: the dossier said the indictment had been annulled; the TJ-RJ rejected it for lack of just cause in 2022, at the prosecutors\' request, without ruling out a new investigation, and in 2025 Justice Gilmar Mendes rejected appeals to reopen the case. The embezzlement figures were removed from the links of individuals and kept in the dossier as prosecution allegations; Flávio Bolsonaro\'s summary no longer mentions the accusation.',
+      es: 'Revisión del caso: el dosier decía que la acusación había sido anulada; el TJ-RJ la rechazó por falta de causa justa en 2022, a petición de la Fiscalía, sin impedir una nueva investigación, y en 2025 el magistrado Gilmar Mendes rechazó recursos para reabrir el caso. Las cifras de desvío salieron de los vínculos de personas y se mantuvieron en el dosier como alegaciones de la acusación; el resumen de Flávio Bolsonaro dejó de citar la acusación.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_laranjas_do_psl',
+    kind: 'atualizacao',
+    summary:
+      'Revisão do caso: os vínculos de Marcelo Álvaro Antônio, Mateus Von Rondon e Roberto Soares passaram de "Sob investigação" para "Absolvidos", porque o ministro Gilmar Mendes arquivou o inquérito em junho de 2026 (convenção do projeto para arquivamento); o de Maria de Lourdes Paixão, pela absolvição na Justiça Eleitoral em 2022. O de Luciano Bivar passou a registrar que, segundo a defesa, ele não foi denunciado. O dossiê dizia que as acusações seguiam em tramitação.',
+    translations: {
+      en: 'Case review: the links of Marcelo Álvaro Antônio, Mateus Von Rondon and Roberto Soares moved from "Under investigation" to "Acquitted", because Justice Gilmar Mendes closed the investigation in June 2026 (the project\'s convention for closed investigations); Maria de Lourdes Paixão\'s, for her acquittal by the Electoral Courts in 2022. Luciano Bivar\'s now records that, according to his defence, he was not charged. The dossier said the charges were still pending.',
+      es: 'Revisión del caso: los vínculos de Marcelo Álvaro Antônio, Mateus Von Rondon y Roberto Soares pasaron de "En investigación" a "Absueltos", porque el magistrado Gilmar Mendes archivó la investigación en junio de 2026 (convención del proyecto para los archivos); el de Maria de Lourdes Paixão, por su absolución en la Justicia Electoral en 2022. El de Luciano Bivar ahora registra que, según su defensa, no fue acusado. El dosier decía que las acusaciones seguían en trámite.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_operacao_placebo',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: os vínculos de Wilson Witzel e Helena Witzel passaram a registrar que se tornaram réus em junho de 2021, com fonte própria; cifras da acusação atribuídas a pessoas e à Iabas saíram dos vínculos; textos que tratavam suspeitas como fatos passaram a identificá-las como acusações e a registrar quando a posição da defesa não foi localizada; resumos foram neutralizados.',
+    translations: {
+      en: 'Case review: the links of Wilson Witzel and Helena Witzel now record that they became defendants in 2021, with their own source; prosecution figures attributed to individuals and to Iabas were removed from the links; texts that treated suspicions as facts now identify them as accusations and note when the defence position was not found; summaries were made neutral.',
+      es: 'Revisión del caso: los vínculos de Wilson Witzel y Helena Witzel ahora registran que pasaron a ser acusados en 2021, con fuente propia; las cifras de la acusación atribuidas a personas y a Iabas salieron de los vínculos; los textos que trataban sospechas como hechos ahora las identifican como acusaciones y señalan cuándo no se localizó la posición de la defensa; se neutralizaron los resúmenes.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_orcamento_secreto_rp9',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: o vínculo de Arthur Lira passou de "Sob investigação" para "Fatos documentados", porque não foi localizado registro de investigação formal contra ele; o texto registra a acareação autorizada pelo ministro Flávio Dino em 2026 e a resposta da assessoria de Lira. A cifra de R$ 53 bilhões saiu do vínculo de Jair Bolsonaro e ficou no dossiê como total de dotações, sem equivaler a desvio; as notas das cifras da Operação Quebra Ossos passaram a dizer o que medem. A Codevasf saiu do grafo do caso: seu vínculo tinha status de investigação e cifra de R$ 1,4 bilhão sem fonte que os sustentasse.',
+    translations: {
+      en: 'Case review: Arthur Lira\'s link moved from "Under investigation" to "Documented facts", because no record of a formal investigation of him was found; the text records the confrontation authorised by Justice Flávio Dino in 2026 and the response of Lira\'s office. The R$ 53 billion figure was removed from Jair Bolsonaro\'s link and kept in the dossier as total allocations, not embezzlement; the notes on the Operation Quebra Ossos figures now state what they measure. Codevasf was removed from the case graph: its link had an investigation status and a R$ 1.4 billion figure with no supporting source.',
+      es: 'Revisión del caso: el vínculo de Arthur Lira pasó de "En investigación" a "Hechos documentados", porque no se ha localizado registro de una investigación formal contra él; el texto registra el careo autorizado por el magistrado Flávio Dino en 2026 y la respuesta de la oficina de Lira. La cifra de 53.000 millones de reales salió del vínculo de Jair Bolsonaro y quedó en el dosier como total de dotaciones, sin equivaler a desvío; las notas de las cifras de la Operación Quebra Ossos ahora dicen qué miden. Codevasf salió del grafo del caso: su vínculo tenía estado de investigación y una cifra de 1.400 millones de reales sin fuente que los sostuviera.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_bolsolao_do_mec',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: o vínculo do prefeito Gilberto Braga passou de "Sob investigação" para "Fatos documentados", porque ele relatou o pedido de propina e não é acusado; o do FNDE também passou para "Fatos documentados", sem acusação à autarquia. O vínculo de Milton Ribeiro passou a ter fonte sobre a abertura do inquérito pelo STF; o de Luciano Musse, a distinguir a punição administrativa da CGU do processo penal, sem desfecho localizado.',
+    translations: {
+      en: 'Case review: Mayor Gilberto Braga\'s link moved from "Under investigation" to "Documented facts", because he reported the bribe request and is not accused; the FNDE\'s link also moved to "Documented facts", with no accusation against the agency. Milton Ribeiro\'s link now has a source on the opening of the STF investigation; Luciano Musse\'s now distinguishes the CGU\'s administrative penalty from the criminal case, with no outcome found.',
+      es: 'Revisión del caso: el vínculo del alcalde Gilberto Braga pasó de "En investigación" a "Hechos documentados", porque denunció la petición de soborno y no está acusado; el del FNDE también pasó a "Hechos documentados", sin acusación al organismo. El vínculo de Milton Ribeiro ahora tiene una fuente sobre la apertura de la investigación en el STF; el de Luciano Musse ahora distingue la sanción administrativa de la CGU del proceso penal, sin desenlace localizado.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_operacao_venire_joias_presidencia',
+    kind: 'atualizacao',
+    summary:
+      'Revisão do caso: o dossiê passou a registrar o arquivamento, em março de 2025, do inquérito do cartão de vacinação em relação a Jair Bolsonaro e o pedido de arquivamento do inquérito das joias feito pela PGR em março de 2026; dizia que os inquéritos aguardavam decisão sobre denúncia. Cifras atribuídas a pessoas foram retiradas dos vínculos; a fonte de baixa qualidade saiu da lista; resumos foram neutralizados.',
+    translations: {
+      en: 'Case review: the dossier now records the closure, in March 2025, of the vaccination card investigation with respect to Jair Bolsonaro and the PGR\'s request in March 2026 to close the jewellery investigation; it previously said the investigations were awaiting a decision on charges. Figures attributed to individuals were removed from the links; the low-quality source was removed from the list; summaries were made neutral.',
+      es: 'Revisión del caso: el dosier ahora registra el archivo, en marzo de 2025, de la investigación de la cartilla de vacunación respecto a Jair Bolsonaro y la petición de la PGR, en marzo de 2026, de archivar la investigación de las joyas; antes decía que las investigaciones esperaban una decisión sobre la acusación. Se retiraron de los vínculos las cifras atribuidas a personas; la fuente de baja calidad salió de la lista; se neutralizaron los resúmenes.',
+    },
+  },
+  {
+    date: '2026-11-17',
+    scheme: 'esquema_inss_sem_desconto',
+    kind: 'correcao',
+    summary:
+      'Revisão do caso: a fonte do vínculo de Antônio Carlos Camilo Antunes foi trocada por reportagem do G1 sobre o relatório da PF de julho de 2026, que lista os 48 indiciados, e a reportagem passou a constar entre as fontes do dossiê.',
+    translations: {
+      en: 'Case review: the source for Antônio Carlos Camilo Antunes\'s link was replaced with a G1 report on the July 2026 Federal Police report, which lists the 48 people named as suspects, and the report was added to the dossier\'s sources.',
+      es: 'Revisión del caso: la fuente del vínculo de Antônio Carlos Camilo Antunes se sustituyó por un reportaje de G1 sobre el informe de la Policía Federal de julio de 2026, que enumera a los 48 imputados, y el reportaje se añadió a las fuentes del dosier.',
+    },
+  },
+  {
+    date: '2026-11-17',
     scheme: 'esquema_banco_master_inss',
     kind: 'correcao',
     summary:
