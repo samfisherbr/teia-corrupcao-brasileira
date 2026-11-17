@@ -37,7 +37,7 @@ export const SCHEME_DETAILS_EN: Record<string, SchemeDetailTranslation> = {
   },
   "esquema_trt_sp": {
     title: "TRT-SP scandal",
-    reviewedAt: "2026-11-04",
+    reviewedAt: "2026-11-15",
     context: "In 1992, the Regional Labour Court of the 2nd Region, presided over by Judge Nicolau dos Santos Neto, put out to tender the construction of the Barra Funda Labour Court building in São Paulo, won by the construction company Incal. The case became public in 1998, after a former son-in-law of the judge reported to the Federal Prosecution Service his assets out of proportion to a judge's salary. In 1999 the Judiciary CPI lifted banking secrecy and traced the trail to companies of Senator Luiz Estevão, who was expelled by the Senate in June 2000.",
     mechanism: "According to the Federal Prosecution Service (MPF), Incal Incorporações, owned by Fábio Monteiro de Barros and José Eduardo Ferraz, and the OK Group, owned by Luiz Estevão, colluded to compete in the tender, and the execution of the work involved overpriced materials, advance payments and illicit transfers to accounts in Brazil and abroad. An audit found that, six years after the tender, only 64% of the building was finished, although all the money had already been released. The lifting of banking secrecy showed transfers from Incal to the OK Group coinciding with the court's payments. The defendants deny any diversion of funds.",
     impact: "R$ 169,400,000 diverted in 1998 values, according to the MPF, which in 2017 sought R$ 1.04 billion in repayment, adding the adjusted diversion and moral damages. In 2012, the OK Group signed an agreement for R$ 468 million with the AGU (Office of the Attorney General of the Union) and paid R$ 338 million until it suspended the instalments in March 2016. In 2023, the AGU resumed collection of a debt of more than R$ 800 million arising from the Federal Court of Accounts (TCU) conviction; Luiz Estevão says the amounts already seized settle the debt.",
@@ -45,7 +45,7 @@ export const SCHEME_DETAILS_EN: Record<string, SchemeDetailTranslation> = {
   },
   "esquema_compra_reeleicao": {
     title: "Re-election vote-buying",
-    reviewedAt: "2026-11-05",
+    reviewedAt: "2026-11-15",
     context: "The constitutional amendment that allowed re-election of the president, governors and mayors was worked on from 1995 and passed at first reading in the Chamber on 28 January 1997, by 336 votes to 17. On 13 and 14 May 1997, Folha de S.Paulo published recordings made at the newspaper's request in which deputies from Acre admitted having sold their votes.",
     mechanism: "On the tapes, deputies Ronivon Santiago and João Maia, of the PFL in Acre, said they had received R$ 200,000 each. Ronivon described transfers from the governor of Amazonas, Amazonino Mendes, to the governor of Acre, Orleir Cameli, and named his colleagues Chicão Brígido, Zila Bezerra and Osmir Lima; the report also named minister Sérgio Motta and deputy Luís Eduardo Magalhães as operators. Those named denied it, and Ronivon said the conversation had been a joke. In a 2016 plea deal, with no judicial proof, Pedro Corrêa stated that more than 50 deputies sold their votes.",
     impact: "R$ 200,000 per deputy, an amount cited in the recordings by Ronivon Santiago and João Maia, with no court confirmation. There is no official figure for the amount diverted, the loss or recovery, because no investigation quantified the scheme. The amendment was passed and allowed FHC's re-election in 1998.",
@@ -77,7 +77,7 @@ export const SCHEME_DETAILS_EN: Record<string, SchemeDetailTranslation> = {
   },
   "esquema_vampiro": {
     title: "Operation Vampiro",
-    reviewedAt: "2026-11-05",
+    reviewedAt: "2026-11-15",
     context: "Since the early 1990s the Federal Police had been investigating irregularities in Ministry of Health tenders. In 2003, Minister Humberto Costa asked the Federal Police and the Federal Prosecution Service (MPF) to investigate, and the inquiries intensified after a supplier reported a blood-products tender. In May 2004 the Federal Police launched Operation Vampiro and arrested 17 people, including civil servants, lobbyists and businessmen.",
     mechanism: "According to the MPF, co-opted civil servants held strategic posts and facilitated fraud in the tenders in return for bribes, with lobbyists linked to politicians acting as intermediaries. The Federal Police proved fraud in four tenders in the first inquiry, and the 2006 indictment describes payments in cash and in suitcases. In an administrative misconduct case, the MPF also points to an agreement among businessmen to divide up the blood-products market; the defences dispute the intercepts.",
     impact: "US$ 100 million (about R$ 280 million) in blood-product losses, an estimate by the MPF prosecutor Marlon Weichert in December 2004. The Ministry of Health estimated R$ 2 billion over 13 years, a figure the Federal Police did not confirm in the first inquiry, and a 2007 report cites R$ 120 million between 1997 and 2004 without saying who established it. The administrative misconduct case seeks repayment of R$ 27.5 million.",

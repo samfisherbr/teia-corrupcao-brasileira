@@ -37,7 +37,7 @@ export const SCHEME_DETAILS_ES: Record<string, SchemeDetailTranslation> = {
   },
   "esquema_trt_sp": {
     title: "Escándalo del TRT-SP",
-    reviewedAt: "2026-11-04",
+    reviewedAt: "2026-11-15",
     context: "En 1992, el Tribunal Regional del Trabajo de la 2.ª Región, presidido por el juez Nicolau dos Santos Neto, abrió la licitación para construir el Foro Laboral de Barra Funda, en São Paulo, ganada por la constructora Incal. El caso se hizo público en 1998, después de que un exyerno del juez denunciara ante el Ministerio Público Federal su patrimonio incompatible con el salario de un magistrado. La CPI del Poder Judicial, en 1999, levantó secretos bancarios y llegó a las empresas del senador Luiz Estevão, destituido por el Senado en junio de 2000.",
     mechanism: "Según el MPF, Incal Incorporações, de Fábio Monteiro de Barros y José Eduardo Ferraz, y el Grupo OK, de Luiz Estevão, se pusieron de acuerdo para concurrir a la licitación, y la ejecución de la obra tuvo sobreprecios en materiales, pagos anticipados y transferencias ilícitas a cuentas en Brasil y en el exterior. Una auditoría constató que, seis años después de la licitación, solo el 64 % de la obra estaba terminada, aunque todo el dinero ya se había liberado. El levantamiento del secreto bancario mostró transferencias de Incal al Grupo OK coincidentes con los pagos del tribunal. Los acusados niegan los desvíos.",
     impact: "169.400.000 reales desviados en valores de 1998, según el MPF, que en 2017 reclamó 1.040 millones de reales en resarcimiento, sumando el desvío actualizado y daños morales. En 2012, el Grupo OK firmó un acuerdo de 468 millones de reales con la AGU (Abogacía General de la Unión) y pagó 338 millones hasta suspender las cuotas, en marzo de 2016. En 2023, la AGU retomó el cobro de una deuda de más de 800 millones de reales derivada de la condena del Tribunal de Cuentas de la Unión (TCU); Luiz Estevão afirma que los importes ya embargados saldan la deuda.",
@@ -45,7 +45,7 @@ export const SCHEME_DETAILS_ES: Record<string, SchemeDetailTranslation> = {
   },
   "esquema_compra_reeleicao": {
     title: "Compra de votos de la reelección",
-    reviewedAt: "2026-11-05",
+    reviewedAt: "2026-11-15",
     context: "La enmienda constitucional que permitió la reelección del presidente, los gobernadores y los alcaldes se articuló desde 1995 y se aprobó en primera votación en la Cámara el 28 de enero de 1997, por 336 votos a 17. El 13 y el 14 de mayo de 1997, Folha de S.Paulo divulgó grabaciones hechas a petición del periódico en las que diputados de Acre admitían haber vendido su voto.",
     mechanism: "En las cintas, los diputados Ronivon Santiago y João Maia, del PFL de Acre, decían haber recibido 200.000 reales cada uno. Ronivon describía transferencias del gobernador de Amazonas, Amazonino Mendes, al gobernador de Acre, Orleir Cameli, y citaba a sus colegas Chicão Brígido, Zila Bezerra y Osmir Lima; el reportaje señalaba además al ministro Sérgio Motta y al diputado Luís Eduardo Magalhães como operadores. Los citados lo negaron, y Ronivon dijo que la conversación había sido una broma. En una delación de 2016, sin prueba judicial, Pedro Corrêa afirmó que más de 50 diputados vendieron su voto.",
     impact: "200.000 reales por diputado, importe citado en las grabaciones por Ronivon Santiago y João Maia, sin confirmación judicial. No hay cifra oficial del importe desviado, del perjuicio ni de la recuperación, porque ninguna investigación cuantificó la trama. La enmienda se aprobó y permitió la reelección de Fernando Henrique Cardoso en 1998.",
@@ -77,7 +77,7 @@ export const SCHEME_DETAILS_ES: Record<string, SchemeDetailTranslation> = {
   },
   "esquema_vampiro": {
     title: "Operación Vampiro",
-    reviewedAt: "2026-11-05",
+    reviewedAt: "2026-11-15",
     context: "Desde principios de los años noventa la Policía Federal investigaba irregularidades en licitaciones del Ministerio de Sanidad. En 2003, el ministro Humberto Costa pidió una investigación a la Policía Federal y al Ministerio Público Federal (MPF), y las pesquisas se intensificaron tras la denuncia de una proveedora sobre una licitación de hemoderivados. En mayo de 2004 la Policía Federal lanzó la Operación Vampiro y detuvo a 17 personas, entre funcionarios, lobistas y empresarios.",
     mechanism: "Según el MPF, funcionarios captados ocupaban puestos estratégicos y facilitaban fraudes en los concursos a cambio de sobornos, con lobistas vinculados a políticos como intermediarios. La Policía Federal comprobó fraudes en cuatro concursos en la primera investigación, y la acusación de 2006 describe pagos en efectivo y en maletas. En una acción por improbidad, el MPF también señala un acuerdo de reparto del mercado de hemoderivados entre empresarios; las defensas impugnan las interceptaciones.",
     impact: "100 millones de dólares (unos 280 millones de reales) en pérdidas en hemoderivados, estimación del fiscal del MPF Marlon Weichert en diciembre de 2004. El Ministerio de Sanidad estimó 2.000 millones de reales en 13 años, importe que la Policía Federal no confirmó en la primera investigación, y un reportaje de 2007 cita 120 millones de reales entre 1997 y 2004 sin indicar quién lo determinó. La acción por improbidad reclama un resarcimiento de 27,5 millones de reales.",

@@ -372,7 +372,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
     impact: "R$ 38 milhões é o valor cuja devolução o MPF pediu em 2013, em ação de improbidade contra investigados e a empresa Tecondi; o desfecho da ação não foi localizado.",
     legalStatus: "A eclosão do caso levou à exoneração de Rosemary Noronha e José Weber, além da demissão dos irmãos Vieira das agências reguladoras. O MPF ofereceu denúncias criminais contra 24 investigados. Em outubro de 2021, a Justiça Federal em SP encerrou as ações penais e trancou os processos contra os réus devido ao reconhecimento da anulação das escutas telefônicas por ilegalidade probatória.",
     sources: [
-      { title: "PF deflagra operação para desarticular esquema de pareceres - G1", url: "https://g1.globo.com/politica/noticia/2012/11/pf-deflagra-operacao-para-desarticular-esquema-de-pareceres.html" },
+      { title: "Veja os principais fatos da Operação Porto Seguro - UOL", url: "https://noticias.uol.com.br/politica/ultimas-noticias/2012/12/03/confira-os-principais-fatos-relacionados-a-operacao-porto-seguro.htm" },
       { title: "Polícia Federal entrega relatório final da Operação Porto Seguro - G1", url: "https://g1.globo.com/politica/noticia/2012/12/policia-federal-entrega-relatorio-final-da-operacao-porto-seguro.html" },
       { title: "MPF denuncia 24 investigados na Operação Porto Seguro - G1", url: "https://g1.globo.com/sao-paulo/noticia/2012/12/mpf-denuncia-24-investigados-na-operacao-porto-seguro.html" },
       { title: "Procuradoria apresenta nova denúncia da Operação Porto Seguro - Folha de S.Paulo", url: "https://www1.folha.uol.com.br/poder/2014/05/1462837-procuradoria-apresenta-nova-denuncia-da-operacao-porto-seguro.shtml" },
