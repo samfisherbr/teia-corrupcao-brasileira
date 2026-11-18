@@ -38,6 +38,39 @@ export interface Correction {
 
 export const CORRECTIONS: Correction[] = [
   {
+    date: '2026-11-18',
+    scheme: 'esquema_caixa_pandora',
+    kind: 'atualizacao',
+    summary:
+      'Incluída a decisão de 13/10/2026 da 1ª Turma Cível do TJDFT, que afastou a condenação por improbidade de José Roberto Arruda, José Geraldo Maciel, Nerci Soares de Souza e da Uni Repro em uma das ações do caso, por considerar ilícitas as gravações de Durval Barbosa. O texto anterior não registrava essa decisão; Arruda segue condenado em outras ações.',
+    translations: {
+      en: "Added the 13 October 2026 ruling of the 1st Civil Panel of the Federal District Court of Justice (TJDFT), which set aside the administrative misconduct convictions of José Roberto Arruda, José Geraldo Maciel, Nerci Soares de Souza and Uni Repro in one of the actions in the case, holding Durval Barbosa's recordings unlawful. The previous text did not record this ruling; Arruda remains convicted in other actions.",
+      es: 'Se incluyó la decisión del 13 de octubre de 2026 de la 1.ª Sala Civil del Tribunal de Justicia del Distrito Federal (TJDFT), que anuló las condenas por improbidad de José Roberto Arruda, José Geraldo Maciel, Nerci Soares de Souza y Uni Repro en una de las acciones del caso, al considerar ilícitas las grabaciones de Durval Barbosa. El texto anterior no recogía esta decisión; Arruda sigue condenado en otras acciones.',
+    },
+  },
+  {
+    date: '2026-11-18',
+    scheme: 'esquema_caixa_pandora',
+    kind: 'atualizacao',
+    summary:
+      'O vínculo da Call Tecnologia passou a citar a decisão de junho de 2026 da 6ª Turma Cível do TJDFT, que manteve a condenação por improbidade da empresa, de Arruda, de José Geraldo Maciel e de José Celso Valadares Gontijo. Antes, o vínculo citava apenas a sentença de primeira instância de 2024.',
+    translations: {
+      en: 'The Call Tecnologia link now cites the June 2026 ruling of the 6th Civil Panel of the Federal District Court of Justice (TJDFT), which upheld the administrative misconduct conviction of the company, Arruda, José Geraldo Maciel and José Celso Valadares Gontijo. Previously the link cited only the 2024 first-instance judgment.',
+      es: 'El vínculo de Call Tecnologia pasó a citar la decisión de junio de 2026 de la 6.ª Sala Civil del Tribunal de Justicia del Distrito Federal (TJDFT), que mantuvo la condena por improbidad de la empresa, de Arruda, de José Geraldo Maciel y de José Celso Valadares Gontijo. Antes, el vínculo citaba solo la sentencia de primera instancia de 2024.',
+    },
+  },
+  {
+    date: '2026-11-18',
+    scheme: 'esquema_operacao_venire_joias_presidencia',
+    kind: 'atualizacao',
+    summary:
+      'Incluídas as decisões de julho e outubro de 2026 do ministro Alexandre de Moraes (custódia das joias transferida à Receita e intimação de Bolsonaro sobre cobrança fiscal). O pedido de arquivamento da PGR, de março de 2026, segue sem decisão localizada; a fonte do vínculo foi trocada por reportagem da CNN Brasil.',
+    translations: {
+      en: "Added Justice Alexandre de Moraes's rulings of July and October 2026 (custody of the jewellery transferred to the Federal Revenue Service and Bolsonaro served notice of a tax charge). The Prosecutor General's Office (PGR) March 2026 request to close the case still has no ruling located; the link's source was replaced with a CNN Brasil report.",
+      es: 'Se incluyeron las decisiones de julio y octubre de 2026 del magistrado Alexandre de Moraes (custodia de las joyas transferida a la Receita Federal y notificación a Bolsonaro de un cargo fiscal). La petición de archivo de la Fiscalía General (PGR), de marzo de 2026, sigue sin decisión localizada; la fuente del vínculo se sustituyó por un reportaje de CNN Brasil.',
+    },
+  },
+  {
     date: '2026-11-17',
     scheme: 'esquema_operacao_porto_seguro',
     kind: 'correcao',
