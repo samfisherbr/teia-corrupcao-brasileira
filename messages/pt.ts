@@ -42,6 +42,8 @@ export const pt = {
     correctionsAndUpdates: 'Correções e atualizações',
     termsOfUse: 'Termos de uso',
     privacyPolicy: 'Política de privacidade',
+    /** Reabre a mensagem de consentimento do Google (só para visitantes do EEE, Reino Unido e Suíça). */
+    consentSettings: 'Privacidade e cookies',
   },
 
   language: {

@@ -29,6 +29,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import GraphApp from '@/components/GraphApp';
 import StatusList from '@/content/legal/StatusList';
+import { ConsentGate, ConsentSettingsButton } from '@/components/ConsentSettings';
 import { CORRECTIONS } from '@/data/corrections';
 import { DOSSIER_SCHEME_IDS, fallbackSchemeTitle, loadSchemeDetails } from '@/lib/dossiers';
 import { formatDate } from '@/lib/format';
@@ -201,6 +202,9 @@ export default async function HomeView({ locale }: { locale: Locale }) {
               <li><Link href={href('/correcoes')} prefetch={false} className={link}>{t.common.correctionsAndUpdates}</Link></li>
               <li><Link href={href('/privacy')} prefetch={false} className={link}>{t.common.privacyPolicy}</Link></li>
               <li><Link href={href('/terms')} prefetch={false} className={link}>{t.common.termsOfUse}</Link></li>
+              <ConsentGate>
+                <li><ConsentSettingsButton className={link}>{t.common.consentSettings}</ConsentSettingsButton></li>
+              </ConsentGate>
             </ul>
           </nav>
         </div>

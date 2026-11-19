@@ -4,6 +4,7 @@
 import React from 'react';
 import { Lock, Eye, Cookie, FileText } from 'lucide-react';
 import { SITE_NAME, SITE_DOMAIN, CONTACT_EMAIL } from '@/lib/site';
+import { ConsentGate, ConsentSettingsButton } from '@/components/ConsentSettings';
 import { localePath } from '@/lib/i18n';
 
 // Classe reaproveitada nos links externos desta página.
@@ -101,6 +102,15 @@ export default function PrivacyEn() {
         <p>
           You can disable cookies and clear the data the site stores on your device (including local storage) in your
           browser settings. Specific instructions are available on each browser&apos;s website.
+        </p>
+        <p>
+          Visitors in the European Economic Area, the United Kingdom and Switzerland are asked for consent to advertising
+          cookies through a Google message certified for the industry consent standard (IAB TCF). The choice can be
+          reviewed or withdrawn at any time.
+          <ConsentGate>
+            {' '}
+            <ConsentSettingsButton className={LINK_CLASS}>Review my choice: Privacy and cookie settings</ConsentSettingsButton>
+          </ConsentGate>
         </p>
       </section>
 
