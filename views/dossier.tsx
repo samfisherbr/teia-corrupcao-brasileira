@@ -41,7 +41,7 @@ import { fallbackSchemeTitle, loadSchemeDetails } from '@/lib/dossiers';
 import { formatDate } from '@/lib/format';
 import { localizeAmountText } from '@/lib/money';
 import { schemeIdFromSlug, schemePath } from '@/lib/schemes';
-import { SITE_DOMAIN, SITE_NAME } from '@/lib/site';
+import { SITE_DOMAIN, SITE_NAME, EDITOR } from '@/lib/site';
 import { DEFAULT_LOCALE, LOCALE_INFO, alternatesFor, localePath, type Locale } from '@/lib/i18n';
 import { getMessages, type Messages } from '@/messages';
 import PageNav from '@/components/PageNav';
@@ -291,7 +291,13 @@ export default async function DossierView({ locale, slug }: { locale: Locale; sl
       inLanguage: LOCALE_INFO[details?.translationPending ? DEFAULT_LOCALE : locale].tag,
       dateModified: details?.reviewedAt,
       mainEntityOfPage: url,
-      author: { '@type': 'Organization', name: SITE_NAME, url: `https://${SITE_DOMAIN}` },
+      author: {
+        '@type': 'Person',
+        name: EDITOR.name,
+        givenName: EDITOR.givenName,
+        familyName: EDITOR.familyName,
+        url: `https://${SITE_DOMAIN}${href('/about')}`,
+      },
       publisher: { '@type': 'Organization', name: SITE_NAME, url: `https://${SITE_DOMAIN}` },
       citation: details?.sources.map((src) => src.url),
     },
@@ -326,6 +332,13 @@ export default async function DossierView({ locale, slug }: { locale: Locale; sl
               <CalendarCheck size={16} className="w-4 h-4 shrink-0 text-cyan-400" aria-hidden="true" />
               <span>
                 {t.dossier.reviewedOn} <time dateTime={details.reviewedAt}>{reviewed}</time>.
+              </span>
+              <span>
+                {t.dossier.editedBy}{' '}
+                <Link href={href('/about')} className="text-cyan-400 hover:text-cyan-200 hover:underline">
+                  {EDITOR.name}
+                </Link>
+                .
               </span>
               <Link href={href('/correcoes')} className="text-cyan-400 hover:text-cyan-200 hover:underline">
                 {t.common.correctionsAndUpdates}

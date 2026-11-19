@@ -216,6 +216,7 @@ export const es: Messages = {
     breadcrumbSchemes: 'Tramas',
     allSchemes: 'Todas las tramas',
     reviewedOn: 'Revisado el',
+    editedBy: 'Edición:',
     impact: 'Impacto:',
     context: 'Contexto histórico y origen',
     mechanism: 'Funcionamiento de la trama',

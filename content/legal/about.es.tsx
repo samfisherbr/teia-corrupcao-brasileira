@@ -3,8 +3,8 @@
  */
 import React from 'react';
 import Link from 'next/link';
-import { Info, Database, CircleCheck, Scale } from 'lucide-react';
-import { SITE_NAME, CONTACT_EMAIL } from '@/lib/site';
+import { Info, Database, CircleCheck, Scale, UserPen } from 'lucide-react';
+import { SITE_NAME, CONTACT_EMAIL, EDITOR } from '@/lib/site';
 import { localePath } from '@/lib/i18n';
 import StatusList from './StatusList';
 
@@ -27,6 +27,18 @@ export default function AboutEs() {
           las comisiones parlamentarias de investigación (CPI) y reportajes de investigación. Al registrar las entidades
           —políticos, partidos, empresas, operadores y tramas—, el usuario puede explorar cómo circularon los recursos
           públicos entre distintas operaciones a lo largo del tiempo.
+        </p>
+      </section>
+
+      <section className="space-y-3 border-t border-slate-800/80 pt-6">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <UserPen className="w-4 h-4 text-cyan-400" />
+          Quién está detrás
+        </h2>
+        <p>
+          <strong>{SITE_NAME}</strong> está creada y editada por <strong>{EDITOR.name}</strong>, responsable del
+          contenido del sitio: la selección de los casos, la verificación en fuentes públicas, la redacción y la
+          revisión de los dosieres y el análisis de las solicitudes de corrección y de derecho de réplica.
         </p>
       </section>
 

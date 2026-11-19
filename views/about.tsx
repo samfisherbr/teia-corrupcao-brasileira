@@ -8,8 +8,8 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { Network } from 'lucide-react';
-import { SITE_NAME } from '@/lib/site';
-import { alternatesFor, type Locale } from '@/lib/i18n';
+import { EDITOR, SITE_DOMAIN, SITE_NAME } from '@/lib/site';
+import { LOCALE_INFO, alternatesFor, localePath, type Locale } from '@/lib/i18n';
 import { getMessages } from '@/messages';
 import LegalPage from '@/components/LegalPage';
 import BodyPt from '@/content/legal/about.pt';
@@ -30,15 +30,35 @@ export function aboutMetadata(locale: Locale): Metadata {
 export default async function AboutView({ locale }: { locale: Locale }) {
   const t = getMessages(locale);
   const Body = BODY[locale];
+  // Dados estruturados: quem publica o site (mesmo nome da seção "Quem faz").
+  const site = `https://${SITE_DOMAIN}`;
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    url: `${site}${localePath(locale, '/about')}`,
+    inLanguage: LOCALE_INFO[locale].tag,
+    mainEntity: {
+      '@type': 'WebSite',
+      name: SITE_NAME,
+      url: site,
+      creator: { '@type': 'Person', name: EDITOR.name, givenName: EDITOR.givenName, familyName: EDITOR.familyName },
+    },
+  };
   return (
-    <LegalPage
-      locale={locale}
-      path="/about"
-      icon={<Network className="w-6 h-6" />}
-      title={t.legal.aboutTitle(SITE_NAME)}
-      subtitle={<p className="text-xs font-mono text-cyan-400 mt-0.5">{t.legal.aboutSubtitle}</p>}
-    >
-      <Body />
-    </LegalPage>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }}
+      />
+      <LegalPage
+        locale={locale}
+        path="/about"
+        icon={<Network className="w-6 h-6" />}
+        title={t.legal.aboutTitle(SITE_NAME)}
+        subtitle={<p className="text-xs font-mono text-cyan-400 mt-0.5">{t.legal.aboutSubtitle}</p>}
+      >
+        <Body />
+      </LegalPage>
+    </>
   );
 }

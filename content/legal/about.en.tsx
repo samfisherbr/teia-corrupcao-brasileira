@@ -3,8 +3,8 @@
  */
 import React from 'react';
 import Link from 'next/link';
-import { Info, Database, CircleCheck, Scale } from 'lucide-react';
-import { SITE_NAME, CONTACT_EMAIL } from '@/lib/site';
+import { Info, Database, CircleCheck, Scale, UserPen } from 'lucide-react';
+import { SITE_NAME, CONTACT_EMAIL, EDITOR } from '@/lib/site';
 import { localePath } from '@/lib/i18n';
 import StatusList from './StatusList';
 
@@ -27,6 +27,18 @@ export default function AboutEn() {
           investigative journalism accessible through a navigable graph. By mapping the entities — politicians, parties,
           companies, operators and schemes — users can explore how public money moved between different operations over
           time.
+        </p>
+      </section>
+
+      <section className="space-y-3 border-t border-slate-800/80 pt-6">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <UserPen className="w-4 h-4 text-cyan-400" />
+          Who runs it
+        </h2>
+        <p>
+          <strong>{SITE_NAME}</strong> is created and edited by <strong>{EDITOR.name}</strong>, who is responsible for
+          the site&rsquo;s content: choosing the cases, checking them against public sources, writing and reviewing
+          the dossiers, and assessing requests for corrections and right of reply.
         </p>
       </section>
 

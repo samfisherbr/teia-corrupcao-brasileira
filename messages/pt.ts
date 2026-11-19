@@ -237,6 +237,7 @@ export const pt = {
     breadcrumbSchemes: 'Esquemas',
     allSchemes: 'Todos os esquemas',
     reviewedOn: 'Revisado em',
+    editedBy: 'Edição:',
     impact: 'Impacto:',
     context: 'Contexto histórico e origem',
     mechanism: 'Funcionamento do esquema',

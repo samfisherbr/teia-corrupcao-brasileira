@@ -215,6 +215,7 @@ export const en: Messages = {
     breadcrumbSchemes: 'Schemes',
     allSchemes: 'All schemes',
     reviewedOn: 'Reviewed on',
+    editedBy: 'Edited by',
     impact: 'Impact:',
     context: 'Historical background and origin',
     mechanism: 'How the scheme worked',
