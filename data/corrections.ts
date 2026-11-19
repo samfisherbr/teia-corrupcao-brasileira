@@ -38,6 +38,39 @@ export interface Correction {
 
 export const CORRECTIONS: Correction[] = [
   {
+    date: '2026-11-19',
+    scheme: 'esquema_operacao_placebo',
+    kind: 'atualizacao',
+    summary:
+      'Incluída a sentença de 19/09/2025 da Justiça do Rio que condenou Edmar Santos e Gabriell Neves por improbidade administrativa pelo superfaturamento na compra de insumos na pandemia (decisão de primeira instância; a defesa de Edmar anunciou recurso e a de Gabriell afirma não haver provas). Também foram incluídas as prisões de 2020 na Operação Mercadores do Caos, a auditoria da Secretaria de Saúde sobre a compra de respiradores e a cassação do registro médico de Edmar Santos em 2023. O texto anterior não registrava a sentença de 2025.',
+    translations: {
+      en: "Added the 19 September 2025 ruling of the Rio de Janeiro courts convicting Edmar Santos and Gabriell Neves of administrative misconduct over overpricing in the purchase of supplies during the pandemic (a first-instance decision; Santos's defence announced an appeal and Neves's defence says there is no evidence). Also added the 2020 arrests in Operation Mercadores do Caos, the Health Secretariat's audit of the ventilator purchases and the revocation of Edmar Santos's medical licence in 2023. The previous text did not record the 2025 ruling.",
+      es: 'Se incluyó la sentencia del 19 de septiembre de 2025 de la Justicia de Río que condenó a Edmar Santos y Gabriell Neves por improbidad administrativa por el sobreprecio en la compra de insumos durante la pandemia (decisión de primera instancia; la defensa de Santos anunció recurso y la de Neves afirma que no hay pruebas). También se incluyeron las detenciones de 2020 en la Operación Mercadores do Caos, la auditoría de la Secretaría de Sanidad sobre la compra de respiradores y la revocación de la licencia médica de Edmar Santos en 2023. El texto anterior no recogía la sentencia de 2025.',
+    },
+  },
+  {
+    date: '2026-11-19',
+    scheme: 'esquema_operacao_porto_seguro',
+    kind: 'atualizacao',
+    summary:
+      'Dossiê ampliado com a origem da investigação (relato de um auditor do TCU sobre oferta de propina ligada à Tecondi, que depois também foi acusado), os números da operação de novembro de 2012 e o recebimento, em fevereiro de 2014, da denúncia contra 18 acusados pela Justiça Federal em São Paulo, com a divisão do processo em núcleos. O texto anterior não trazia esses fatos; nada do que constava foi alterado.',
+    translations: {
+      en: 'Dossier expanded with the origin of the investigation (an account by a TCU auditor of a bribe offer linked to Tecondi, who was later accused himself), the figures for the November 2012 operation and the acceptance, in February 2014, of the charges against 18 defendants by the Federal Court in São Paulo, with the case split into strands. The previous text did not include these facts; nothing already in it was changed.',
+      es: 'Dosier ampliado con el origen de la investigación (el relato de un auditor del TCU sobre una oferta de soborno vinculada a Tecondi, que después también fue acusado), las cifras de la operación de noviembre de 2012 y la admisión, en febrero de 2014, de la acusación contra 18 imputados por la Justicia Federal de São Paulo, con la división del proceso en bloques. El texto anterior no recogía estos hechos; no se modificó nada de lo que ya figuraba.',
+    },
+  },
+  {
+    date: '2026-11-19',
+    scheme: 'esquema_operacao_navalha',
+    kind: 'atualizacao',
+    summary:
+      'Dossiê ampliado com os números da operação de maio de 2007 (46 presos, 48 mandados de prisão preventiva e 84 de busca e apreensão), as áreas e os órgãos atingidos e o desmembramento da ação pela Corte Especial do STJ em março de 2010. O texto anterior não trazia esses fatos; nada do que constava foi alterado.',
+    translations: {
+      en: 'Dossier expanded with the figures for the May 2007 operation (46 arrests, 48 pre-trial detention warrants and 84 search and seizure warrants), the areas and bodies affected and the splitting of the case by the STJ Special Court in March 2010. The previous text did not include these facts; nothing already in it was changed.',
+      es: 'Dosier ampliado con las cifras de la operación de mayo de 2007 (46 detenidos, 48 órdenes de prisión preventiva y 84 de registro e incautación), las áreas y los organismos afectados y la división del proceso por la Corte Especial del STJ en marzo de 2010. El texto anterior no recogía estos hechos; no se modificó nada de lo que ya figuraba.',
+    },
+  },
+  {
     date: '2026-11-18',
     scheme: 'esquema_caixa_pandora',
     kind: 'atualizacao',
