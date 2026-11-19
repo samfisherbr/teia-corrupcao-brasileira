@@ -6,6 +6,7 @@
 import React from 'react';
 import { Lock, Eye, Cookie, FileText } from 'lucide-react';
 import { SITE_NAME, SITE_DOMAIN, CONTACT_EMAIL } from '@/lib/site';
+import { ConsentGate, ConsentSettingsButton } from '@/components/ConsentSettings';
 
 // Classe reaproveitada nos links externos desta página.
 const LINK_CLASS = 'text-cyan-400 underline hover:text-cyan-300';
@@ -95,6 +96,15 @@ export default function PrivacyPt() {
           Você pode desativar os cookies e apagar os dados guardados pelo site no seu aparelho (inclusive o
           armazenamento local) nas configurações do seu navegador. Instruções específicas estão disponíveis nos sites
           de cada navegador.
+        </p>
+        <p>
+          Para visitantes do Espaço Econômico Europeu, do Reino Unido e da Suíça, o consentimento para cookies de
+          publicidade é pedido por uma mensagem do Google, certificada para o padrão de consentimento do setor (IAB TCF).
+          A escolha pode ser revista ou retirada a qualquer momento.
+          <ConsentGate>
+            {' '}
+            <ConsentSettingsButton className={LINK_CLASS}>Rever minha escolha: Privacidade e cookies</ConsentSettingsButton>
+          </ConsentGate>
         </p>
       </section>
 

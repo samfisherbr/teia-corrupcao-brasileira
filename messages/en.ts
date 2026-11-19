@@ -28,6 +28,7 @@ export const en: Messages = {
     correctionsAndUpdates: 'Corrections and updates',
     termsOfUse: 'Terms of use',
     privacyPolicy: 'Privacy policy',
+    consentSettings: 'Privacy and cookie settings',
   },
 
   language: {

@@ -21,8 +21,9 @@
 import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, PanelRightOpen, RotateCcwClock, BookOpenText } from 'lucide-react';
+import { Plus, Minus, Maximize, Scale, ShieldCheck, Info, FileText, ChevronUp, PanelRightOpen, RotateCcwClock, BookOpenText, Cookie } from 'lucide-react';
 import { HOME_TEXT_ID } from '@/lib/site';
+import { ConsentGate, ConsentSettingsButton } from '@/components/ConsentSettings';
 import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, getLinkEnds } from '@/lib/graphConfig';
 import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink } from '@/lib/layout';
@@ -1742,6 +1743,13 @@ export default function NetworkGraph({
                   <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
                   <span>{t.common.privacyPolicy}</span>
                 </Link>
+                {/* Só onde o GDPR vale e a ferramenta de consentimento do Google carregou (components/ConsentSettings.tsx). */}
+                <ConsentGate>
+                  <ConsentSettingsButton className="w-full text-left flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
+                    <Cookie className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+                    <span>{t.common.consentSettings}</span>
+                  </ConsentSettingsButton>
+                </ConsentGate>
                 <Link href={href('/terms')} className="flex items-center space-x-2 px-2 py-1.5 rounded-sm hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition-colors">
                   <Scale className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
                   <span>{t.common.termsOfUse}</span>
