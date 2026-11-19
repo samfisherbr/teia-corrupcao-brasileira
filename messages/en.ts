@@ -259,6 +259,27 @@ export const en: Messages = {
     allSchemes: 'All schemes, from the most recent to the oldest',
     aboutNav: 'About the site',
     aboutLink: 'About and methodology',
+    scrollCue: 'How to read the map',
+    aboutMapTitle: 'What this map is',
+    aboutMapBody:
+      'Teia da Corrupção brings together, on a single map, the major corruption schemes investigated in Brazil since 1989 and the people, companies and parties linked to each one. Every link records the role attributed to that entity, the legal stage the matter has reached and the public source that supports it: court rulings, charges brought by prosecutors, congressional inquiry reports and reporting by established news outlets. The aim is to show how the cases intersect over time without presuming guilt: the map also records acquittals, annulled convictions and the positions of the defence.',
+    howToReadTitle: 'How to read the map',
+    circlesIntro: 'Each circle is an entity, and its colour shows the type:',
+    nodeTypeHelp: {
+      scheme: 'the case investigated or tried, at the centre of each cluster;',
+      party: 'parties linked to the case as an institution or through members who were named;',
+      company: 'private companies, state-owned companies and banks involved;',
+      politician: 'people who hold or held elected or political office;',
+      operator: 'money changers, lobbyists, aides and other intermediaries.',
+    },
+    linesIntro:
+      'Each line links an entity to a scheme, and its colour shows the legal stage of that specific link; the same person may have been convicted in one case and acquitted in another:',
+    howToUse:
+      'Tap or click a circle to highlight its links and use “Show details” to read each person’s role, the legal status and the source. On a computer, the sidebar filters by name, year, type and status; the Infographics and Glossary buttons show the same data as charts and as text.',
+    recentTitle: 'Recently reviewed dossiers',
+    reviewedOn: 'Reviewed on',
+    correctionsTitle: 'Latest corrections and updates',
+    seeAllCorrections: 'See the full corrections log',
   },
 
   notFound: {

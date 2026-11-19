@@ -260,6 +260,27 @@ export const es: Messages = {
     allSchemes: 'Todas las tramas, de la más reciente a la más antigua',
     aboutNav: 'Sobre el sitio',
     aboutLink: 'Quiénes somos y metodología',
+    scrollCue: 'Cómo leer el mapa',
+    aboutMapTitle: 'Qué es este mapa',
+    aboutMapBody:
+      'Teia da Corrupção reúne en un solo mapa las grandes tramas de corrupción investigadas en Brasil desde 1989 y las personas, empresas y partidos vinculados a cada una. Cada vínculo indica el papel atribuido a esa entidad, la fase judicial en la que se encuentra el hecho y la fuente pública que lo respalda: resoluciones judiciales, acusaciones de la Fiscalía, informes de comisiones parlamentarias de investigación y reportajes de la prensa de referencia. El objetivo es mostrar cómo se cruzan los casos a lo largo del tiempo sin dar por sentada la culpa: el mapa también registra las absoluciones, las anulaciones y las posiciones de la defensa.',
+    howToReadTitle: 'Cómo leer el mapa',
+    circlesIntro: 'Cada círculo es una entidad, y el color indica el tipo:',
+    nodeTypeHelp: {
+      scheme: 'el caso investigado o juzgado, en el centro de cada grupo;',
+      party: 'partidos vinculados al caso como institución o a través de afiliados citados;',
+      company: 'empresas privadas, empresas estatales y bancos implicados;',
+      politician: 'personas que ejercen o ejercieron un mandato o cargo político;',
+      operator: 'cambistas, lobistas, asesores y otros intermediarios.',
+    },
+    linesIntro:
+      'Cada línea une una entidad a una trama, y el color muestra la fase judicial de ese vínculo concreto; una misma persona puede haber sido condenada en un caso y absuelta en otro:',
+    howToUse:
+      'Toque o haga clic en un círculo para resaltar sus vínculos y use «Ver detalles» para leer el papel de cada implicado, la situación judicial y la fuente. En el ordenador, la barra lateral filtra por nombre, año, tipo y estado; los botones Infografías y Glosario muestran los mismos datos en gráficos y en texto.',
+    recentTitle: 'Dosieres revisados recientemente',
+    reviewedOn: 'Revisado el',
+    correctionsTitle: 'Últimas correcciones y actualizaciones',
+    seeAllCorrections: 'Ver el registro completo de correcciones',
   },
 
   notFound: {

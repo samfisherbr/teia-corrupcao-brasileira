@@ -282,6 +282,28 @@ export const pt = {
     allSchemes: 'Todos os esquemas, do mais recente ao mais antigo',
     aboutNav: 'Sobre o site',
     aboutLink: 'Sobre e metodologia',
+    /** Botão na base do grafo que desce até o texto da página. */
+    scrollCue: 'Como ler o mapa',
+    aboutMapTitle: 'O que é este mapa',
+    aboutMapBody:
+      'A Teia da Corrupção reúne, num só mapa, os grandes esquemas de corrupção investigados no Brasil desde 1989 e as pessoas, empresas e partidos ligados a cada um. Cada ligação traz o papel atribuído àquela entidade, o estágio jurídico em que o fato se encontra e a fonte pública que o sustenta — decisões judiciais, denúncias do Ministério Público, relatórios de CPI e reportagens da imprensa de referência. O objetivo é mostrar como os casos se cruzam ao longo do tempo sem antecipar culpas: o mapa registra também as absolvições, as anulações e as posições da defesa.',
+    howToReadTitle: 'Como ler o mapa',
+    circlesIntro: 'Cada círculo é uma entidade, e a cor indica o tipo:',
+    nodeTypeHelp: {
+      scheme: 'o caso investigado ou julgado, no centro de cada aglomerado;',
+      party: 'partidos ligados ao caso como instituição ou por meio de filiados citados;',
+      company: 'empresas privadas, estatais e bancos envolvidos;',
+      politician: 'pessoas que exerciam ou exerceram mandato ou cargo político;',
+      operator: 'doleiros, lobistas, assessores e demais intermediários.',
+    } satisfies Record<NodeType, string>,
+    linesIntro:
+      'Cada linha liga uma entidade a um esquema, e a cor mostra o estágio jurídico daquele vínculo específico — uma mesma pessoa pode ter sido condenada num caso e absolvida em outro:',
+    howToUse:
+      'Toque ou clique num círculo para destacar as ligações dele e use “Exibir detalhes” para ler o papel de cada envolvido, a situação jurídica e a fonte. No computador, a barra lateral filtra por nome, ano, tipo e status; os botões Infográficos e Glossário mostram os mesmos dados em gráficos e em texto.',
+    recentTitle: 'Dossiês revisados recentemente',
+    reviewedOn: 'Revisado em',
+    correctionsTitle: 'Últimas correções e atualizações',
+    seeAllCorrections: 'Ver o registro completo de correções',
   },
 
   notFound: {

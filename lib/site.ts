@@ -22,6 +22,12 @@ export const CONTACT_EMAIL = 'teiadacorrupcao@gmail.com';
 export const LEGAL_LAST_UPDATED = '2026-11-16';
 
 /**
+ * id da seção de texto da página inicial, logo abaixo do grafo (views/home.tsx).
+ * Alvo do botão "Como ler o mapa" (GraphApp) e do item do menu do grafo.
+ */
+export const HOME_TEXT_ID = 'sobre-o-mapa';
+
+/**
  * ID de editor do Google AdSense (público: aparece no HTML de toda página).
  * Usado no script e na meta tag de verificação (app/layout.tsx) e nos blocos
  * de anúncio. NEXT_PUBLIC_ADSENSE_CLIENT, se definida, tem prioridade.
@@ -32,12 +38,13 @@ export const ADSENSE_CLIENT =
 
 /**
  * IDs dos blocos de anúncio criados no AdSense (Anúncios → Por bloco).
- *  - banner: anúncio de display fixo 728×90 sobre o grafo ("Network graph"),
- *    em components/AdBanner.tsx. NEXT_PUBLIC_ADSENSE_SLOT tem prioridade.
  *  - inArticle: anúncio no artigo (fluido) dos dossiês, em
  *    components/InArticleAd.tsx.
+ * A página do grafo NÃO tem anúncio: é um <canvas>, quase sem texto legível,
+ * e a política do AdSense veta anúncio em tela sem conteúdo do editor
+ * ("Inventory value"). O bloco "Network graph" (2182726962) do AdSense
+ * ficou sem uso.
  */
 export const ADSENSE_SLOTS = {
-  banner: process.env.NEXT_PUBLIC_ADSENSE_SLOT?.trim() || '2182726962',
   inArticle: '1991155274',
 } as const;

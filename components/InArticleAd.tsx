@@ -13,6 +13,12 @@ import React, { useEffect, useRef } from 'react';
 import { ADSENSE_CLIENT, ADSENSE_SLOTS } from '@/lib/site';
 import { useI18n } from '@/components/I18nProvider';
 
+declare global {
+  interface Window {
+    adsbygoogle: unknown[];
+  }
+}
+
 export default function InArticleAd() {
   const pushedRef = useRef(false);
   const { t } = useI18n();
