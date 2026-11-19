@@ -5,8 +5,8 @@
  */
 import React from 'react';
 import Link from 'next/link';
-import { Info, Database, CircleCheck, Scale } from 'lucide-react';
-import { SITE_NAME, CONTACT_EMAIL } from '@/lib/site';
+import { Info, Database, CircleCheck, Scale, UserPen } from 'lucide-react';
+import { SITE_NAME, CONTACT_EMAIL, EDITOR } from '@/lib/site';
 import { localePath } from '@/lib/i18n';
 import StatusList from './StatusList';
 
@@ -28,6 +28,18 @@ export default function AboutPt() {
           Comissões Parlamentares de Inquérito (CPIs) e reportagens investigativas. Ao mapear as entidades — políticos,
           partidos, empresas, operadores e esquemas — o usuário pode explorar como recursos públicos circularam entre
           diferentes operações ao longo do tempo.
+        </p>
+      </section>
+
+      <section className="space-y-3 border-t border-slate-800/80 pt-6">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <UserPen className="w-4 h-4 text-cyan-400" />
+          Quem faz
+        </h2>
+        <p>
+          A <strong>{SITE_NAME}</strong> é criada e editada por <strong>{EDITOR.name}</strong>, responsável pelo
+          conteúdo do site: a escolha dos casos, a apuração em fontes públicas, a redação e a revisão dos dossiês e a
+          análise dos pedidos de correção e de direito de resposta.
         </p>
       </section>
 

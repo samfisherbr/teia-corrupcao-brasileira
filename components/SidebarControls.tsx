@@ -7,7 +7,7 @@
  * Busca, controle de ano, filtros por tipo e por status, índice de esquemas
  * e contadores. Não guarda estado próprio: tudo vem de app/page.tsx por props.
  *
- * Largura: `w-[300px]` no <aside> (a folga do anúncio em AdBanner.tsx depende dela). Para mostrar no celular, troque `hidden md:flex`
+ * Largura: `w-[300px]` no <aside>. Para mostrar no celular, troque `hidden md:flex`
  * por `flex` (e trate o espaço, ex. como gaveta).
  * Altura máxima do índice de esquemas: `max-h-40` (≈160px) mais abaixo.
  * ============================================================================
