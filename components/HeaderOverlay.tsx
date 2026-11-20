@@ -34,6 +34,7 @@ import { LOCALE_INFO } from '@/lib/i18n';
 import { useI18n } from '@/components/I18nProvider';
 import { schemePath, computeSchemeStartYears, compareByYearDesc } from '@/lib/schemes';
 import Link from 'next/link';
+import BlinkingSquares from './BlinkingSquares';
 import { 
   ExternalLink, 
   Coins, 
@@ -332,7 +333,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
 
   return (
     <div
-      className={`absolute inset-0 z-40 bg-slate-950 text-slate-100 transition-transform duration-500 ease-in-out overflow-y-auto ${
+      className={`absolute inset-0 z-40 bg-slate-950 text-slate-100 transition-transform duration-500 ease-in-out ${
         isOpen ? 'translate-y-0 pointer-events-auto' : '-translate-y-full pointer-events-none'
       }`}
       // When closed the panel is only translated off-screen; without this its
@@ -342,6 +343,28 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
       ref={panelRef}
       aria-hidden={!isOpen}
     >
+      {/* Fundo dos Infográficos: fica parado atrás do conteúdo, que rola no
+          contêiner de dentro. Sem cor de fundo própria (deixa o slate-950 do
+          painel aparecer); quadrados no ciano do site (cyan-400). Só montado
+          com a página aberta, para a animação não rodar escondida. */}
+      {activePage === 'infographics' && (
+        <BlinkingSquares
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          direction="top"
+          gridSize={60}
+          squareSize={0.3}
+          fadeStart={0.6}
+          fadeEnd={1}
+          falloff={2}
+          minBrightness={0.55}
+          twinkleSpeed={1}
+          twinkleStrength={0.94}
+          intensity={1}
+          opacity={0.51}
+          squareColor="#22d3ee"
+        />
+      )}
+      <div className="absolute inset-0 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-10">
         
         {/* =================================================================== */}
@@ -866,6 +889,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
