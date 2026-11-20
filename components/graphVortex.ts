@@ -35,9 +35,9 @@ const FLOW_SPEED = 0.03;
 const SPIN_SPEED = 0.3;
 const FADE_IN = 0.03;
 const FADE_OUT = 0.4;
-/** Cores no tom dos partidos (NODE_STYLE.party em lib/graphConfig.ts). */
-const DISC_COLOR = 'rgba(165, 163, 255, 0.16)';
-const PARTICLE_COLOR = '#d4d3ff';
+/** Cores: anéis cinza-claro translúcidos e partículas brancas. */
+const DISC_COLOR = 'rgba(200, 200, 200, 0.15)';
+const PARTICLE_COLOR = '#ffffff';
 /** Lado da partícula em px de tela. */
 const PARTICLE_PX = 1.2;
 /** Segmentos de cada anel (polilinha projetada). */
