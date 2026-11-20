@@ -28,7 +28,14 @@ const DEPTH = 0.9;
 const TOP_PERSPECTIVE = 1.1;
 
 const DISC_COUNT = 40;
-const PARTICLE_COUNT = 6000;
+/**
+ * Partículas do funil. Eram 6.000, redesenhadas a cada quadro, para sempre —
+ * o bastante para manter a CPU do celular ocupada o tempo todo. 1.500 em lote
+ * (ALPHA_LEVELS) mantém o aspecto com uma fração do custo.
+ */
+const PARTICLE_COUNT = 1500;
+/** Níveis de opacidade para desenhar as partículas em lote (um fill por nível). */
+const ALPHA_LEVELS = 8;
 /** Voltas do loop por segundo (anéis entrando no funil). */
 const FLOW_SPEED = 0.03;
 /**
@@ -66,6 +73,9 @@ export interface VortexState {
   z: Float32Array;
   a: Float32Array;
   t: Float32Array;
+  /** Rascunho do desenho em lote: x, y de cada partícula, agrupados por nível de opacidade. */
+  levelXY: Float32Array;
+  levelCount: Uint16Array;
   /** Tempo (s) do último quadro: os ângulos avançam por passo (ω · dt). */
   lastTime: number;
 }
@@ -88,6 +98,8 @@ export function createVortex(): VortexState {
     z: new Float32Array(DISC_COUNT),
     a: new Float32Array(DISC_COUNT),
     t: new Float32Array(DISC_COUNT),
+    levelXY: new Float32Array(ALPHA_LEVELS * PARTICLE_COUNT * 2),
+    levelCount: new Uint16Array(ALPHA_LEVELS),
     lastTime: -1,
   };
 }
@@ -128,6 +140,24 @@ export function drawVortex(
   const phase = (time * FLOW_SPEED) % 1;
   const persp = (1 - st.m) * TOP_PERSPECTIVE;
 
+  // Projeção inline (a mesma de lib/iso.ts `project`), sem criar um [x, y]
+  // por ponto: são ~3.000 pontos de anel + PARTICLE_COUNT partículas por quadro.
+  const flat = st.m === 0;
+  const { ax, ay, a: pa, b: pb, c: pc, d: pd, lift } = st;
+  let px0 = 0;
+  let py0 = 0;
+  const proj = (x: number, y: number, z: number) => {
+    if (flat) {
+      px0 = x;
+      py0 = y;
+      return;
+    }
+    const rx = x - ax;
+    const ry = y - ay;
+    px0 = ax + pa * rx + pb * ry;
+    py0 = ay + pc * rx + pd * ry - lift * z;
+  };
+
   // Anéis: t = 0 na boca, 1 no fundo.
   ctx.lineWidth = px;
   ctx.strokeStyle = DISC_COLOR;
@@ -147,25 +177,43 @@ export function drawVortex(
     ctx.beginPath();
     for (let i = 0; i <= RING_SEGMENTS; i++) {
       const ang = (i / RING_SEGMENTS) * TAU;
-      const [x, y] = project(st, cx + r * Math.cos(ang), cy + r * Math.sin(ang), -depth);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+      proj(cx + r * Math.cos(ang), cy + r * Math.sin(ang), -depth);
+      if (i === 0) ctx.moveTo(px0, py0);
+      else ctx.lineTo(px0, py0);
     }
     ctx.stroke();
   }
 
   // Partículas em órbita kepleriana: cada uma avança ω·dt do seu anel.
-  ctx.fillStyle = PARTICLE_COLOR;
+  // Desenho em lote: a opacidade de cada partícula (anel × brilho) é
+  // arredondada para um de ALPHA_LEVELS níveis, e cada nível vira UM caminho
+  // preenchido de uma vez (ALPHA_LEVELS fills por quadro, não um por partícula).
   const s = PARTICLE_PX * px;
+  const h = s / 2;
+  const counts = vs.levelCount;
+  counts.fill(0);
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const d = vs.pDisc[i];
     const ang = (vs.pAng[i] = (vs.pAng[i] + vs.w[d] * dt) % TAU);
-    const a = vs.a[d];
-    if (a <= 0.01) continue;
+    const pa2 = vs.a[d] * vs.pBright[i];
+    const level = Math.min(ALPHA_LEVELS - 1, Math.floor(pa2 * ALPHA_LEVELS));
+    if (pa2 <= 0.01) continue;
     const r = vs.r[d] * vs.pJit[i];
-    const [x, y] = project(st, cx + r * Math.cos(ang), cy + r * Math.sin(ang), vs.z[d]);
-    ctx.globalAlpha = a * vs.pBright[i] * alpha;
-    ctx.fillRect(x - s / 2, y - s / 2, s, s);
+    proj(cx + r * Math.cos(ang), cy + r * Math.sin(ang), vs.z[d]);
+    const k = (level * PARTICLE_COUNT + counts[level]++) * 2;
+    vs.levelXY[k] = px0 - h;
+    vs.levelXY[k + 1] = py0 - h;
+  }
+  ctx.fillStyle = PARTICLE_COLOR;
+  for (let level = 0; level < ALPHA_LEVELS; level++) {
+    const n = counts[level];
+    if (!n) continue;
+    // Opacidade do meio do intervalo do nível.
+    ctx.globalAlpha = ((level + 0.5) / ALPHA_LEVELS) * alpha;
+    ctx.beginPath();
+    const base = level * PARTICLE_COUNT * 2;
+    for (let j = 0; j < n; j++) ctx.rect(vs.levelXY[base + j * 2], vs.levelXY[base + j * 2 + 1], s, s);
+    ctx.fill();
   }
   ctx.globalAlpha = 1;
 }

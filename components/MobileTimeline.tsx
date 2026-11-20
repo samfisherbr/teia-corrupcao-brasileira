@@ -48,6 +48,12 @@ export default function MobileTimeline({
       <span className="shrink-0 text-[10px] font-mono text-muted" aria-hidden="true">
         {minYear}
       </span>
+      {/* Contêiner do slider + brilho pulsante (.timeline-glow, atrás do seletor). */}
+      <span
+        className="relative min-w-0 flex-1 flex"
+        style={{ '--pct': `${pct}%`, '--pct-n': pct / 100 } as React.CSSProperties}
+      >
+      <span className="timeline-glow" aria-hidden="true" />
       <input
         id="mobile-year"
         type="range"
@@ -58,9 +64,9 @@ export default function MobileTimeline({
         onChange={(e) => setStartYearFilter(Number(e.target.value))}
         aria-label={t.sidebar.startYearAria}
         aria-valuetext={t.timeline.valueText(startYearFilter, nodeCount)}
-        className="timeline-range min-w-0 flex-1 h-8"
-        style={{ '--pct': `${pct}%` } as React.CSSProperties}
+        className="timeline-range relative min-w-0 flex-1 h-8"
       />
+      </span>
       <span className="shrink-0 text-[10px] font-mono text-muted" aria-hidden="true">
         {maxYear}
       </span>
