@@ -380,7 +380,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
         <BlinkingSquares
           className="absolute inset-0 w-full h-full pointer-events-none"
           direction="top"
-          gridSize={60}
+          gridSize={80}
           squareSize={0.3}
           fadeStart={squaresFadeStart}
           fadeEnd={1}
