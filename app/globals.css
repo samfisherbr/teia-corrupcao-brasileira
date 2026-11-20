@@ -114,12 +114,12 @@ html, body {
    Trilha e seletor desenhados à mão (o seletor nativo não aceita brilho).
    A parte preenchida usa a variável --pct (0%–100%), que o componente define.
    O seletor "pulsa" um brilho ciano: o brilho é um <span> próprio
-   (.timeline-glow) atrás do seletor, e só a OPACIDADE dele anima
+   (.timeline-glow) atrás do seletor, e só a OPACIDADE e a ESCALA dele animam
    (timeline-hum) — animar box-shadow redesenha a cada quadro na thread
-   principal; opacidade roda no compositor. Com "reduzir movimento" ativado
+   principal; opacidade e transform rodam no compositor. Com "reduzir movimento" ativado
    no aparelho, o brilho fica fixo.
    Ajustes: cor → --timeline-cyan; ritmo → duração da animation (2.4s);
-   intensidade → box-shadow de .timeline-glow e as opacidades de @keyframes timeline-hum.
+   intensidade → box-shadow de .timeline-glow e opacidade/escala de @keyframes timeline-hum.
    --------------------------------------------------------------------------- */
 .timeline-range {
   --timeline-cyan: 34, 211, 238; /* #22d3ee (cyan-400) em RGB */
@@ -196,16 +196,18 @@ html, body {
   pointer-events: none;
   box-shadow: 0 0 12px 5px rgba(var(--timeline-cyan), 0.8);
   animation: timeline-hum 2.4s ease-in-out infinite;
-  will-change: opacity;
+  will-change: opacity, transform;
 }
 
 @keyframes timeline-hum {
   0%,
   100% {
-    opacity: 0.4;
+    opacity: 0.45;
+    transform: scale(0.6);
   }
   50% {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -213,5 +215,6 @@ html, body {
   .timeline-glow {
     animation: none;
     opacity: 0.7;
+    transform: scale(0.8);
   }
 }

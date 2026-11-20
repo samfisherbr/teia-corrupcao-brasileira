@@ -76,6 +76,8 @@ export interface VortexState {
   /** Rascunho do desenho em lote: x, y de cada partícula, agrupados por nível de opacidade. */
   levelXY: Float32Array;
   levelCount: Uint16Array;
+  /** Soma das opacidades das partículas de cada nível (para pintar o nível na média). */
+  levelSum: Float32Array;
   /** Tempo (s) do último quadro: os ângulos avançam por passo (ω · dt). */
   lastTime: number;
 }
@@ -100,6 +102,7 @@ export function createVortex(): VortexState {
     t: new Float32Array(DISC_COUNT),
     levelXY: new Float32Array(ALPHA_LEVELS * PARTICLE_COUNT * 2),
     levelCount: new Uint16Array(ALPHA_LEVELS),
+    levelSum: new Float32Array(ALPHA_LEVELS),
     lastTime: -1,
   };
 }
@@ -185,13 +188,17 @@ export function drawVortex(
   }
 
   // Partículas em órbita kepleriana: cada uma avança ω·dt do seu anel.
-  // Desenho em lote: a opacidade de cada partícula (anel × brilho) é
-  // arredondada para um de ALPHA_LEVELS níveis, e cada nível vira UM caminho
-  // preenchido de uma vez (ALPHA_LEVELS fills por quadro, não um por partícula).
+  // Desenho em lote: as partículas são agrupadas em ALPHA_LEVELS níveis pela
+  // opacidade (anel × brilho), e cada nível vira UM caminho preenchido de uma
+  // vez (ALPHA_LEVELS fills por quadro, não um por partícula), pintado com a
+  // opacidade MÉDIA das partículas do nível — assim o brilho total do funil
+  // fica igual ao do desenho uma a uma.
   const s = PARTICLE_PX * px;
   const h = s / 2;
   const counts = vs.levelCount;
+  const sums = vs.levelSum;
   counts.fill(0);
+  sums.fill(0);
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const d = vs.pDisc[i];
     const ang = (vs.pAng[i] = (vs.pAng[i] + vs.w[d] * dt) % TAU);
@@ -200,6 +207,7 @@ export function drawVortex(
     if (pa2 <= 0.01) continue;
     const r = vs.r[d] * vs.pJit[i];
     proj(cx + r * Math.cos(ang), cy + r * Math.sin(ang), vs.z[d]);
+    sums[level] += pa2;
     const k = (level * PARTICLE_COUNT + counts[level]++) * 2;
     vs.levelXY[k] = px0 - h;
     vs.levelXY[k + 1] = py0 - h;
@@ -208,8 +216,7 @@ export function drawVortex(
   for (let level = 0; level < ALPHA_LEVELS; level++) {
     const n = counts[level];
     if (!n) continue;
-    // Opacidade do meio do intervalo do nível.
-    ctx.globalAlpha = ((level + 0.5) / ALPHA_LEVELS) * alpha;
+    ctx.globalAlpha = (sums[level] / n) * alpha;
     ctx.beginPath();
     const base = level * PARTICLE_COUNT * 2;
     for (let j = 0; j < n; j++) ctx.rect(vs.levelXY[base + j * 2], vs.levelXY[base + j * 2 + 1], s, s);
