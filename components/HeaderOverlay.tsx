@@ -382,6 +382,9 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
           direction="top"
           gridSize={80}
           squareSize={0.3}
+          // Telas largas: célula limitada a 8px (≈ a do celular), então a
+          // grade ganha colunas e os quadrados não engordam no computador.
+          maxCellSize={8}
           fadeStart={squaresFadeStart}
           fadeEnd={1}
           falloff={2}

@@ -26,6 +26,12 @@ export interface BlinkingSquaresProps {
   gridSize?: number;
   /** Lado do quadrado como fração da célula (0.05–0.98). */
   squareSize?: number;
+  /**
+   * Tamanho máximo da célula em px (opcional). Em telas largas a célula
+   * deixaria de crescer além disso: a grade ganha mais colunas e os quadrados
+   * ficam do mesmo tamanho que no celular, em vez de "engordar".
+   */
+  maxCellSize?: number;
   /** Onde a grade começa a aparecer ao longo de `direction` (0–1). */
   fadeStart?: number;
   /** Onde a grade atinge densidade máxima (0–1, > fadeStart). */
@@ -65,6 +71,7 @@ export default function BlinkingSquares({
   direction = 'right',
   gridSize = 52,
   squareSize = 0.57,
+  maxCellSize,
   fadeStart = 0.65,
   fadeEnd = 1,
   falloff = 1.25,
@@ -108,7 +115,7 @@ export default function BlinkingSquares({
       canvas.height = Math.max(1, Math.round(height * ratio));
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 
-      const cell = Math.max(width, height) / grid;
+      const cell = Math.min(Math.max(width, height) / grid, maxCellSize && maxCellSize > 0 ? maxCellSize : Infinity);
       const cols = Math.ceil(width / cell);
       const rows = Math.ceil(height / cell);
       side = cell * fill;
@@ -173,7 +180,7 @@ export default function BlinkingSquares({
       ro.disconnect();
     };
   }, [
-    direction, gridSize, squareSize, fadeStart, fadeEnd, falloff, minBrightness,
+    direction, gridSize, squareSize, maxCellSize, fadeStart, fadeEnd, falloff, minBrightness,
     twinkleSpeed, twinkleStrength, intensity, opacity, squareColor, backgroundColor, dpr,
   ]);
 
