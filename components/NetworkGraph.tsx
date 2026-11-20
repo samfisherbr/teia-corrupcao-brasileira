@@ -29,6 +29,7 @@ import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, ge
 import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink } from '@/lib/layout';
 import { createIsoState, depthOf, fullIsoOffset, morphForZoom, project, resolveLifts, setMorph, unprojectGround, zoomForFull25D } from '@/lib/iso';
 import { drawFloor, drawGroundMarks, getGlossSprite, getSphereSprite, SPHERE_PHOTO_INSET } from '@/components/graph25d';
+import { createVortex, drawVortex, VortexState } from '@/components/graphVortex';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { resizedPhotoUrl } from '@/lib/photoUrl';
 import { useI18n } from '@/components/I18nProvider';
@@ -1304,6 +1305,34 @@ export default function NetworkGraph({
    * ----------------------------------------------------------------------- */
   const groundMarksRef = useRef<{ x: number; y: number; z: number; r: number; color: string; alpha: number }[]>([]);
   const depthOrderRef = useRef<any[]>([]);
+
+  /* VÓRTICE DO NÚCLEO (components/graphVortex.ts) — canvas próprio atrás do
+   * grafo. renderFramePre guarda a câmera do quadro (vortexSnapRef) e já
+   * redesenha o vórtice no MESMO quadro (zoom/arrasto sem atraso); entre um
+   * quadro do grafo e outro, o laço do efeito mais abaixo o mantém girando. */
+  const vortexCanvasRef = useRef<HTMLCanvasElement>(null);
+  const vortexStateRef = useRef<VortexState | null>(null);
+  const vortexSnapRef = useRef<{ transform: DOMMatrix; scale: number; cx: number; cy: number; w: number; h: number } | null>(null);
+  const vortexDrawnAtRef = useRef(0);
+  const reducedMotionRef = useRef(false);
+  const paintVortex = useCallback(() => {
+    const canvas = vortexCanvasRef.current;
+    const snap = vortexSnapRef.current;
+    if (!canvas || !snap) return;
+    if (canvas.width !== snap.w || canvas.height !== snap.h) {
+      canvas.width = snap.w;
+      canvas.height = snap.h;
+    }
+    const vctx = canvas.getContext('2d');
+    if (!vctx) return;
+    const vs = vortexStateRef.current ?? (vortexStateRef.current = createVortex());
+    const now = performance.now();
+    vortexDrawnAtRef.current = now;
+    // "Reduzir movimento": um quadro parado (o vórtice ainda acompanha o zoom).
+    const time = reducedMotionRef.current ? 0 : now / 1000;
+    drawVortex(vctx, vs, isoRef.current, snap.transform, snap.scale, snap.cx, snap.cy, time);
+  }, []);
+
   const renderFramePre = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     const st = isoRef.current;
     const { width, height } = dimensionsRef.current;
@@ -1311,6 +1340,13 @@ export default function NetworkGraph({
     // Centro da tela no espaço projetado (o mesmo da biblioteca).
     const c = ctx.getTransform().inverse().transformPoint({ x: ctx.canvas.width / 2, y: ctx.canvas.height / 2 });
     applyMorph(m, c.x, c.y);
+    // Vórtice: centro do núcleo (0, 0) com o afastamento dos grupos, como os partidos.
+    {
+      const k = (SPREAD_25D - 1) * st.m;
+      const sc = spreadCentreRef.current;
+      vortexSnapRef.current = { transform: ctx.getTransform(), scale: globalScale, cx: -k * sc.x, cy: -k * sc.y, w: ctx.canvas.width, h: ctx.canvas.height };
+      paintVortex();
+    }
     const on = st.m > 0;
     if (on !== active25dRef.current) {
       active25dRef.current = on;
@@ -1336,7 +1372,29 @@ export default function NetworkGraph({
     }
     marks.length = count;
     drawGroundMarks(ctx, st, globalScale, marks);
-  }, [graphData.nodes, nodeAlpha, isNodeLit, applyMorph, spreadXY]);
+  }, [graphData.nodes, nodeAlpha, isNodeLit, applyMorph, spreadXY, paintVortex]);
+
+  // Laço do vórtice: continua girando com o grafo parado. Pula o quadro em que
+  // o próprio grafo já o desenhou; pausa sozinho com a aba oculta (rAF).
+  useEffect(() => {
+    const mq = window.matchMedia(REDUCED_MOTION_QUERY);
+    const onMq = () => {
+      reducedMotionRef.current = mq.matches;
+      paintVortex();
+    };
+    onMq();
+    mq.addEventListener('change', onMq);
+    let raf = 0;
+    const loop = () => {
+      if (!reducedMotionRef.current && performance.now() - vortexDrawnAtRef.current > 8) paintVortex();
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(raf);
+      mq.removeEventListener('change', onMq);
+    };
+  }, [paintVortex]);
 
   const renderFramePost = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     const st = isoRef.current;
@@ -1528,13 +1586,15 @@ export default function NetworkGraph({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full flex-1 bg-surface-canvas overflow-hidden"
+      className="relative isolate w-full h-full flex-1 bg-surface-canvas overflow-hidden"
       // Qualquer interação manual cancela o reenquadramento automático.
       onWheel={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
       onPointerDown={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
       // Cursor saiu do grafo: some o destaque de hover.
       onMouseLeave={clearHover}
     >
+      {/* Vórtice do núcleo: atrás do grafo (z negativo dentro do contêiner "isolate"), sem receber cliques. */}
+      <canvas ref={vortexCanvasRef} aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 h-full w-full" />
       <ForceGraph2D
         // A tipagem da biblioteca só aceita objeto de ref, mas ref-callback funciona.
         ref={setGraphInstance as any}
@@ -1580,7 +1640,9 @@ export default function NetworkGraph({
         cooldownTime={driftEnabled ? Infinity : COOLDOWN_MS}
         d3AlphaDecay={0.03}   // ↑ assenta mais rápido (e mais "duro"); ↓ mais lento e suave
         d3VelocityDecay={0.35} // "atrito": ↑ nós param mais cedo, menos tremedeira
-        backgroundColor={BG_COLOR}
+        // Transparente: o fundo vem do contêiner (bg-surface-canvas = BG_COLOR),
+        // para o vórtice aparecer por trás.
+        backgroundColor="rgba(0, 0, 0, 0)"
       />
 
       {/* Botão "Exibir detalhes" (posição definida em positionDetailsButton) */}
