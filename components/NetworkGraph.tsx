@@ -1312,7 +1312,7 @@ export default function NetworkGraph({
    * quadro do grafo e outro, o laço do efeito mais abaixo o mantém girando. */
   const vortexCanvasRef = useRef<HTMLCanvasElement>(null);
   const vortexStateRef = useRef<VortexState | null>(null);
-  const vortexSnapRef = useRef<{ transform: DOMMatrix; scale: number; cx: number; cy: number; w: number; h: number } | null>(null);
+  const vortexSnapRef = useRef<{ transform: DOMMatrix; scale: number; cx: number; cy: number; w: number; h: number; alpha: number } | null>(null);
   const vortexDrawnAtRef = useRef(0);
   const reducedMotionRef = useRef(false);
   const paintVortex = useCallback(() => {
@@ -1330,7 +1330,7 @@ export default function NetworkGraph({
     vortexDrawnAtRef.current = now;
     // "Reduzir movimento": um quadro parado (o vórtice ainda acompanha o zoom).
     const time = reducedMotionRef.current ? 0 : now / 1000;
-    drawVortex(vctx, vs, isoRef.current, snap.transform, snap.scale, snap.cx, snap.cy, time);
+    drawVortex(vctx, vs, isoRef.current, snap.transform, snap.scale, snap.cx, snap.cy, time, snap.alpha);
   }, []);
 
   const renderFramePre = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
@@ -1341,10 +1341,21 @@ export default function NetworkGraph({
     const c = ctx.getTransform().inverse().transformPoint({ x: ctx.canvas.width / 2, y: ctx.canvas.height / 2 });
     applyMorph(m, c.x, c.y);
     // Vórtice: centro do núcleo (0, 0) com o afastamento dos grupos, como os partidos.
+    // Opacidade = a do partido mais aceso (nodeAlpha: brilho por zoom e foco),
+    // então o vórtice apaga e acende junto com os partidos.
     {
       const k = (SPREAD_25D - 1) * st.m;
       const sc = spreadCentreRef.current;
-      vortexSnapRef.current = { transform: ctx.getTransform(), scale: globalScale, cx: -k * sc.x, cy: -k * sc.y, w: ctx.canvas.width, h: ctx.canvas.height };
+      let alpha = 0;
+      let parties = 0;
+      for (const n of graphData.nodes) {
+        if (n.type !== 'party') continue;
+        parties++;
+        alpha = Math.max(alpha, nodeAlpha(n, globalScale));
+      }
+      // Sem partidos na tela (filtro): segue a regra de brilho dos partidos mesmo assim.
+      if (!parties) alpha = hasFocus ? FADED_ALPHA : zoomBrightness(globalScale, BRIGHT_ZOOM.party);
+      vortexSnapRef.current = { transform: ctx.getTransform(), scale: globalScale, cx: -k * sc.x, cy: -k * sc.y, w: ctx.canvas.width, h: ctx.canvas.height, alpha };
       paintVortex();
     }
     const on = st.m > 0;
@@ -1372,7 +1383,7 @@ export default function NetworkGraph({
     }
     marks.length = count;
     drawGroundMarks(ctx, st, globalScale, marks);
-  }, [graphData.nodes, nodeAlpha, isNodeLit, applyMorph, spreadXY, paintVortex]);
+  }, [graphData.nodes, nodeAlpha, isNodeLit, hasFocus, applyMorph, spreadXY, paintVortex]);
 
   // Laço do vórtice: continua girando com o grafo parado. Pula o quadro em que
   // o próprio grafo já o desenhou; pausa sozinho com a aba oculta (rAF).
