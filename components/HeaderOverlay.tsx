@@ -90,6 +90,34 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
   useEffect(() => {
     panelRef.current?.toggleAttribute('inert', !isOpen);
   }, [isOpen]);
+
+  // Fundo dos Infográficos: os quadrados vão do topo até o fim do título e
+  // não passam dele. Mede onde o título termina (em relação ao painel, sem
+  // contar a rolagem) e converte em `fadeStart` (fração da altura, a partir
+  // de baixo). Refaz a conta quando o título quebra linha ou a tela muda.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const infographicsTitleRef = useRef<HTMLHeadingElement>(null);
+  const [squaresFadeStart, setSquaresFadeStart] = useState<number | null>(null);
+  useEffect(() => {
+    if (activePage !== 'infographics') return;
+    const panel = panelRef.current;
+    const scroller = scrollRef.current;
+    const title = infographicsTitleRef.current;
+    if (!panel || !scroller || !title) return;
+    const measure = () => {
+      const height = panel.clientHeight;
+      if (!height) return;
+      const bottom =
+        title.getBoundingClientRect().bottom - panel.getBoundingClientRect().top + scroller.scrollTop;
+      const next = Math.min(0.99, Math.max(0, 1 - bottom / height));
+      setSquaresFadeStart((prev) => (prev !== null && Math.abs(prev - next) < 0.002 ? prev : next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(panel);
+    ro.observe(title);
+    return () => ro.disconnect();
+  }, [activePage]);
   
   // State for expanding/collapsing individual scheme dossiers in the Glossary
   const [expandedSchemeId, setExpandedSchemeId] = useState<string | null>(null);
@@ -343,28 +371,29 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
       ref={panelRef}
       aria-hidden={!isOpen}
     >
-      {/* Fundo dos Infográficos: fica parado atrás do conteúdo, que rola no
-          contêiner de dentro. Sem cor de fundo própria (deixa o slate-950 do
+      {/* Fundo dos Infográficos: fixo no topo do painel, atrás do conteúdo
+          (que rola no contêiner de dentro), indo só até o fim do título — ver
+          squaresFadeStart. Sem cor de fundo própria (deixa o slate-950 do
           painel aparecer); quadrados no ciano do site (cyan-400). Só montado
           com a página aberta, para a animação não rodar escondida. */}
-      {activePage === 'infographics' && (
+      {activePage === 'infographics' && squaresFadeStart !== null && (
         <BlinkingSquares
           className="absolute inset-0 w-full h-full pointer-events-none"
           direction="top"
           gridSize={60}
           squareSize={0.3}
-          fadeStart={0.6}
+          fadeStart={squaresFadeStart}
           fadeEnd={1}
           falloff={2}
           minBrightness={0.55}
           twinkleSpeed={1}
           twinkleStrength={0.94}
           intensity={1}
-          opacity={0.51}
+          opacity={0.46}
           squareColor="#22d3ee"
         />
       )}
-      <div className="absolute inset-0 overflow-y-auto">
+      <div ref={scrollRef} className="absolute inset-0 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-10">
         
         {/* =================================================================== */}
@@ -378,7 +407,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                 <PieChartIcon className="w-4 h-4" />
                 <span>{t.infographics.eyebrow}</span>
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1">
+              <h1 ref={infographicsTitleRef} className="text-3xl font-extrabold tracking-tight text-white mt-1">
                 {t.infographics.title}
               </h1>
               <p className="mt-6 text-sm text-slate-400 leading-relaxed">
