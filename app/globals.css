@@ -113,10 +113,13 @@ html, body {
    Slider da linha do tempo no celular (components/MobileTimeline.tsx).
    Trilha e seletor desenhados à mão (o seletor nativo não aceita brilho).
    A parte preenchida usa a variável --pct (0%–100%), que o componente define.
-   O seletor "pulsa" um brilho ciano (timeline-hum); com "reduzir movimento"
-   ativado no aparelho, o brilho fica fixo.
+   O seletor "pulsa" um brilho ciano: o brilho é um <span> próprio
+   (.timeline-glow) atrás do seletor, e só a OPACIDADE e a ESCALA dele animam
+   (timeline-hum) — animar box-shadow redesenha a cada quadro na thread
+   principal; opacidade e transform rodam no compositor. Com "reduzir movimento" ativado
+   no aparelho, o brilho fica fixo.
    Ajustes: cor → --timeline-cyan; ritmo → duração da animation (2.4s);
-   intensidade → os dois box-shadow de @keyframes timeline-hum.
+   intensidade → box-shadow de .timeline-glow e opacidade/escala de @keyframes timeline-hum.
    --------------------------------------------------------------------------- */
 .timeline-range {
   --timeline-cyan: 34, 211, 238; /* #22d3ee (cyan-400) em RGB */
@@ -160,7 +163,6 @@ html, body {
   border-radius: 9999px;
   background: rgb(var(--timeline-cyan));
   border: 2px solid var(--color-cyan-50);
-  animation: timeline-hum 2.4s ease-in-out infinite;
 }
 .timeline-range::-moz-range-thumb {
   width: 14px; /* + 2px de borda de cada lado = 18px */
@@ -168,7 +170,6 @@ html, body {
   border-radius: 9999px;
   background: rgb(var(--timeline-cyan));
   border: 2px solid var(--color-cyan-50);
-  animation: timeline-hum 2.4s ease-in-out infinite;
 }
 
 /* Contorno de foco para teclado, sem apagar o brilho */
@@ -181,23 +182,39 @@ html, body {
   outline-offset: 3px;
 }
 
+/* Brilho do seletor: centro acompanha --pct. O centro do seletor (18px) vai
+   de 9px a (largura − 9px) da trilha. */
+.timeline-glow {
+  --timeline-cyan: 34, 211, 238; /* o mesmo de .timeline-range (irmão, não herda) */
+  position: absolute;
+  top: 50%;
+  left: calc(9px + (100% - 18px) * var(--pct-n, 0));
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 9999px;
+  pointer-events: none;
+  box-shadow: 0 0 12px 5px rgba(var(--timeline-cyan), 0.8);
+  animation: timeline-hum 2.4s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
 @keyframes timeline-hum {
   0%,
   100% {
-    box-shadow: 0 0 4px 1px rgba(var(--timeline-cyan), 0.45);
+    opacity: 0.45;
+    transform: scale(0.6);
   }
   50% {
-    box-shadow: 0 0 12px 5px rgba(var(--timeline-cyan), 0.8);
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .timeline-range::-webkit-slider-thumb {
+  .timeline-glow {
     animation: none;
-    box-shadow: 0 0 8px 3px rgba(var(--timeline-cyan), 0.6);
-  }
-  .timeline-range::-moz-range-thumb {
-    animation: none;
-    box-shadow: 0 0 8px 3px rgba(var(--timeline-cyan), 0.6);
+    opacity: 0.7;
+    transform: scale(0.8);
   }
 }

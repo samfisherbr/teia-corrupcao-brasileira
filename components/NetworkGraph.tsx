@@ -78,10 +78,13 @@ const FIT_PADDING_MOBILE = 20;
  * Física: quantos "passos" a simulação roda ANTES do primeiro desenho
  * (invisível ao usuário) e por quanto tempo continua animando depois.
  *   - WARMUP_TICKS ↑ = abre mais "assentado", porém demora mais para aparecer.
- *     Como as posições já nascem no lugar certo (layout semeado), 100 basta.
+ *     Como as posições já nascem no lugar certo (layout semeado), 30 basta:
+ *     os passos de aquecimento rodam todos de uma vez e travam a página
+ *     (100 passos ≈ 0,4–0,7 s sem resposta no celular); o resto do
+ *     assentamento acontece animado, durante COOLDOWN_MS.
  *   - COOLDOWN_MS  = tempo máximo de animação após aparecer.
  */
-const WARMUP_TICKS = 100;
+const WARMUP_TICKS = 30;
 const COOLDOWN_MS = 4000;
 
 /**
@@ -90,6 +93,19 @@ const COOLDOWN_MS = 4000;
  * desktop. Para religar (a simulação nunca para), troque por `true`.
  */
 const DRIFT_ENABLED = false;
+
+/**
+ * Intervalo mínimo (ms) entre dois quadros do vórtice com o grafo parado.
+ * 33 ≈ 30 quadros/s (com folga de 1–2 ms para não cair para 20 em telas de 60 Hz).
+ */
+const VORTEX_FRAME_MS = 31;
+
+/**
+ * Fotos dos nós: começam a baixar quando a simulação assenta (onEngineStop) ou
+ * PHOTO_LOAD_DELAY_MS depois de o grafo aparecer, o que vier primeiro. Assim
+ * os ~240 downloads e decodificações não disputam a CPU com o primeiro desenho.
+ */
+const PHOTO_LOAD_DELAY_MS = 2500;
 
 /**
  * Mouse/trackpad (ponteiro fino, com hover)? Só nesses aparelhos o hover
@@ -351,6 +367,8 @@ export default function NetworkGraph({
   const pendingRef = useRef<Set<string>>(new Set());
   const failedRef = useRef<Set<string>>(new Set());
   const redrawRafRef = useRef(0);
+  // As fotos só começam a baixar depois do primeiro desenho (ver PHOTO_LOAD_DELAY_MS).
+  const [photosEnabled, setPhotosEnabled] = useState(false);
 
   // Se o usuário já mexeu na câmera (zoom/arrasto), não reenquadramos sozinhos.
   const userMovedCameraRef = useRef(false);
@@ -885,6 +903,7 @@ export default function NetworkGraph({
   useEffect(() => () => cancelAnimationFrame(liftAnimRef.current), []);
 
   const handleEngineStop = useCallback(() => {
+    setPhotosEnabled(true);
     recomputeLifts();
     if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
   }, [graphRef, fitPadding, recomputeLifts]);
@@ -892,7 +911,16 @@ export default function NetworkGraph({
   /* -------------------------------------------------------------------------
    * 5. IMAGENS — pré-carrega fotos dos nós (ex.: Wikimedia Commons)
    * ----------------------------------------------------------------------- */
+  // Libera as fotos PHOTO_LOAD_DELAY_MS depois de o grafo existir, caso a
+  // simulação ainda não tenha assentado (handleEngineStop também libera).
   useEffect(() => {
+    if (!graphReady || photosEnabled) return;
+    const id = window.setTimeout(() => setPhotosEnabled(true), PHOTO_LOAD_DELAY_MS);
+    return () => window.clearTimeout(id);
+  }, [graphReady, photosEnabled]);
+
+  useEffect(() => {
+    if (!photosEnabled) return;
     // Pede UM redesenho no próximo quadro, por mais fotos que cheguem juntas.
     // zoom(zoom atual) só marca o canvas como "precisa redesenhar": não mexe
     // na câmera nem na física. (Antes cada foto reaquecia a simulação — com
@@ -921,14 +949,19 @@ export default function NetworkGraph({
         img.crossOrigin = 'anonymous'; // necessário para desenhar no canvas sem "contaminá-lo"
         img.decoding = 'async';
         img.onload = () => {
-          pendingRef.current.delete(url);
-          const sprite = makePhotoSprite(img);
-          if (!sprite) {
-            failedRef.current.add(url);
-            return;
-          }
-          imgCacheRef.current.set(url, sprite);
-          requestRedraw();
+          // decode() decodifica FORA da thread principal; sem ele, o drawImage
+          // de makePhotoSprite decodificaria cada AVIF/WebP ali, travando a página.
+          // Se decode() falhar (navegador antigo), desenha assim mesmo.
+          img.decode().catch(() => {}).then(() => {
+            pendingRef.current.delete(url);
+            const sprite = makePhotoSprite(img);
+            if (!sprite) {
+              failedRef.current.add(url);
+              return;
+            }
+            imgCacheRef.current.set(url, sprite);
+            requestRedraw();
+          });
         };
         // Falhou (também a original): fica só o círculo de vidro, e a foto não é pedida de novo.
         img.onerror = () => {
@@ -941,7 +974,7 @@ export default function NetworkGraph({
       const resized = resizedPhotoUrl(url, nodeType);
       load(resized ?? url, resized ? url : null);
     });
-  }, [graphData.nodes, graphRef]);
+  }, [graphData.nodes, graphRef, photosEnabled]);
 
   useEffect(() => () => cancelAnimationFrame(redrawRafRef.current), []);
 
@@ -1396,8 +1429,11 @@ export default function NetworkGraph({
     onMq();
     mq.addEventListener('change', onMq);
     let raf = 0;
+    // Até 30 quadros/s (VORTEX_FRAME_MS): o giro é lento e não precisa de 60.
+    // Enquanto a simulação anda, o grafo já redesenha o vórtice a cada quadro
+    // (renderFramePre), e este laço só pula.
     const loop = () => {
-      if (!reducedMotionRef.current && performance.now() - vortexDrawnAtRef.current > 8) paintVortex();
+      if (!reducedMotionRef.current && performance.now() - vortexDrawnAtRef.current >= VORTEX_FRAME_MS) paintVortex();
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -1533,10 +1569,13 @@ export default function NetworkGraph({
     [showPartyLinks, hasFocus, isLinkLit]
   );
   // Partículas animadas (quantidade por status em STATUS_STYLE.particles).
+  // Só nas linhas em FOCO (nó/linha selecionado ou sob o mouse): enquanto houver
+  // uma partícula na tela, a biblioteca redesenha o grafo inteiro a cada quadro.
+  // Sem foco, sem partículas — a teia assentada fica parada e não gasta CPU.
   // No 2.5D, sem partículas: a biblioteca as desenha em x/y (no plano), não na linha projetada.
   const linkParticles = useCallback(
-    (link: any) => (!active25d && isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0),
-    [isLinkLit, active25d]
+    (link: any) => (!active25d && hasFocus && isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0),
+    [isLinkLit, active25d, hasFocus]
   );
   const linkParticleColor = useCallback((link: any) => statusColor(link.status), []);
   // Hover (só com mouse; ver HOVER_POINTER_QUERY e suppressHoverUntilRef).
