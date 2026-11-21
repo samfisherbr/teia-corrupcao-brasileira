@@ -421,6 +421,18 @@ export default function NetworkGraph({
   const switchTRef = useRef(1);
   const switchAnimRef = useRef(0);
   const focusAnimRef = useRef(0);
+  // Até quando (performance.now()) a câmera está enquadrando a seleção: nesse
+  // tempo o botão "Exibir detalhes" fica escondido em vez de correr atrás do nó.
+  const cameraBusyUntilRef = useRef(0);
+  // Se o usuário já mexeu na câmera (roda, pinça, arrasto, botões, seleção),
+  // o reenquadramento ao assentar não acontece. Volta a false quando o
+  // conjunto de nós muda (filtros) — aí a teia é reenquadrada de novo.
+  const userMovedCameraRef = useRef(false);
+  // Legenda aberta abaixo de 1280px (acima disso fica sempre aberta).
+  const [legendOpen, setLegendOpen] = useState(false);
+  // Posiciona o botão "Exibir detalhes" (definido na seção 8b; ref para poder
+  // ser chamado de qualquer lugar sem depender da ordem das declarações).
+  const positionDetailsButtonRef = useRef<(scale: number) => void>(() => {});
   const [active25d, setActive25d] = useState(false);
   // clearHover é definido mais abaixo (seção 0); o ref evita depender da ordem.
   const clearHoverRef = useRef<() => void>(() => {});
@@ -520,6 +532,16 @@ export default function NetworkGraph({
     cancelAnimationFrame(focusAnimRef.current);
     focusAnimRef.current = 0;
   }, []);
+
+  /** O usuário pegou a câmera (roda, pinça, arrasto, botões): para o enquadramento animado e mostra já o "Exibir detalhes". */
+  const userTookCamera = useCallback(() => {
+    userMovedCameraRef.current = true;
+    cancelFocusAnim();
+    if (cameraBusyUntilRef.current) {
+      cameraBusyUntilRef.current = 0;
+      positionDetailsButtonRef.current(graphRef.current?.zoom?.() ?? 1);
+    }
+  }, [cancelFocusAnim, graphRef]);
 
   const toggle25d = useCallback(() => {
     // A teia se move sob o cursor parado: sem isso o destaque de hover
@@ -729,10 +751,6 @@ export default function NetworkGraph({
    * ----------------------------------------------------------------------- */
   const fitPadding = isMobile ? FIT_PADDING_MOBILE : FIT_PADDING_DESKTOP;
 
-  // Se o usuário já mexeu na câmera (roda, pinça, arrasto, botões, seleção),
-  // o reenquadramento ao assentar não acontece. Volta a false quando o
-  // conjunto de nós muda (filtros) — aí a teia é reenquadrada de novo.
-  const userMovedCameraRef = useRef(false);
   // Contexto só para medir os rótulos (mesma fonte do desenho em 7).
   const measureCtxRef = useRef<CanvasRenderingContext2D | null>(null);
 
@@ -917,10 +935,18 @@ export default function NetworkGraph({
       lit.add(sourceId);
       lit.add(targetId);
     }
+    // "Exibir detalhes" só aparece quando a câmera para (ver positionDetailsButton).
+    const busyMs = enabled25dRef.current ? 50 + FOCUS25D_MS : 50 + FOCUS_FIT_MS + 80 + 300;
+    cameraBusyUntilRef.current = performance.now() + busyMs;
+    const showBtn = setTimeout(() => {
+      cameraBusyUntilRef.current = 0;
+      positionDetailsButtonRef.current(graphRef.current?.zoom?.() ?? 1);
+    }, busyMs + 20);
     if (enabled25dRef.current) {
       const t0 = setTimeout(() => startFocus25d(lit), 50);
       return () => {
         clearTimeout(t0);
+        clearTimeout(showBtn);
         cancelFocusAnim();
       };
     }
@@ -948,6 +974,8 @@ export default function NetworkGraph({
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(showBtn);
+      cameraBusyUntilRef.current = 0;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectionKey, graphReady]);
@@ -1277,7 +1305,6 @@ export default function NetworkGraph({
   // Linhas já quebradas + largura (px de tela) da maior: medir texto é caro e
   // o resultado não muda com o zoom, então é medido uma vez por rótulo.
   const labelLinesCache = useRef(new Map<string, { lines: string[]; widthPx: number }>());
-  const positionDetailsButtonRef = useRef<(scale: number) => void>(() => {});
   // Se a fonte Inter terminar de carregar depois do 1º desenho, as medidas
   // feitas com a fonte reserva ficariam erradas: limpa o cache.
   useEffect(() => {
@@ -1609,8 +1636,14 @@ export default function NetworkGraph({
     const btn = detailsBtnRef.current;
     const fg = graphRef.current;
     if (!btn) return;
-    if (!fg || !showDetailsButton) {
+    const hide = () => {
       btn.style.visibility = 'hidden';
+      btn.style.opacity = '0';
+    };
+    // Escondido enquanto a câmera enquadra a seleção: seguir o nó durante a
+    // animação fazia o botão fugir do cursor.
+    if (!fg || !showDetailsButton || performance.now() < cameraBusyUntilRef.current) {
+      hide();
       return;
     }
     let gx: number | undefined;
@@ -1631,7 +1664,7 @@ export default function NetworkGraph({
       }
     }
     if (typeof gx !== 'number' || typeof gy !== 'number') {
-      btn.style.visibility = 'hidden';
+      hide();
       return;
     }
     const p = fg.graph2ScreenCoords(gx, gy);
@@ -1639,8 +1672,12 @@ export default function NetworkGraph({
     const halfW = btn.offsetWidth / 2;
     const x = Math.min(Math.max(p.x, halfW + 8), dimensions.width - halfW - 8);
     const y = Math.min(Math.max(top, btn.offsetHeight + 8), dimensions.height - 8);
-    btn.style.transform = `translate(${x - halfW}px, ${y - btn.offsetHeight}px)`;
+    // Propriedade `translate`, não `transform`: o `active:scale-95` do clique
+    // (propriedade `scale`) multiplicava também o deslocamento do transform,
+    // e o botão pulava ~20 px para cima/esquerda no exato momento do clique.
+    btn.style.translate = `${x - halfW}px ${y - btn.offsetHeight}px`;
     btn.style.visibility = 'visible';
+    btn.style.opacity = '1';
   }
 
   // drawLabels é memorizado; o ref garante que ele chame sempre a versão
@@ -1737,8 +1774,8 @@ export default function NetworkGraph({
       // usuário mexeu na câmera e cancela o enquadramento animado da seleção.
       // Na fase de CAPTURA: o d3-zoom do canvas chama stopImmediatePropagation()
       // na roda do mouse, então um onWheel comum nunca recebia o evento.
-      onWheelCapture={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
-      onPointerDownCapture={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
+      onWheelCapture={userTookCamera}
+      onPointerDownCapture={userTookCamera}
       // Cursor saiu do grafo: some o destaque de hover.
       onMouseLeave={clearHover}
     >
@@ -1800,15 +1837,29 @@ export default function NetworkGraph({
         ref={detailsBtnRef}
         type="button"
         onClick={onOpenDetails}
-        style={{ visibility: 'hidden' }}
-        className="absolute left-0 top-0 z-30 inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-semibold text-cyan-200 bg-surface-field/95 backdrop-blur-md border border-cyan-500/60 shadow-[0_0_16px_rgba(34,211,238,0.35)] hover:bg-cyan-950 active:scale-95 transition-colors"
+        style={{ visibility: 'hidden', opacity: 0 }}
+        className="absolute left-0 top-0 z-30 inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-semibold text-cyan-200 bg-surface-field/95 backdrop-blur-md border border-cyan-500/60 shadow-[0_0_16px_rgba(34,211,238,0.35)] hover:bg-cyan-950 active:scale-95 transition-[color,background-color,border-color,opacity] duration-150"
       >
         <PanelRightOpen size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
         {t.graph.showDetails}
       </button>
 
-      {/* LEGENDAS — geradas de lib/graphConfig.ts; escondidas em telas pequenas */}
-      <div data-graph-overlay className="absolute top-4 right-6 hidden sm:block space-y-3 z-20 select-none">
+      {/* LEGENDAS — geradas de lib/graphConfig.ts. Celular (< 640px): escondidas.
+          640–1279px: recolhidas atrás do botão "Legenda" (abertas, cobriam
+          boa parte da teia). A partir de 1280px: sempre abertas. */}
+      <div data-graph-overlay className="absolute top-4 right-6 hidden sm:flex flex-col items-end gap-3 z-20 select-none">
+        <button
+          type="button"
+          onClick={() => setLegendOpen((v) => !v)}
+          aria-expanded={legendOpen}
+          aria-controls="graph-legend"
+          className="xl:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-field/95 backdrop-blur-md border border-slate-800 text-xs font-mono text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-colors"
+        >
+          <Info size={14} className="w-3.5 h-3.5" aria-hidden="true" />
+          {t.graph.legend}
+          <ChevronUp size={14} className={`w-3.5 h-3.5 text-slate-400 transition-transform ${legendOpen ? '' : 'rotate-180'}`} aria-hidden="true" />
+        </button>
+        <div id="graph-legend" className={`${legendOpen ? 'flex' : 'hidden'} xl:flex flex-col gap-3`}>
         <div className="bg-surface-field/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{t.graph.linkLegend}</div>
           {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => {
@@ -1842,6 +1893,7 @@ export default function NetworkGraph({
               <span className="text-slate-200">{t.nodeType[key].label}</span>
             </div>
           ))}
+        </div>
         </div>
       </div>
 

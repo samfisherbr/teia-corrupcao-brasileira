@@ -101,6 +101,7 @@ export const en: Messages = {
 
   graph: {
     showDetails: 'Show details',
+    legend: 'Legend',
     linkLegend: 'Connection key',
     nodeLegend: 'Circle key',
     zoomIn: 'Zoom in',
