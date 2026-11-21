@@ -82,10 +82,21 @@ const FIT_PADDING_MOBILE = 20;
  *     os passos de aquecimento rodam todos de uma vez e travam a página
  *     (100 passos ≈ 0,4–0,7 s sem resposta no celular); o resto do
  *     assentamento acontece animado, durante COOLDOWN_MS.
- *   - COOLDOWN_MS  = tempo máximo de animação após aparecer.
+ *   - COOLDOWN_MS  = tempo MÁXIMO de animação após aparecer (trava de
+ *     segurança para aparelhos lentos; normalmente a física para antes, ao
+ *     chegar em ALPHA_MIN).
+ *   - ALPHA_DECAY  = quanto a "energia" da simulação cai a cada passo.
+ *     ↑ assenta mais rápido (e mais "duro"); ↓ mais lento e suave.
+ *   - ALPHA_MIN    = energia abaixo da qual a física PARA (onEngineStop). O
+ *     padrão da biblioteca é 0 (nunca para sozinha: ia sempre até
+ *     COOLDOWN_MS), mas abaixo de ~0,01 os nós só se mexem frações de pixel.
+ * Medido com os dados de nov/2026 (348 nós): 0,045 + 0,01 para em ~100
+ * passos (~1,7 s a 60 quadros/s; antes ~4 s), sem círculos sobrepostos.
  */
 const WARMUP_TICKS = 30;
 const COOLDOWN_MS = 4000;
+const ALPHA_DECAY = 0.045;
+const ALPHA_MIN = 0.01;
 
 /**
  * Deriva contínua ("teia respirando"): DESLIGADA em todos os aparelhos — a
@@ -369,9 +380,6 @@ export default function NetworkGraph({
   const redrawRafRef = useRef(0);
   // As fotos só começam a baixar depois do primeiro desenho (ver PHOTO_LOAD_DELAY_MS).
   const [photosEnabled, setPhotosEnabled] = useState(false);
-
-  // Se o usuário já mexeu na câmera (zoom/arrasto), não reenquadramos sozinhos.
-  const userMovedCameraRef = useRef(false);
 
   // O ForceGraph2D é carregado sob demanda, então graphRef.current pode ser
   // null quando os efeitos rodam pela 1ª vez. O ref-callback + estado faz os
@@ -690,28 +698,21 @@ export default function NetworkGraph({
   }, [paused, graphReady, graphRef]);
 
   /* -------------------------------------------------------------------------
-   * 4. CÂMERA — enquadra a teia inteira logo que ela aparece (instantâneo,
-   *    sem a animação de "zoom pulando" de antes) e de novo, suavemente,
-   *    quando ela se acomoda — a não ser que o usuário já tenha mexido.
-   *    No desktop a simulação nunca "termina" (deriva contínua), então o
-   *    segundo enquadramento é feito por tempo (COOLDOWN_MS) em vez de esperar
-   *    o fim da física.
+   * 4. CÂMERA — enquadra a teia inteira UMA vez, logo que os nós aparecem
+   *    (instantâneo) e de novo quando o conjunto de nós muda (filtros).
+   *    Não há segundo enquadramento quando a física assenta: os nós já nascem
+   *    no lugar (layout semeado) e, depois do aquecimento, o contorno da teia
+   *    muda menos de 5 px (zoom ideal < 1% diferente). O antigo reenquadramento
+   *    após COOLDOWN_MS desfazia o zoom de quem começava a mexer cedo.
    * ----------------------------------------------------------------------- */
   const fitPadding = isMobile ? FIT_PADDING_MOBILE : FIT_PADDING_DESKTOP;
 
   useEffect(() => {
     const fg = graphRef.current;
     if (!fg || graphData.nodes.length === 0) return;
-    userMovedCameraRef.current = false;
     // Espera um quadro para a biblioteca registrar os nós antes de medir.
     const id = requestAnimationFrame(() => fg.zoomToFit(0, fitPadding));
-    const settle = setTimeout(() => {
-      if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
-    }, COOLDOWN_MS);
-    return () => {
-      cancelAnimationFrame(id);
-      clearTimeout(settle);
-    };
+    return () => cancelAnimationFrame(id);
     // Só reenquadra quando muda o CONJUNTO de nós (filtros), não a cada render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphReady, graphData.nodes.length]);
@@ -807,7 +808,6 @@ export default function NetworkGraph({
   useEffect(() => {
     const fg = graphRef.current;
     if (!fg || !selectionKey) return;
-    userMovedCameraRef.current = true; // não reenquadrar a teia inteira depois
     // Durante o enquadramento, ignora o hover e solta o que estava, para o
     // destaque ficar no item selecionado.
     suppressHoverUntilRef.current = Date.now() + FOCUS_FIT_MS + 700;
@@ -905,8 +905,7 @@ export default function NetworkGraph({
   const handleEngineStop = useCallback(() => {
     setPhotosEnabled(true);
     recomputeLifts();
-    if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
-  }, [graphRef, fitPadding, recomputeLifts]);
+  }, [recomputeLifts]);
 
   /* -------------------------------------------------------------------------
    * 5. IMAGENS — pré-carrega fotos dos nós (ex.: Wikimedia Commons)
@@ -1637,9 +1636,11 @@ export default function NetworkGraph({
     <div
       ref={containerRef}
       className="relative isolate w-full h-full flex-1 bg-surface-canvas overflow-hidden"
-      // Qualquer interação manual cancela o reenquadramento automático.
-      onWheel={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
-      onPointerDown={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
+      // Qualquer interação manual cancela o enquadramento animado da seleção.
+      // Na fase de CAPTURA: o d3-zoom do canvas chama stopImmediatePropagation()
+      // na roda do mouse, então um onWheel comum nunca recebia o evento.
+      onWheelCapture={cancelFocusAnim}
+      onPointerDownCapture={cancelFocusAnim}
       // Cursor saiu do grafo: some o destaque de hover.
       onMouseLeave={clearHover}
     >
@@ -1688,7 +1689,8 @@ export default function NetworkGraph({
         // Com DRIFT_ENABLED = false (padrão), a simulação para depois de
         // COOLDOWN_MS e a teia fica em repouso em todos os aparelhos.
         cooldownTime={driftEnabled ? Infinity : COOLDOWN_MS}
-        d3AlphaDecay={0.03}   // ↑ assenta mais rápido (e mais "duro"); ↓ mais lento e suave
+        d3AlphaDecay={ALPHA_DECAY}
+        d3AlphaMin={ALPHA_MIN}
         d3VelocityDecay={0.35} // "atrito": ↑ nós param mais cedo, menos tremedeira
         // Transparente: o fundo vem do contêiner (bg-surface-canvas = BG_COLOR),
         // para o vórtice aparecer por trás.

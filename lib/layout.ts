@@ -421,7 +421,10 @@ export function applyLayoutForces(
     'collide',
     forceCollide((n: any) => getNodeRadius(n.type, n) + COLLIDE_PADDING)
       .strength(0.9)
-      .iterations(2)
+      // 1 passada por passo: colisão e repulsão são ~metade do custo da física
+      // cada; com 2 passadas o passo custava ~25% a mais e o resultado final
+      // (dados de nov/2026) era o mesmo: nenhum círculo sobreposto.
+      .iterations(1)
   );
   setForce('tether', forceTether(targets));
 
