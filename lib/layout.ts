@@ -30,7 +30,7 @@
  * na animação normal da biblioteca, guiadas pelas forças de applyLayoutForces.
  * ============================================================================
  */
-import { forceCollide, forceManyBody, forceX, forceY } from 'd3-force';
+import { forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY } from 'd3-force';
 import type { GraphLink, GraphNode, NodeType } from '@/types/graph';
 import { getLinkEnds, getNodeRadius } from '@/lib/graphConfig';
 
@@ -205,19 +205,6 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
       return { ang: Math.atan2(vy, vx), focus: Math.hypot(vx, vy) / ps.length };
     });
   };
-  const cost = (order: GraphNode[]) => {
-    const a = directions(order).map((d) => d.ang).sort((x, y) => x - y);
-    if (a.length < 2) return 0;
-    let gap = 2 * Math.PI - (a[a.length - 1] - a[0]);
-    let sx = 0;
-    let sy = 0;
-    for (let i = 0; i < a.length; i++) {
-      if (i) gap = Math.max(gap, a[i] - a[i - 1]);
-      sx += Math.cos(a[i]);
-      sy += Math.sin(a[i]);
-    }
-    return gap + (2 * Math.hypot(sx, sy)) / a.length; // maior arco vazio + desequilíbrio
-  };
   // A ordem é calculada uma vez e reaproveitada enquanto todos os partidos
   // visíveis já estiverem nela: filtros e o slider de ano não reembaralham o
   // núcleo (e não pagam a busca de novo a cada passo).
@@ -227,16 +214,58 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
     const rank = new Map(cachedPartyOrder!.map((id, i) => [id, i]));
     order.sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
   } else if (order.length > 2) {
+    // Busca local: troca dois partidos de lugar e mantém a troca se o custo
+    // não piorar. São milhares de avaliações, então `searchCost` faz a mesma
+    // conta de antes (direção de cada esquema, maior arco vazio + desequilíbrio) sem alocar nada: índices em vez de ids, senos e
+    // cossenos das posições pré-calculados, e a posição de cada partido
+    // atualizada só nas duas trocas. Mesmas operações, na mesma ordem: o
+    // resultado é idêntico ao de `cost` (antes, ~70 ms por carga num PC rápido).
+    const partyIndex = new Map(order.map((p, i) => [p.id, i]));
+    const slotCos = order.map((_, i) => Math.cos(slot(i)));
+    const slotSin = order.map((_, i) => Math.sin(slot(i)));
+    const slotOf = Int32Array.from(order.keys()); // partido (índice original) → posição atual
+    const schemePartyIdx = schemes.map((s) => schemeParties.get(s.id)!.map((p) => partyIndex.get(p)!));
+    const fixedAng = schemes.map((s) => hashUnit(s.id) * 2 * Math.PI);
+    const angles = new Float64Array(schemes.length);
+    const searchCost = () => {
+      for (let k = 0; k < schemes.length; k++) {
+        const ps = schemePartyIdx[k];
+        if (!ps.length) { angles[k] = fixedAng[k]; continue; }
+        let vx = 0;
+        let vy = 0;
+        for (const p of ps) {
+          vx += slotCos[slotOf[p]];
+          vy += slotSin[slotOf[p]];
+        }
+        angles[k] = Math.atan2(vy, vx);
+      }
+      const a = angles.sort();
+      if (a.length < 2) return 0;
+      let gap = 2 * Math.PI - (a[a.length - 1] - a[0]);
+      let sx = 0;
+      let sy = 0;
+      for (let i = 0; i < a.length; i++) {
+        if (i) gap = Math.max(gap, a[i] - a[i - 1]);
+        sx += Math.cos(a[i]);
+        sy += Math.sin(a[i]);
+      }
+      return gap + (2 * Math.hypot(sx, sy)) / a.length; // maior arco vazio + desequilíbrio
+    };
+    const swap = (i: number, j: number) => {
+      [order[i], order[j]] = [order[j], order[i]];
+      slotOf[partyIndex.get(order[i].id)!] = i;
+      slotOf[partyIndex.get(order[j].id)!] = j;
+    };
     const rnd = seeded(order.length * 7919 + schemes.length);
-    let best = cost(order);
+    let best = searchCost();
     for (let it = 0; it < 4000; it++) {
       const i = Math.floor(rnd() * order.length);
       const j = Math.floor(rnd() * order.length);
       if (i === j) continue;
-      [order[i], order[j]] = [order[j], order[i]];
-      const c = cost(order);
+      swap(i, j);
+      const c = searchCost();
       if (c <= best) best = c;
-      else [order[i], order[j]] = [order[j], order[i]];
+      else swap(i, j);
     }
     cachedPartyOrder = order.map((p) => p.id);
   }
@@ -442,6 +471,38 @@ export function applyLayoutForces(
   }
 
   setForce('drift', drift ? forceDrift() : null);
+}
+
+/**
+ * PRÉ-AQUECIMENTO — roda os primeiros passos da física numa simulação própria,
+ * em pedaços de `chunk` passos com uma pausa entre eles (o navegador responde
+ * a cliques e desenha no meio). Antes, a biblioteca rodava todos os passos de
+ * aquecimento de uma vez, numa tarefa só (~100 ms num PC rápido, ~0,5 s num
+ * celular). Mexe nos próprios nós (x, y, vx, vy): a biblioteca continua de onde
+ * esta simulação parou. Mesmas forças de applyLayoutForces e o mesmo atrito.
+ * Para no meio se `signal.aborted` (dados trocados antes de terminar).
+ */
+export async function prewarmLayout(
+  nodes: GraphNode[],
+  links: GraphLink[],
+  targets: Map<string, LayoutTarget>,
+  ticks: number,
+  opts: { alphaDecay: number; velocityDecay: number; chunk?: number; signal?: { aborted: boolean } }
+): Promise<void> {
+  if (!nodes.length || ticks <= 0) return;
+  const sim = forceSimulation(nodes as any)
+    .force('link', forceLink(links as any).id((d: any) => d.id))
+    .alphaDecay(opts.alphaDecay)
+    .velocityDecay(opts.velocityDecay)
+    .stop();
+  applyLayoutForces((name, force) => (force === undefined ? sim.force(name) : sim.force(name, force as any)), targets, false);
+  const chunk = opts.chunk ?? 4;
+  for (let done = 0; done < ticks; done += chunk) {
+    if (opts.signal?.aborted) break;
+    sim.tick(Math.min(chunk, ticks - done));
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  sim.stop();
 }
 
 /** Ligação com um partido? (desenhadas só sob demanda; ver NetworkGraph) */

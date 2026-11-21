@@ -26,7 +26,7 @@ import { HOME_TEXT_ID } from '@/lib/site';
 import { ConsentGate, ConsentSettingsButton } from '@/components/ConsentSettings';
 import { GraphData, GraphNode, GraphLink, NodeType, LinkStatus } from '@/types/graph';
 import { NODE_STYLE, STATUS_STYLE, FALLBACK_COLOR, getNodeRadius, getLinkKey, getLinkEnds } from '@/lib/graphConfig';
-import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink } from '@/lib/layout';
+import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink, prewarmLayout } from '@/lib/layout';
 import { createIsoState, depthOf, fullIsoOffset, morphForZoom, project, resolveLifts, setMorph, unprojectGround, zoomForFull25D } from '@/lib/iso';
 import { drawFloor, drawGroundMarks, getGlossSprite, getSphereSprite, SPHERE_PHOTO_INSET } from '@/components/graph25d';
 import { createVortex, drawVortex, VortexState } from '@/components/graphVortex';
@@ -94,28 +94,35 @@ const LABEL_MAX_LINES = 3;
 const LABEL_LINE_HEIGHT = 1.2;
 
 /**
- * Física: quantos "passos" a simulação roda ANTES do primeiro desenho
- * (invisível ao usuário) e por quanto tempo continua animando depois.
- *   - WARMUP_TICKS ↑ = abre mais "assentado", porém demora mais para aparecer.
- *     Como as posições já nascem no lugar certo (layout semeado), 30 basta:
- *     os passos de aquecimento rodam todos de uma vez e travam a página
- *     (100 passos ≈ 0,4–0,7 s sem resposta no celular); o resto do
- *     assentamento acontece animado, durante COOLDOWN_MS.
- *   - COOLDOWN_MS  = tempo MÁXIMO de animação após aparecer (trava de
- *     segurança para aparelhos lentos; normalmente a física para antes, ao
- *     chegar em ALPHA_MIN).
- *   - ALPHA_DECAY  = quanto a "energia" da simulação cai a cada passo.
- *     ↑ assenta mais rápido (e mais "duro"); ↓ mais lento e suave.
- *   - ALPHA_MIN    = energia abaixo da qual a física PARA (onEngineStop). O
- *     padrão da biblioteca é 0 (nunca para sozinha: ia sempre até
- *     COOLDOWN_MS), mas abaixo de ~0,01 os nós só se mexem frações de pixel.
- * Medido com os dados de nov/2026 (348 nós): 0,045 + 0,01 para em ~100
- * passos (~1,7 s a 60 quadros/s; antes ~4 s), sem círculos sobrepostos.
+ * Física — três fases, medidas com os dados de nov/2026 (348 nós):
+ *  1. PRÉ-AQUECIMENTO (invisível): PREWARM_TICKS passos numa simulação própria,
+ *     em pedaços com pausas (lib/layout.ts, prewarmLayout). Antes eram 30
+ *     passos de uma vez dentro da biblioteca: uma tarefa de ~100 ms num PC
+ *     rápido (~0,5 s com CPU 4× mais lenta) sem a página responder.
+ *  2. AQUECIMENTO DA BIBLIOTECA (invisível): WARMUP_TICKS passos de uma vez
+ *     (~30 ms num PC rápido). A biblioteca sempre recomeça a "energia" (alpha)
+ *     em 1 ao receber dados; esses passos, com ALPHA_DECAY alto, a trazem de
+ *     volta a ~0,25 — o nível em que a teia aparecia antes — sem que o salto
+ *     do recomeço (até ~20 px) apareça na tela.
+ *  3. ANIMAÇÃO (visível): até alpha < ALPHA_MIN, ~24 quadros (~0,4 s; antes 71
+ *     quadros), passos de no máximo ~2 px, nenhum círculo sobreposto. Menos
+ *     quadros = menos desenho, o que pesava em CPUs lentas.
+ *   - PREWARM_DECAY: decaimento da fase 1 (o mesmo de antes de existir a fase 2).
+ *   - ALPHA_DECAY = 1 − 0,25^(1/WARMUP_TICKS): alpha de 1 a ~0,25 nos passos
+ *     da fase 2. Vale também depois (arrastar um nó, filtros).
+ *   - ALPHA_MIN: abaixo disso a física PARA (onEngineStop). O padrão da
+ *     biblioteca é 0 (nunca para sozinha: ia sempre até COOLDOWN_MS).
+ *   - COOLDOWN_MS: tempo MÁXIMO de animação (trava para aparelhos lentos).
  */
-const WARMUP_TICKS = 30;
-const COOLDOWN_MS = 4000;
-const ALPHA_DECAY = 0.045;
+const PREWARM_TICKS = 20;
+const PREWARM_DECAY = 0.045;
+const WARMUP_TICKS = 10;
+const ALPHA_DECAY = 1 - Math.pow(0.25, 1 / WARMUP_TICKS); // ≈ 0,129
 const ALPHA_MIN = 0.01;
+const COOLDOWN_MS = 4000;
+const VELOCITY_DECAY = 0.35;
+/** Grafo vazio estável (a biblioteca recebe isto até o pré-aquecimento terminar). */
+const EMPTY_GRAPH = { nodes: [], links: [] };
 
 /**
  * Deriva contínua ("teia respirando"): DESLIGADA em todos os aparelhos — a
@@ -425,6 +432,12 @@ export default function NetworkGraph({
   // Até quando (performance.now()) a câmera está enquadrando a seleção: nesse
   // tempo o botão "Exibir detalhes" fica escondido em vez de correr atrás do nó.
   const cameraBusyUntilRef = useRef(0);
+  // Vórtice parado enquanto a física anda (ver 8a, paintVortex): `settling` vira
+  // true no 1º passo da simulação e false quando ela para. O relógio do giro
+  // não anda durante a pausa, então o vórtice continua de onde parou.
+  const settlingRef = useRef(false);
+  const vortexPauseStartRef = useRef(0);
+  const vortexPausedTotalRef = useRef(0);
   // Se o usuário já mexeu na câmera (roda, pinça, arrasto, botões, seleção),
   // o reenquadramento ao assentar não acontece. Volta a false quando o
   // conjunto de nós muda (filtros) — aí a teia é reenquadrada de novo.
@@ -717,14 +730,35 @@ export default function NetworkGraph({
   }, [graphData]);
 
   /* -------------------------------------------------------------------------
-   * 3. FÍSICA — aplica as forças do layout na simulação da biblioteca.
+   * 3. FÍSICA — pré-aquece os dados novos em pedaços (ver PREWARM_TICKS) e só
+   *    então os entrega à biblioteca, já com as forças do layout aplicadas.
+   *    A biblioteca recebe `readyData` (vazio até lá); o resto do componente
+   *    usa `graphData`, com os MESMOS objetos de nó.
    * ----------------------------------------------------------------------- */
+  const [warmedData, setWarmedData] = useState<GraphData | null>(null);
+  const [readyData, setReadyData] = useState<GraphData | null>(null);
+  useEffect(() => {
+    const signal = { aborted: false };
+    prewarmLayout(graphData.nodes, graphData.links, layoutTargets, PREWARM_TICKS, {
+      alphaDecay: PREWARM_DECAY,
+      velocityDecay: VELOCITY_DECAY,
+      signal,
+    }).then(() => {
+      if (!signal.aborted) setWarmedData(graphData);
+    });
+    return () => {
+      signal.aborted = true;
+    };
+  }, [graphData, layoutTargets]);
+
   useEffect(() => {
     const fg = graphRef.current;
-    if (!fg) return;
+    if (!fg || !warmedData || warmedData !== graphData) return;
+    // Forças ANTES dos dados: o aquecimento da biblioteca (WARMUP_TICKS) roda
+    // logo depois, ao receber os dados, e precisa delas.
     applyLayoutForces((name, force) => fg.d3Force(name, force), layoutTargets, driftEnabled);
-    fg.d3ReheatSimulation();
-  }, [graphReady, layoutTargets, driftEnabled, graphRef]);
+    setReadyData(warmedData);
+  }, [warmedData, graphReady, graphData, layoutTargets, driftEnabled, graphRef]);
 
   /* -------------------------------------------------------------------------
    * 3b. PAUSA — com um painel aberto por cima do grafo, a animação para (não
@@ -822,14 +856,14 @@ export default function NetworkGraph({
 
   useEffect(() => {
     const fg = graphRef.current;
-    if (!fg || graphData.nodes.length === 0) return;
+    if (!fg || !readyData || readyData.nodes.length === 0) return;
     userMovedCameraRef.current = false;
     // Espera um quadro para a biblioteca registrar os nós antes de medir.
     const id = requestAnimationFrame(() => fitGraph(0));
     return () => cancelAnimationFrame(id);
-    // Só reenquadra quando muda o CONJUNTO de nós (filtros), não a cada render.
+    // Só reenquadra quando a biblioteca recebe um conjunto novo de nós (filtros).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graphReady, graphData.nodes.length]);
+  }, [readyData]);
 
   /* 4b. ENQUADRAR O FOCO — ao selecionar um nó ou uma linha, a câmera mostra
    *     o nó e TODOS os vizinhos em destaque, com zoom limitado e o foco
@@ -1027,7 +1061,17 @@ export default function NetworkGraph({
   }, [graphData.nodes, requestFrame]);
   useEffect(() => () => cancelAnimationFrame(liftAnimRef.current), []);
 
+  const handleEngineTick = useCallback(() => {
+    if (settlingRef.current) return;
+    settlingRef.current = true;
+    vortexPauseStartRef.current = performance.now();
+  }, []);
+
   const handleEngineStop = useCallback(() => {
+    if (settlingRef.current) {
+      settlingRef.current = false;
+      vortexPausedTotalRef.current += performance.now() - vortexPauseStartRef.current;
+    }
     setPhotosEnabled(true);
     recomputeLifts();
     const fg = graphRef.current;
@@ -1471,6 +1515,7 @@ export default function NetworkGraph({
   const vortexStateRef = useRef<VortexState | null>(null);
   const vortexSnapRef = useRef<{ transform: DOMMatrix; scale: number; cx: number; cy: number; w: number; h: number; alpha: number } | null>(null);
   const vortexDrawnAtRef = useRef(0);
+  const vortexPaintedSnapRef = useRef<typeof vortexSnapRef.current>(null);
   const reducedMotionRef = useRef(false);
   const paintVortex = useCallback(() => {
     const canvas = vortexCanvasRef.current;
@@ -1485,8 +1530,11 @@ export default function NetworkGraph({
     const vs = vortexStateRef.current ?? (vortexStateRef.current = createVortex());
     const now = performance.now();
     vortexDrawnAtRef.current = now;
+    vortexPaintedSnapRef.current = snap;
+    // Relógio do giro sem o tempo em que a física andava (vórtice pausado).
+    const clock = now - vortexPausedTotalRef.current - (settlingRef.current ? now - vortexPauseStartRef.current : 0);
     // "Reduzir movimento": um quadro parado (o vórtice ainda acompanha o zoom).
-    const time = reducedMotionRef.current ? 0 : now / 1000;
+    const time = reducedMotionRef.current ? 0 : clock / 1000;
     drawVortex(vctx, vs, isoRef.current, snap.transform, snap.scale, snap.cx, snap.cy, time, snap.alpha);
   }, []);
 
@@ -1512,8 +1560,14 @@ export default function NetworkGraph({
       }
       // Sem partidos na tela (filtro): segue a regra de brilho dos partidos mesmo assim.
       if (!parties) alpha = hasFocus ? FADED_ALPHA : zoomBrightness(globalScale, BRIGHT_ZOOM.party);
-      vortexSnapRef.current = { transform: ctx.getTransform(), scale: globalScale, cx: -k * sc.x, cy: -k * sc.y, w: ctx.canvas.width, h: ctx.canvas.height, alpha };
-      paintVortex();
+      const snap = { transform: ctx.getTransform(), scale: globalScale, cx: -k * sc.x, cy: -k * sc.y, w: ctx.canvas.width, h: ctx.canvas.height, alpha };
+      vortexSnapRef.current = snap;
+      // Com a física andando, o giro fica pausado: só redesenha se a câmera,
+      // o tamanho ou o brilho mudaram (o canvas do vórtice guarda o último quadro).
+      const last = vortexPaintedSnapRef.current;
+      const same = !!last && last.w === snap.w && last.h === snap.h && last.alpha === snap.alpha && last.cx === snap.cx && last.cy === snap.cy
+        && last.transform.a === snap.transform.a && last.transform.d === snap.transform.d && last.transform.e === snap.transform.e && last.transform.f === snap.transform.f;
+      if (!settlingRef.current || !same) paintVortex();
     }
     const on = st.m > 0;
     if (on !== active25dRef.current) {
@@ -1554,10 +1608,10 @@ export default function NetworkGraph({
     mq.addEventListener('change', onMq);
     let raf = 0;
     // Até 30 quadros/s (VORTEX_FRAME_MS): o giro é lento e não precisa de 60.
-    // Enquanto a simulação anda, o grafo já redesenha o vórtice a cada quadro
-    // (renderFramePre), e este laço só pula.
+    // Enquanto a simulação anda, o giro fica pausado (renderFramePre só
+    // redesenha se a câmera mudar) e este laço só pula.
     const loop = () => {
-      if (!reducedMotionRef.current && performance.now() - vortexDrawnAtRef.current >= VORTEX_FRAME_MS) paintVortex();
+      if (!reducedMotionRef.current && !settlingRef.current && performance.now() - vortexDrawnAtRef.current >= VORTEX_FRAME_MS) paintVortex();
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -1787,7 +1841,7 @@ export default function NetworkGraph({
         ref={setGraphInstance as any}
         width={dimensions.width}
         height={dimensions.height}
-        graphData={graphData as any}
+        graphData={(readyData ?? EMPTY_GRAPH) as any}
         // Desenho customizado (passos 6–8)
         nodeCanvasObject={drawNode}
         nodePointerAreaPaint={paintPointerArea}
@@ -1819,6 +1873,7 @@ export default function NetworkGraph({
         //   • demais nós (livres) → são soltos e voltam a se acomodar na teia.
         // Para fixar também os outros nós ao soltar, acrescente:
         //   onNodeDragEnd={(node: any) => { node.fx = node.x; node.fy = node.y; }}
+        onEngineTick={handleEngineTick}
         onEngineStop={handleEngineStop}
         // Física: ver constantes no topo do arquivo e lib/layout.ts
         warmupTicks={WARMUP_TICKS}
@@ -1827,7 +1882,7 @@ export default function NetworkGraph({
         cooldownTime={driftEnabled ? Infinity : COOLDOWN_MS}
         d3AlphaDecay={ALPHA_DECAY}
         d3AlphaMin={ALPHA_MIN}
-        d3VelocityDecay={0.35} // "atrito": ↑ nós param mais cedo, menos tremedeira
+        d3VelocityDecay={VELOCITY_DECAY} // "atrito": ↑ nós param mais cedo, menos tremedeira
         // Transparente: o fundo vem do contêiner (bg-surface-canvas = BG_COLOR),
         // para o vórtice aparecer por trás.
         backgroundColor="rgba(0, 0, 0, 0)"
