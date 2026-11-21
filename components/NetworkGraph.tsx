@@ -31,6 +31,7 @@ import { createIsoState, depthOf, fullIsoOffset, morphForZoom, project, resolveL
 import { drawFloor, drawGroundMarks, getGlossSprite, getSphereSprite, SPHERE_PHOTO_INSET } from '@/components/graph25d';
 import { createVortex, drawVortex, VortexState } from '@/components/graphVortex';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { GraphGlow } from '@/components/BorderGlow';
 import { resizedPhotoUrl } from '@/lib/photoUrl';
 import { fitToView, type Fit, type FitItem, type Rect } from '@/lib/fitArea';
 import { useI18n } from '@/components/I18nProvider';
@@ -1593,7 +1594,7 @@ export default function NetworkGraph({
    *     desenhado, direto no estilo do elemento (sem re-render do React), para
    *     acompanhar zoom, arrasto e o movimento da simulação.
    * ----------------------------------------------------------------------- */
-  const detailsBtnRef = useRef<HTMLButtonElement>(null);
+  const detailsBtnRef = useRef<HTMLDivElement>(null);
   const nodeById = useMemo(() => new Map(graphData.nodes.map((n: any) => [n.id, n])), [graphData.nodes]);
 
   selectionPointRef.current = (m?: number) => {
@@ -1832,33 +1833,40 @@ export default function NetworkGraph({
         backgroundColor="rgba(0, 0, 0, 0)"
       />
 
-      {/* Botão "Exibir detalhes" (posição definida em positionDetailsButton) */}
-      <button
+      {/* Botão "Exibir detalhes" (posição do CONTÊINER definida em positionDetailsButton) */}
+      <GraphGlow
         ref={detailsBtnRef}
-        type="button"
-        onClick={onOpenDetails}
-        style={{ visibility: 'hidden', opacity: 0 }}
-        className="absolute left-0 top-0 z-30 inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-semibold text-cyan-200 bg-surface-field/95 backdrop-blur-md border border-cyan-500/60 shadow-[0_0_16px_rgba(34,211,238,0.35)] hover:bg-cyan-950 active:scale-95 transition-[color,background-color,border-color,opacity] duration-150"
+        borderColor="color-mix(in oklab, var(--color-cyan-500) 60%, transparent)"
+        style={{ visibility: 'hidden', opacity: 0, boxShadow: '0 0 16px rgba(34,211,238,0.35)' }}
+        className="absolute left-0 top-0 z-30 backdrop-blur-md active:scale-95 transition-opacity duration-150"
       >
-        <PanelRightOpen size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
-        {t.graph.showDetails}
-      </button>
+        <button
+          type="button"
+          onClick={onOpenDetails}
+          className="inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-[inherit] text-xs font-semibold text-cyan-200 hover:bg-cyan-950 transition-colors"
+        >
+          <PanelRightOpen size={16} className="w-4 h-4 shrink-0" aria-hidden="true" />
+          {t.graph.showDetails}
+        </button>
+      </GraphGlow>
 
       {/* LEGENDAS — geradas de lib/graphConfig.ts. Celular (< 640px): escondidas.
           640–1279px: recolhidas atrás do botão "Legenda" (abertas, cobriam
           boa parte da teia). A partir de 1280px: sempre abertas. */}
       <div data-graph-overlay className="absolute top-4 right-6 hidden sm:flex flex-col items-end gap-3 z-20 select-none">
-        <button
-          type="button"
-          onClick={() => setLegendOpen((v) => !v)}
-          aria-expanded={legendOpen}
-          aria-controls="graph-legend"
-          className="xl:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-field/95 backdrop-blur-md border border-slate-800 text-xs font-mono text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-colors"
-        >
-          <Info size={14} className="w-3.5 h-3.5" aria-hidden="true" />
-          {t.graph.legend}
-          <ChevronUp size={14} className={`w-3.5 h-3.5 text-slate-400 transition-transform ${legendOpen ? '' : 'rotate-180'}`} aria-hidden="true" />
-        </button>
+        <GraphGlow className="xl:hidden backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setLegendOpen((v) => !v)}
+            aria-expanded={legendOpen}
+            aria-controls="graph-legend"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[inherit] text-xs font-mono text-slate-300 hover:text-cyan-400 transition-colors"
+          >
+            <Info size={14} className="w-3.5 h-3.5" aria-hidden="true" />
+            {t.graph.legend}
+            <ChevronUp size={14} className={`w-3.5 h-3.5 text-slate-400 transition-transform ${legendOpen ? '' : 'rotate-180'}`} aria-hidden="true" />
+          </button>
+        </GraphGlow>
         <div id="graph-legend" className={`${legendOpen ? 'flex' : 'hidden'} xl:flex flex-col gap-3`}>
         <div className="bg-surface-field/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{t.graph.linkLegend}</div>
@@ -1902,6 +1910,7 @@ export default function NetworkGraph({
       <div data-graph-overlay className="absolute bottom-6 left-4 md:left-6 z-20 flex flex-col items-start gap-2 select-none">
       {/* INTERRUPTOR 2.5D — liga/desliga a transição para 2.5D ao aproximar
           (ver MODO 2.5D no topo do arquivo). Não fica salvo entre visitas. */}
+      <GraphGlow className="backdrop-blur-md">
       <button
         type="button"
         role="switch"
@@ -1909,7 +1918,7 @@ export default function NetworkGraph({
         aria-label={t.graph.toggle25dAria}
         title={t.graph.toggle25dAria}
         onClick={toggle25d}
-        className="flex items-center gap-2 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg pl-2 pr-3 py-2.5 md:py-2 shadow-xl text-xs font-mono font-semibold hover:border-slate-700/80 transition-colors"
+        className="flex items-center gap-2 rounded-[inherit] pl-2 pr-3 py-2.5 md:py-2 text-xs font-mono font-semibold"
       >
         <span
           aria-hidden="true"
@@ -1921,10 +1930,12 @@ export default function NetworkGraph({
         </span>
         <span className={enabled25d ? 'text-cyan-200' : 'text-slate-400'}>2.5D</span>
       </button>
+      </GraphGlow>
 
       {/* CONTROLES DE CÂMERA — o fator 1.2 é o "passo" de cada clique de zoom.
           Alinhados na base com o MENU LEGAL (mesmo bottom-6 e mesma altura). */}
-      <div className="flex items-center space-x-1.5 bg-surface-field/95 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 shadow-xl">
+      <GraphGlow className="backdrop-blur-md">
+      <div className="flex items-center space-x-1.5 p-1.5">
         <button
           onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.2, 400)}
           className="p-2 md:p-1.5 hover:bg-slate-800 active:bg-slate-700 text-slate-300 rounded-sm transition-colors"
@@ -1953,6 +1964,7 @@ export default function NetworkGraph({
           <Maximize className="w-4 h-4" />
         </button>
       </div>
+      </GraphGlow>
       </div>
 
       {/* CANTO INFERIOR DIREITO — duas peças empilhadas, alinhadas à direita:
@@ -2022,11 +2034,15 @@ export default function NetworkGraph({
             </div>
           </div>
 
+          <GraphGlow
+            className="backdrop-blur-md"
+            borderColor={legalOpen ? 'color-mix(in oklab, var(--color-slate-700) 80%, transparent)' : undefined}
+          >
           <button
             ref={legalButtonRef}
             type="button"
             onClick={() => setLegalOpen((o) => !o)}
-            className={`flex items-center space-x-2 bg-surface-field/95 backdrop-blur-md border rounded-lg px-3 py-3.5 md:py-3 text-xs leading-4 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-all cursor-pointer select-none ${legalOpen ? 'text-cyan-400 border-slate-700/80' : 'text-slate-300 border-slate-800'}`}
+            className={`flex items-center space-x-2 rounded-[inherit] px-3 py-3.5 md:py-3 text-xs leading-4 hover:text-cyan-400 transition-colors cursor-pointer select-none ${legalOpen ? 'text-cyan-400' : 'text-slate-300'}`}
             aria-label={t.graph.legalMenuAria}
             aria-haspopup="true"
             aria-expanded={legalOpen}
@@ -2036,6 +2052,7 @@ export default function NetworkGraph({
             <span className="font-mono text-xs hidden sm:inline">{t.graph.termsAndPrivacy}</span>
             <ChevronUp className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${legalOpen ? 'rotate-180' : ''}`} />
           </button>
+          </GraphGlow>
         </div>
       </div>
     </div>

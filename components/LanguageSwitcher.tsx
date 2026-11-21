@@ -23,6 +23,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { LOCALES, LOCALE_INFO, localePath, type Locale } from '@/lib/i18n';
 import { useI18n } from '@/components/I18nProvider';
+import { GraphGlow } from '@/components/BorderGlow';
 
 /** Bandeiras em miniatura (SVG embutido: emoji de bandeira não aparece no Windows). */
 const FLAGS: Record<Locale, React.ReactNode> = {
@@ -75,8 +76,8 @@ const BUTTON_CLASS: Record<Variant, string> = {
   header:
     'px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-cyan-400 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60',
   // Mesma caixa do botão "Termos & Privacidade" (NetworkGraph.tsx), para os dois parecerem um conjunto.
-  floating:
-    'px-3 py-3 rounded-lg text-xs leading-4 text-slate-300 hover:text-cyan-400 bg-surface-field/95 backdrop-blur-md border border-slate-800 hover:border-slate-700/80 shadow-xl',
+  // Fundo, borda e sombra vêm do GraphGlow em volta do botão (ver abaixo).
+  floating: 'px-3 py-3 rounded-[inherit] text-xs leading-4 text-slate-300 hover:text-cyan-400',
   page: 'px-2.5 py-1.5 rounded-lg text-xs font-mono text-slate-300 hover:text-cyan-400 bg-slate-900 border border-slate-800 hover:border-slate-700',
 };
 
@@ -126,31 +127,36 @@ export default function LanguageSwitcher({
   const others = LOCALES.filter((l) => l !== locale);
   const opensUp = variant === 'floating';
 
+  // Botão; no grafo do celular ('floating') ganha o brilho dos botões do grafo (GraphGlow).
+  const trigger = (
+    <button
+      ref={buttonRef}
+      type="button"
+      onClick={() => setOpen((v) => !v)}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          setOpen(true);
+          requestAnimationFrame(() => rootRef.current?.querySelector<HTMLAnchorElement>('ul a')?.focus());
+        }
+      }}
+      aria-expanded={open}
+      aria-controls={listId}
+      aria-label={`${t.language.label}: ${LOCALE_INFO[locale].name}`}
+      className={`flex items-center gap-2 transition-all cursor-pointer select-none whitespace-nowrap ${BUTTON_CLASS[variant]}`}
+    >
+      <Flag locale={locale} />
+      <span>{LOCALE_INFO[locale].name}</span>
+      <ChevronDown
+        className={`w-3.5 h-3.5 shrink-0 text-slate-400 transition-transform duration-200 ${open !== opensUp ? 'rotate-180' : ''}`}
+        aria-hidden="true"
+      />
+    </button>
+  );
+
   return (
     <div ref={rootRef} className={`relative ${className}`}>
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        onKeyDown={(e) => {
-          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-            e.preventDefault();
-            setOpen(true);
-            requestAnimationFrame(() => rootRef.current?.querySelector<HTMLAnchorElement>('ul a')?.focus());
-          }
-        }}
-        aria-expanded={open}
-        aria-controls={listId}
-        aria-label={`${t.language.label}: ${LOCALE_INFO[locale].name}`}
-        className={`flex items-center gap-2 transition-all cursor-pointer select-none whitespace-nowrap ${BUTTON_CLASS[variant]}`}
-      >
-        <Flag locale={locale} />
-        <span>{LOCALE_INFO[locale].name}</span>
-        <ChevronDown
-          className={`w-3.5 h-3.5 shrink-0 text-slate-400 transition-transform duration-200 ${open !== opensUp ? 'rotate-180' : ''}`}
-          aria-hidden="true"
-        />
-      </button>
+      {variant === 'floating' ? <GraphGlow className="backdrop-blur-md">{trigger}</GraphGlow> : trigger}
 
       <ul
         id={listId}

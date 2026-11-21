@@ -21,14 +21,16 @@
  *  - `borderColor`, `style`, `ref` e a classe de posição vêm de fora (o botão
  *    "Exibir detalhes" é posicionado pelo próprio contêiner);
  *  - o conteúdo não tem `overflow-auto` nem `flex-col` (é um botão, não um card);
- *  - a apresentação animada é pulada com `prefers-reduced-motion`.
+ *  - a apresentação animada é pulada com `prefers-reduced-motion`;
+ *  - no toque (celular), o brilho acende inteiro do lado tocado enquanto o
+ *    dedo está na tela (o original só reage ao ponteiro se movendo).
  * O botão dentro do contêiner deve ser transparente e sem borda.
  * ============================================================================
  */
 
 import React, { useRef, useCallback, useState, useEffect, type ReactNode, type Ref } from 'react';
 
-interface BorderGlowProps {
+export interface BorderGlowProps {
   children?: ReactNode;
   /** Classes do contêiner (posição, z-index, backdrop-blur…). Sem classe de posição, fica `relative`. */
   className?: string;
@@ -122,6 +124,7 @@ function isLightColor(color: string): boolean {
 }
 
 const HAS_POSITION = /(^|\s)(absolute|fixed|relative|sticky)(\s|$)/;
+const HAS_DISPLAY = /(^|\s)(hidden|block|grid|inline-grid|flex|inline-flex)(\s|$)/;
 
 export default function BorderGlow({
   children,
@@ -189,6 +192,20 @@ export default function BorderGlow({
     setCursorAngle(getCursorAngle(card, x, y));
   }, [getEdgeProximity, getCursorAngle]);
 
+  // Toque (celular): não há ponteiro passeando perto da borda, e um toque no
+  // meio do botão nunca passaria da edgeSensitivity. Então o toque acende o
+  // brilho por inteiro, apontado para o lado tocado, enquanto o dedo está na
+  // tela; ao soltar, apaga com a mesma transição do mouse.
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse') return;
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    setIsHovered(true);
+    setEdgeProximity(1);
+    setCursorAngle(getCursorAngle(card, e.clientX - rect.left, e.clientY - rect.top));
+  }, [getCursorAngle]);
+
   useEffect(() => {
     if (!animated) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -230,14 +247,18 @@ export default function BorderGlow({
   const angleDeg = `${cursorAngle.toFixed(3)}deg`;
   const lightSurface = isLightColor(backgroundColor);
   const position = HAS_POSITION.test(className) ? '' : 'relative ';
+  const display = HAS_DISPLAY.test(className) ? '' : 'grid ';
 
   return (
     <div
       ref={setRefs}
-      onPointerMove={handlePointerMove}
+      onPointerMove={(e) => { if (e.pointerType === 'mouse') handlePointerMove(e); }}
+      onPointerDown={handlePointerDown}
+      onPointerUp={(e) => { if (e.pointerType !== 'mouse') setIsHovered(false); }}
+      onPointerCancel={() => setIsHovered(false)}
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
-      className={`${position}grid isolate border ${className}`}
+      className={`${position}${display}isolate border ${className}`}
       style={{
         background: backgroundColor,
         borderColor: borderColor ?? (lightSurface ? 'rgb(24 24 27 / 12%)' : 'rgb(255 255 255 / 15%)'),
@@ -327,4 +348,29 @@ export default function BorderGlow({
       </div>
     </div>
   );
+}
+
+/**
+ * Preset dos botões flutuantes do grafo. Valores pedidos: sensibilidade da
+ * borda 50, raio do brilho 16, intensidade 1, abertura do cone 10. Cantos de
+ * 8 px (rounded-lg, o formato atual dos botões). Brilho no ciano dos
+ * elementos do site (#38bdf8 = HSL 199 93 60) e anel em tons de ciano.
+ * Fundo e borda iguais aos dos botões antes do brilho: bg-surface-field/95 e
+ * border-slate-800 (as mesmas cores do Tailwind, via variáveis).
+ */
+export const GRAPH_GLOW = {
+  edgeSensitivity: 50,
+  borderRadius: 8,
+  glowRadius: 16,
+  glowIntensity: 1,
+  coneSpread: 10,
+  glowColor: '199 93 60',
+  colors: ['#38bdf8', '#22d3ee', '#7dd3fc'],
+  backgroundColor: 'color-mix(in oklab, var(--color-surface-field) 95%, transparent)',
+  borderColor: 'var(--color-slate-800)',
+} as const;
+
+/** BorderGlow com o preset dos botões do grafo; qualquer prop sobrescreve o preset. */
+export function GraphGlow(props: BorderGlowProps) {
+  return <BorderGlow {...GRAPH_GLOW} colors={[...GRAPH_GLOW.colors]} {...props} />;
 }
