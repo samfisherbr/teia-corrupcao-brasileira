@@ -121,6 +121,7 @@ export const pt = {
 
   graph: {
     showDetails: 'Exibir detalhes',
+    legend: 'Legenda',
     linkLegend: 'Legenda das Conexões',
     nodeLegend: 'Legenda dos Círculos',
     zoomIn: 'Aproximar',
