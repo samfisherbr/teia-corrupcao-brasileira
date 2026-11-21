@@ -28,6 +28,7 @@ import { getLinkEnds, normalizeText, STATUS_STYLE } from '@/lib/graphConfig';
 import { computeSchemeStartYears } from '@/lib/schemes';
 import { useI18n } from '@/components/I18nProvider';
 import { HOME_TEXT_ID } from '@/lib/site';
+import { GraphGlow } from '@/components/BorderGlow';
 import { ChevronDown } from 'lucide-react';
 import { DEFAULT_LOCALE } from '@/lib/i18n';
 
@@ -495,14 +496,21 @@ export default function GraphApp() {
               o mesmo link está dentro desse menu. Altura igual à dos controles
               de câmera (py-3 + leading-4 + borda = 42px) para alinhar na base. */}
           {!error && !isLoading && (
-            <a
-              href={`#${HOME_TEXT_ID}`}
-              data-graph-overlay
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 hidden lg:inline-flex items-center gap-1.5 px-3 py-3 rounded-lg bg-surface-field/95 backdrop-blur-md border border-slate-800 text-xs leading-4 font-mono text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-colors"
+            // Só aqui o brilho tem a volta de apresentação (animated): botão
+            // exclusivo do desktop (lg), chama a atenção para o texto abaixo.
+            <GraphGlow
+              animated
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 hidden lg:grid backdrop-blur-md"
             >
-              {t.home.scrollCue}
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-            </a>
+              <a
+                href={`#${HOME_TEXT_ID}`}
+                data-graph-overlay
+                className="inline-flex items-center gap-1.5 px-3 py-3 rounded-[inherit] text-xs leading-4 font-mono text-slate-300 hover:text-cyan-400 transition-colors"
+              >
+                {t.home.scrollCue}
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+              </a>
+            </GraphGlow>
           )}
 
         </main>
