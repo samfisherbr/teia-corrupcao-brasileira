@@ -3,6 +3,9 @@
  *  - reactStrictMode: roda efeitos 2x em desenvolvimento para achar bugs.
  *  - transpilePackages: força o Next a compilar o react-force-graph-2d
  *    (distribuído só como ESM moderno).
+ *  - experimental.inlineCss: o CSS (Tailwind, ~12 KB) vai num <style> dentro do
+ *    HTML em vez de um <link> que bloqueava a primeira pintura (PageSpeed:
+ *    ~470 ms no celular). Custo: o CSS não fica em cache separado do HTML.
  *  - headers: cabeçalhos de segurança em todas as respostas (ver abaixo).
  *  - redirects: o endereço de produção *.workers.dev manda para o domínio próprio.
  *  - initOpenNextCloudflareForDev (no fim): em `next dev`, dá às páginas os
@@ -52,6 +55,9 @@ const nextConfig = {
   // Não anuncia "X-Powered-By: Next.js" em cada resposta.
   poweredByHeader: false,
   transpilePackages: ['react-force-graph-2d'],
+  experimental: {
+    inlineCss: true,
+  },
 
   async headers() {
     return [{ source: '/:path*', headers: SECURITY_HEADERS }];

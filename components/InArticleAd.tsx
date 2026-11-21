@@ -4,8 +4,10 @@
  * INARTICLEAD — anúncio "no artigo" do Google AdSense (formato fluido, se
  * ajusta à largura do texto). Usado nos dossiês (/esquemas/<slug>), dois
  * parágrafos depois do início, como o Google recomenda.
- * O script do AdSense é carregado uma vez para o site todo em app/layout.tsx;
- * este componente só desenha o bloco e pede o anúncio.
+ * O script do AdSense é carregado uma vez para o site todo, depois da página,
+ * por components/AdSenseLoader.tsx (que também segura os anúncios até o
+ * consentimento no EEE/Reino Unido/Suíça); este componente só desenha o bloco
+ * e põe o pedido na fila window.adsbygoogle.
  * IDs em lib/site.ts (ADSENSE_CLIENT, ADSENSE_SLOTS.inArticle).
  */
 
