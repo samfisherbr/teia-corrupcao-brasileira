@@ -101,6 +101,7 @@ export const es: Messages = {
 
   graph: {
     showDetails: 'Ver detalles',
+    legend: 'Leyenda',
     linkLegend: 'Leyenda de las conexiones',
     nodeLegend: 'Leyenda de los círculos',
     zoomIn: 'Acercar',

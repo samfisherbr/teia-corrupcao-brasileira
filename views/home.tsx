@@ -89,7 +89,10 @@ export default async function HomeView({ locale }: { locale: Locale }) {
   const link = 'text-cyan-400 hover:text-cyan-200 hover:underline';
 
   return (
-    <div className="relative h-dvh w-full overflow-y-auto overflow-x-hidden bg-surface-canvas">
+    // motion-safe:scroll-smooth — "Como ler o mapa" (link #HOME_TEXT_ID) DESLIZA
+    // até o texto em vez de pular: dá para ver que o grafo continua logo acima.
+    // Quem pediu menos movimento ao sistema (prefers-reduced-motion) mantém o salto.
+    <div className="relative h-dvh w-full overflow-y-auto overflow-x-hidden bg-surface-canvas motion-safe:scroll-smooth">
       <GraphApp />
 
       <div id={HOME_TEXT_ID} className="w-full border-t border-slate-800 px-4 sm:px-8 py-12 text-slate-300 select-text">
