@@ -497,6 +497,7 @@ export default function GraphApp() {
           {!error && !isLoading && (
             <a
               href={`#${HOME_TEXT_ID}`}
+              data-graph-overlay
               className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 hidden lg:inline-flex items-center gap-1.5 px-3 py-3 rounded-lg bg-surface-field/95 backdrop-blur-md border border-slate-800 text-xs leading-4 font-mono text-slate-300 hover:text-cyan-400 hover:border-slate-700/80 shadow-xl transition-colors"
             >
               {t.home.scrollCue}

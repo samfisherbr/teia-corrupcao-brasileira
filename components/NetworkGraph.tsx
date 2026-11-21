@@ -32,6 +32,7 @@ import { drawFloor, drawGroundMarks, getGlossSprite, getSphereSprite, SPHERE_PHO
 import { createVortex, drawVortex, VortexState } from '@/components/graphVortex';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { resizedPhotoUrl } from '@/lib/photoUrl';
+import { fitToView, type Fit, type FitItem, type Rect } from '@/lib/fitArea';
 import { useI18n } from '@/components/I18nProvider';
 
 // A biblioteca usa `window`, então só carrega no navegador (ssr: false).
@@ -71,8 +72,25 @@ const MOBILE_BREAKPOINT = 768;
 const CLICK_PADDING = 15;
 
 /** Margem (px) entre a teia e a borda da tela ao enquadrar com "recentralizar". */
-const FIT_PADDING_DESKTOP = 60;
-const FIT_PADDING_MOBILE = 20;
+/**
+ * Margem (px) entre a teia e a borda da área livre ao enquadrar a teia
+ * inteira. O enquadramento já conta os círculos e os nomes dos esquemas
+ * (lib/fitArea.ts), então a margem é só respiro.
+ */
+const FIT_PADDING_DESKTOP = 24;
+const FIT_PADDING_MOBILE = 12;
+/** Mudança mínima (fração do zoom) para o reenquadramento ao assentar acontecer. */
+const SETTLE_REFIT_MIN_CHANGE = 0.02;
+
+/**
+ * Rótulos dos nós (desenho em 7 e enquadramento em 4), em px de tela:
+ * contorno escuro, largura máxima antes de quebrar a linha, nº máximo de
+ * linhas e altura da linha (× tamanho da fonte).
+ */
+const HALO_PX = 4;
+const LABEL_MAX_WIDTH_PX = 170;
+const LABEL_MAX_LINES = 3;
+const LABEL_LINE_HEIGHT = 1.2;
 
 /**
  * Física: quantos "passos" a simulação roda ANTES do primeiro desenho
@@ -82,10 +100,21 @@ const FIT_PADDING_MOBILE = 20;
  *     os passos de aquecimento rodam todos de uma vez e travam a página
  *     (100 passos ≈ 0,4–0,7 s sem resposta no celular); o resto do
  *     assentamento acontece animado, durante COOLDOWN_MS.
- *   - COOLDOWN_MS  = tempo máximo de animação após aparecer.
+ *   - COOLDOWN_MS  = tempo MÁXIMO de animação após aparecer (trava de
+ *     segurança para aparelhos lentos; normalmente a física para antes, ao
+ *     chegar em ALPHA_MIN).
+ *   - ALPHA_DECAY  = quanto a "energia" da simulação cai a cada passo.
+ *     ↑ assenta mais rápido (e mais "duro"); ↓ mais lento e suave.
+ *   - ALPHA_MIN    = energia abaixo da qual a física PARA (onEngineStop). O
+ *     padrão da biblioteca é 0 (nunca para sozinha: ia sempre até
+ *     COOLDOWN_MS), mas abaixo de ~0,01 os nós só se mexem frações de pixel.
+ * Medido com os dados de nov/2026 (348 nós): 0,045 + 0,01 para em ~100
+ * passos (~1,7 s a 60 quadros/s; antes ~4 s), sem círculos sobrepostos.
  */
 const WARMUP_TICKS = 30;
 const COOLDOWN_MS = 4000;
+const ALPHA_DECAY = 0.045;
+const ALPHA_MIN = 0.01;
 
 /**
  * Deriva contínua ("teia respirando"): DESLIGADA em todos os aparelhos — a
@@ -369,9 +398,6 @@ export default function NetworkGraph({
   const redrawRafRef = useRef(0);
   // As fotos só começam a baixar depois do primeiro desenho (ver PHOTO_LOAD_DELAY_MS).
   const [photosEnabled, setPhotosEnabled] = useState(false);
-
-  // Se o usuário já mexeu na câmera (zoom/arrasto), não reenquadramos sozinhos.
-  const userMovedCameraRef = useRef(false);
 
   // O ForceGraph2D é carregado sob demanda, então graphRef.current pode ser
   // null quando os efeitos rodam pela 1ª vez. O ref-callback + estado faz os
@@ -690,28 +716,98 @@ export default function NetworkGraph({
   }, [paused, graphReady, graphRef]);
 
   /* -------------------------------------------------------------------------
-   * 4. CÂMERA — enquadra a teia inteira logo que ela aparece (instantâneo,
-   *    sem a animação de "zoom pulando" de antes) e de novo, suavemente,
-   *    quando ela se acomoda — a não ser que o usuário já tenha mexido.
-   *    No desktop a simulação nunca "termina" (deriva contínua), então o
-   *    segundo enquadramento é feito por tempo (COOLDOWN_MS) em vez de esperar
-   *    o fim da física.
+   * 4. CÂMERA — enquadra a teia inteira logo que os nós aparecem
+   *    (instantâneo) e de novo quando o conjunto de nós muda (filtros).
+   *    Quando a física assenta (onEngineStop, ~1,7 s), reenquadra suavemente
+   *    SE o usuário não mexeu na câmera e se a diferença passar de
+   *    SETTLE_REFIT_MIN_CHANGE: com a teia inteira quase não muda, mas com
+   *    filtros (ex.: o ano atual, padrão no celular) os poucos nós visíveis
+   *    ainda se aproximam bastante depois do 1º quadro.
+   *    A detecção de "mexeu" escuta na fase de CAPTURA (ver o contêiner):
+   *    o d3-zoom engole a roda do mouse, e antes um zoom pela roda não era
+   *    percebido e era desfeito pelo reenquadramento.
    * ----------------------------------------------------------------------- */
   const fitPadding = isMobile ? FIT_PADDING_MOBILE : FIT_PADDING_DESKTOP;
+
+  // Se o usuário já mexeu na câmera (roda, pinça, arrasto, botões, seleção),
+  // o reenquadramento ao assentar não acontece. Volta a false quando o
+  // conjunto de nós muda (filtros) — aí a teia é reenquadrada de novo.
+  const userMovedCameraRef = useRef(false);
+  // Contexto só para medir os rótulos (mesma fonte do desenho em 7).
+  const measureCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+
+  /**
+   * Calcula o enquadramento da teia inteira: maior zoom em que todos os
+   * círculos E os nomes visíveis cabem no canvas sem ficar por baixo dos
+   * painéis marcados com `data-graph-overlay` (legendas, controles, "Como
+   * ler o mapa", menu legal). Ver lib/fitArea.ts.
+   * Os nomes têm tamanho fixo em px; quais aparecem depende do zoom (minZoom
+   * de cada tipo), então o cálculo é refeito com os tipos que passam a ter
+   * nome no zoom encontrado (no máximo 3 voltas).
+   */
+  const computeFit = useCallback(() => {
+    const box = containerRef.current?.getBoundingClientRect();
+    const nodes = (graphData.nodes as any[]).filter((n) => typeof n.x === 'number' && typeof n.y === 'number');
+    if (!box || box.width === 0 || box.height === 0 || nodes.length === 0) return null;
+
+    const overlays: Rect[] = [];
+    document.querySelectorAll<HTMLElement>('[data-graph-overlay]').forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) return; // escondido (display: none)
+      overlays.push({ left: r.left - box.left, top: r.top - box.top, right: r.right - box.left, bottom: r.bottom - box.top });
+    });
+
+    if (!measureCtxRef.current) measureCtxRef.current = document.createElement('canvas').getContext('2d');
+    const ctx = measureCtxRef.current;
+    const labelBox = (n: any) => {
+      const style = NODE_STYLE[n.type as NodeType];
+      const px = style?.labelPx ?? 11;
+      let text = String(n.label ?? '');
+      if (n.type === 'scheme') text = text.toUpperCase();
+      let w = LABEL_MAX_WIDTH_PX;
+      if (ctx) {
+        ctx.font = `${n.type === 'scheme' || n.type === 'party' ? 600 : 500} ${px}px Inter, system-ui, sans-serif`;
+        w = ctx.measureText(text).width;
+      }
+      const lines = Math.min(LABEL_MAX_LINES, Math.max(1, Math.ceil(w / LABEL_MAX_WIDTH_PX)));
+      // Mesmas medidas do desenho: 6 px abaixo do círculo + linhas + contorno (halo).
+      return { halfW: Math.min(w, LABEL_MAX_WIDTH_PX) / 2 + HALO_PX, below: 6 + lines * px * LABEL_LINE_HEIGHT + HALO_PX };
+    };
+
+    let fit: Fit | null = null;
+    let k = 0;
+    for (let round = 0; round < 3; round++) {
+      const items: FitItem[] = nodes.map((n) => {
+        const labelled = (NODE_STYLE[n.type as NodeType]?.minZoom ?? 0.5) <= k;
+        const lb = labelled ? labelBox(n) : null;
+        return { x: n.x, y: n.y, r: getNodeRadius(n.type, n), labelHalfW: lb?.halfW ?? 0, labelBelow: lb?.below ?? 0 };
+      });
+      const next = fitToView(items, box.width, box.height, overlays, fitPadding);
+      if (!next) break;
+      fit = next;
+      if (next.k <= k) break; // nenhum tipo novo ganha nome neste zoom
+      k = next.k;
+    }
+    return fit;
+  }, [graphData, fitPadding]);
+
+  /** Aplica o enquadramento (ms = duração da animação). */
+  const fitGraph = useCallback((ms: number) => {
+    const fg = graphRef.current;
+    const fit = computeFit();
+    if (!fg || !fit) return;
+    // Mesma ordem do zoomToFit da biblioteca: o zoom gira em torno do centro do canvas.
+    fg.centerAt(fit.cx, fit.cy, ms);
+    fg.zoom(fit.k, ms);
+  }, [graphRef, computeFit]);
 
   useEffect(() => {
     const fg = graphRef.current;
     if (!fg || graphData.nodes.length === 0) return;
     userMovedCameraRef.current = false;
     // Espera um quadro para a biblioteca registrar os nós antes de medir.
-    const id = requestAnimationFrame(() => fg.zoomToFit(0, fitPadding));
-    const settle = setTimeout(() => {
-      if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
-    }, COOLDOWN_MS);
-    return () => {
-      cancelAnimationFrame(id);
-      clearTimeout(settle);
-    };
+    const id = requestAnimationFrame(() => fitGraph(0));
+    return () => cancelAnimationFrame(id);
     // Só reenquadra quando muda o CONJUNTO de nós (filtros), não a cada render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphReady, graphData.nodes.length]);
@@ -905,8 +1001,11 @@ export default function NetworkGraph({
   const handleEngineStop = useCallback(() => {
     setPhotosEnabled(true);
     recomputeLifts();
-    if (!userMovedCameraRef.current) graphRef.current?.zoomToFit(400, fitPadding);
-  }, [graphRef, fitPadding, recomputeLifts]);
+    const fg = graphRef.current;
+    if (!fg || userMovedCameraRef.current) return;
+    const fit = computeFit();
+    if (fit && Math.abs(fit.k / fg.zoom() - 1) > SETTLE_REFIT_MIN_CHANGE) fitGraph(400);
+  }, [recomputeLifts, graphRef, computeFit, fitGraph]);
 
   /* -------------------------------------------------------------------------
    * 5. IMAGENS — pré-carrega fotos dos nós (ex.: Wikimedia Commons)
@@ -1174,10 +1273,7 @@ export default function NetworkGraph({
    *    A quebra é calculada em pixels de tela, então não muda com o zoom e
    *    pode ficar em cache (labelLinesCache).
    * ----------------------------------------------------------------------- */
-  const HALO_PX = 4;
-  const LABEL_MAX_WIDTH_PX = 170;
-  const LABEL_MAX_LINES = 3;
-  const LABEL_LINE_HEIGHT = 1.2;
+  // Medidas dos rótulos: constantes HALO_PX / LABEL_* no topo do arquivo.
   // Linhas já quebradas + largura (px de tela) da maior: medir texto é caro e
   // o resultado não muda com o zoom, então é medido uma vez por rótulo.
   const labelLinesCache = useRef(new Map<string, { lines: string[]; widthPx: number }>());
@@ -1637,9 +1733,12 @@ export default function NetworkGraph({
     <div
       ref={containerRef}
       className="relative isolate w-full h-full flex-1 bg-surface-canvas overflow-hidden"
-      // Qualquer interação manual cancela o reenquadramento automático.
-      onWheel={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
-      onPointerDown={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
+      // Qualquer interação manual (roda, pinça, arrasto, botões) marca que o
+      // usuário mexeu na câmera e cancela o enquadramento animado da seleção.
+      // Na fase de CAPTURA: o d3-zoom do canvas chama stopImmediatePropagation()
+      // na roda do mouse, então um onWheel comum nunca recebia o evento.
+      onWheelCapture={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
+      onPointerDownCapture={() => { userMovedCameraRef.current = true; cancelFocusAnim(); }}
       // Cursor saiu do grafo: some o destaque de hover.
       onMouseLeave={clearHover}
     >
@@ -1688,7 +1787,8 @@ export default function NetworkGraph({
         // Com DRIFT_ENABLED = false (padrão), a simulação para depois de
         // COOLDOWN_MS e a teia fica em repouso em todos os aparelhos.
         cooldownTime={driftEnabled ? Infinity : COOLDOWN_MS}
-        d3AlphaDecay={0.03}   // ↑ assenta mais rápido (e mais "duro"); ↓ mais lento e suave
+        d3AlphaDecay={ALPHA_DECAY}
+        d3AlphaMin={ALPHA_MIN}
         d3VelocityDecay={0.35} // "atrito": ↑ nós param mais cedo, menos tremedeira
         // Transparente: o fundo vem do contêiner (bg-surface-canvas = BG_COLOR),
         // para o vórtice aparecer por trás.
@@ -1708,7 +1808,7 @@ export default function NetworkGraph({
       </button>
 
       {/* LEGENDAS — geradas de lib/graphConfig.ts; escondidas em telas pequenas */}
-      <div className="absolute top-4 right-6 hidden sm:block space-y-3 z-20 select-none">
+      <div data-graph-overlay className="absolute top-4 right-6 hidden sm:block space-y-3 z-20 select-none">
         <div className="bg-surface-field/90 backdrop-blur-md border border-slate-800 rounded-lg p-3 text-[11px] space-y-2 font-mono shadow-2xl">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{t.graph.linkLegend}</div>
           {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => {
@@ -1747,7 +1847,7 @@ export default function NetworkGraph({
 
       {/* CANTO INFERIOR ESQUERDO — interruptor 2.5D em cima, controles de câmera
           embaixo, os dois na mesma margem esquerda. */}
-      <div className="absolute bottom-6 left-4 md:left-6 z-20 flex flex-col items-start gap-2 select-none">
+      <div data-graph-overlay className="absolute bottom-6 left-4 md:left-6 z-20 flex flex-col items-start gap-2 select-none">
       {/* INTERRUPTOR 2.5D — liga/desliga a transição para 2.5D ao aproximar
           (ver MODO 2.5D no topo do arquivo). Não fica salvo entre visitas. */}
       <button
@@ -1788,7 +1888,7 @@ export default function NetworkGraph({
           <Minus className="w-4 h-4" />
         </button>
         <button
-          onClick={() => graphRef.current?.zoomToFit(400, fitPadding)}
+          onClick={() => fitGraph(400)}
           className="px-2.5 py-1.5 md:py-1 hover:bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-mono rounded-sm transition-colors"
         >
           {t.graph.recenter}
@@ -1819,7 +1919,7 @@ export default function NetworkGraph({
           para os dois ficarem alinhados na base: o py-3.5/md:py-3 do botão
           reproduz a altura da caixa de câmera (46px no celular, 42px no desktop).
           Se mudar o padding de um, mude o do outro. */}
-      <div className="absolute bottom-6 right-4 md:right-6 z-20 flex flex-col items-end gap-2">
+      <div data-graph-overlay className="absolute bottom-6 right-4 md:right-6 z-20 flex flex-col items-end gap-2">
         <LanguageSwitcher path="/" variant="floating" className="sm:hidden" />
 
         <div ref={legalMenuRef} className="flex flex-col items-end">

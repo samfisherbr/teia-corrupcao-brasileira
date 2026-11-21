@@ -6,8 +6,9 @@
  * ============================================================================
  * A mensagem de consentimento para visitantes do Espaço Econômico Europeu, do
  * Reino Unido e da Suíça é a do Google (AdSense → Privacidade e mensagens →
- * Regulamentações europeias), carregada pelo próprio script do AdSense que
- * já está em toda página (views/layout.tsx). Nada dela fica neste código.
+ * Regulamentações europeias), carregada pelo próprio script do AdSense, que
+ * components/AdSenseLoader.tsx insere em toda página depois que ela carrega.
+ * Nada dela fica neste código.
  *
  * O texto da mensagem promete um link no site para mudar a escolha: é este.
  * Segue o padrão da documentação do Google (Privacy & Messaging JavaScript

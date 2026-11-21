@@ -40,7 +40,7 @@ export const HOME_TEXT_ID = 'sobre-o-mapa';
 
 /**
  * ID de editor do Google AdSense (público: aparece no HTML de toda página).
- * Usado no script e na meta tag de verificação (app/layout.tsx) e nos blocos
+ * Usado no script (components/AdSenseLoader.tsx), na meta tag de verificação (views/layout.tsx) e nos blocos
  * de anúncio. NEXT_PUBLIC_ADSENSE_CLIENT, se definida, tem prioridade.
  * Ao trocar de ID, atualize também public/ads.txt (arquivo de texto fixo).
  */

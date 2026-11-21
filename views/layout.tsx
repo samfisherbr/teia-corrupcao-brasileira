@@ -8,8 +8,10 @@
  *    tradutor do navegador, busca) e tema escuro do Tailwind.
  *  - I18nProvider: entrega o idioma aos componentes do navegador (useI18n).
  *  - Google AdSense: toda página leva a meta tag de verificação
- *    `google-adsense-account` e o script do AdSense no <head>, com o ID de
- *    editor de lib/site.ts (ADSENSE_CLIENT). Isso basta para o Google verificar
+ *    `google-adsense-account` e o script do AdSense, com o ID de editor de
+ *    lib/site.ts (ADSENSE_CLIENT). O script é inserido por
+ *    components/AdSenseLoader.tsx depois que a página carrega; no EEE, Reino
+ *    Unido e Suíça os anúncios ficam pausados até o consentimento. Isso basta para o Google verificar
  *    o site e para os Anúncios automáticos. O bloco de anúncio dos dossiês
  *    (InArticleAd) usa o ID de ADSENSE_SLOTS, no mesmo arquivo. A página do
  *    grafo não tem anúncio (ver ADSENSE_SLOTS).
@@ -22,6 +24,7 @@ import { ADSENSE_CLIENT, SITE_DOMAIN, SITE_NAME } from '@/lib/site';
 import { LOCALE_INFO, type Locale } from '@/lib/i18n';
 import { getMessages } from '@/messages';
 import { I18nProvider } from '@/components/I18nProvider';
+import AdSenseLoader from '@/components/AdSenseLoader';
 
 /**
  * Fonte Inter, servida pelo próprio site (next/font baixa os arquivos no build;
@@ -53,19 +56,10 @@ export function layoutMetadata(locale: Locale): Metadata {
 export default function LocaleLayout({ locale, children }: { locale: Locale; children: React.ReactNode }) {
   return (
     <html lang={LOCALE_INFO[locale].tag} className={`dark h-full w-full ${inter.variable}`}>
-      {/* <head> no layout raiz é o jeito certo no App Router; a regra
-          no-head-element vale para o Pages Router (_document). */}
-      {/* eslint-disable-next-line @next/next/no-head-element */}
-      <head>
-        {/* Script do Google AdSense (o código fornecido pelo AdSense). */}
-        <script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-          crossOrigin="anonymous"
-        />
-      </head>
       <body className="bg-surface-canvas text-slate-100 font-sans antialiased selection:bg-cyan-500 selection:text-black h-full w-full overflow-hidden">
         <I18nProvider locale={locale}>{children}</I18nProvider>
+        {/* Script do AdSense: depois da página e, no EEE/Reino Unido/Suíça, anúncios só após consentimento. */}
+        <AdSenseLoader />
       </body>
     </html>
   );
