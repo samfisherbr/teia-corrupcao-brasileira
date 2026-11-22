@@ -37,6 +37,23 @@ export type LinkStatus =
  */
 export type LinkType = 'transaction' | 'contract' | 'process';
 
+/**
+ * Natureza do valor de um vínculo (coluna `links.amount_kind`, migração 0007).
+ * Só some cifras do mesmo tipo: um valor de contrato não é dinheiro desviado.
+ *  - bribe         propina ou vantagem indevida (paga, recebida ou pedida)
+ *  - damage        prejuízo ou desvio estimado de dinheiro público
+ *  - illicit_flow  dinheiro movimentado, lavado, remetido; caixa dois
+ *  - contract      valor de contrato, financiamento ou verba envolvido
+ *  - recovery      acordo, multa, ressarcimento, bloqueio ou apreensão
+ *  - other         qualquer outro
+ */
+export const AMOUNT_KINDS = ['bribe', 'damage', 'illicit_flow', 'contract', 'recovery', 'other'] as const;
+export type AmountKind = (typeof AMOUNT_KINDS)[number];
+
+/** O valor como AmountKind, ou null se ausente ou desconhecido. */
+export const toAmountKind = (v: unknown): AmountKind | null =>
+  typeof v === 'string' && (AMOUNT_KINDS as readonly string[]).includes(v) ? (v as AmountKind) : null;
+
 /** Uma linha da tabela `nodes`. O D1 devolve NULL do SQL como `null`. */
 export interface GraphNode {
   id: string;
@@ -76,6 +93,8 @@ export interface GraphLink {
   amount_brl: number | null;
   /** Ressalva sobre o número (estimativa, moeda estrangeira, total de acordo…). */
   amount_note: string | null;
+  /** O que o valor representa (propina, prejuízo, contrato…). NULL sem valor ou antes da migração 0007. */
+  amount_kind?: AmountKind | null;
   year: number | null;
   source_url: string | null;
   /** Data (AAAA-MM-DD) em que o status foi conferido pela última vez. NULL = não registrada. */

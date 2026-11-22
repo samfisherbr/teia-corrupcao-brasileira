@@ -22,6 +22,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { isLocale } from '@/lib/i18n';
 import { edgeCachedText } from '@/lib/edgeCache';
+import { toAmountKind } from '@/types/graph';
 import {
   applyLinkTranslation,
   applyNodeTranslation,
@@ -97,6 +98,7 @@ function normalizeLink(raw: Row) {
     amount: clean(r.amount),
     amount_brl: toInt(r.amount_brl), // ausente nas tabelas antigas → null
     amount_note: clean(r.amount_note), // ausente nas tabelas antigas → null
+    amount_kind: toAmountKind(r.amount_kind), // migração 0007: ausente ou desconhecido → null
     year: toInt(r.year),
     source_url: clean(r.source_url),
     reviewed_at: clean(r.reviewed_at), // migração 0002: ausente → null
