@@ -627,9 +627,11 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                     const colorStyle = intensityColors[Math.min(index, 2)];
 
                     return (
-                      <div
+                      <Link
                         key={item.id}
-                        className={`p-5 rounded-xl border bg-linear-to-br ${colorStyle} flex flex-col justify-between space-y-3 transition-all hover:scale-[1.01]`}
+                        href={href(schemePath(item.id))}
+                        title={t.glossary.openPage}
+                        className={`p-5 rounded-xl border bg-linear-to-br ${colorStyle} flex flex-col justify-between space-y-3 transition-all hover:scale-[1.01] hover:border-cyan-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400`}
                       >
                         <div className="space-y-1">
                           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
@@ -646,7 +648,7 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
                             {item.formatted}
                           </span>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
