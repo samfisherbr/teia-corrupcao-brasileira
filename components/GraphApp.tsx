@@ -248,6 +248,23 @@ export default function GraphApp() {
     return () => clearTimeout(id);
   }, [overlayMounted, activePage, hasData]);
 
+  // Com Infográficos/Glossário abertos, o texto "Como ler o mapa" (views/home.tsx,
+  // logo abaixo do grafo no mesmo contêiner rolável) ficava alcançável rolando a
+  // tela, como uma "página dentro da página". Aqui ele só é ESCONDIDO enquanto o
+  // painel está aberto, e só no navegador, depois de o visitante abrir o painel:
+  // o HTML entregue (o que o Google e o AdSense leem) continua com o texto
+  // visível, porque o estado inicial é sempre 'graph'.
+  useEffect(() => {
+    if (activePage === 'graph') return;
+    const el = document.getElementById(HOME_TEXT_ID);
+    if (!el) return;
+    el.hidden = true;
+    el.parentElement?.scrollTo({ top: 0 });
+    return () => {
+      el.hidden = false;
+    };
+  }, [activePage]);
+
   // --- Filtragem -------------------------------------------------------------
   // 1) links: status marcado e filtro de ano —
   //    - link ligado a um esquema: passa se o esquema começou no ano do filtro
