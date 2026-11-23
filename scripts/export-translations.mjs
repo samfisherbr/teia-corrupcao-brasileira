@@ -28,9 +28,17 @@ function d1(sql) {
     maxBuffer: 256 * 1024 * 1024,
   });
   if (r.status !== 0) throw new Error(`wrangler falhou (código ${r.status}): ${(r.stderr || r.stdout).slice(-500)}`);
-  const i = r.stdout.search(/^\[/m);
-  if (i < 0) throw new Error(`resposta do wrangler sem JSON: ${r.stdout.slice(-300)}`);
-  const parsed = JSON.parse(r.stdout.slice(i));
+  // O wrangler pode imprimir avisos antes do JSON: tenta cada linha que começa com '['.
+  let parsed;
+  for (const m of r.stdout.matchAll(/^\[/gm)) {
+    try {
+      parsed = JSON.parse(r.stdout.slice(m.index));
+      break;
+    } catch {
+      /* não era o JSON; tenta a próxima linha */
+    }
+  }
+  if (!parsed) throw new Error(`resposta do wrangler sem JSON: ${r.stdout.slice(-300)}`);
   if (!parsed[0]?.success) throw new Error(`consulta falhou: ${JSON.stringify(parsed[0]).slice(0, 300)}`);
   return parsed[0].results;
 }
@@ -75,4 +83,5 @@ const header = `-- ARQUIVO GERADO: não edite à mão. Regere com: npm run expor
 `;
 
 writeFileSync(OUT, `${header}${statements.join('\n')}\n`, 'utf8');
-console.log(`${statements.length} traduções (${statements.length / 2} vínculos) gravadas em data/translations/links.en-es.sql`);
+const linkCount = new Set(rows.map((r) => [r.source, r.target, r.type, r.status, r.year ?? -1].join('|'))).size;
+console.log(`${statements.length} traduções de ${linkCount} vínculos gravadas em data/translations/links.en-es.sql`);

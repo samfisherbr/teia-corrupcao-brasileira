@@ -14,8 +14,9 @@
  * O que confere: migrações numeradas de 0007 em diante e o seed de traduções
  * data/translations/links.en-es.sql. As 0002 a 0006 já foram aplicadas e ficam
  * de fora. Em cada comando que cita `links` ou `link_translations`, procura
- * `id = 12`, `id IN (1, 2)`, `link_id = 12` ou `link_id IN (1, 2)` (os textos
- * entre aspas e os comentários são ignorados; `id = 'pol_x'` de nós é permitido).
+ * `id = 12`, `id IN (1, 2)`, `id <= 5`, `id BETWEEN 1 AND 9`, `rowid = 5` ou
+ * `link_id = 12` (os textos entre aspas e os comentários são ignorados;
+ * `id = 'pol_x'` de nós é permitido).
  */
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -53,7 +54,8 @@ export function statements(sql) {
 }
 
 const TOUCHES_LINKS = /\b(links|link_translations)\b/i;
-const ID_PREDICATE = /(?:\b\w+\.)?\b(?:link_)?id\s*(?:=|\bIN\b)\s*\(?\s*\d/i;
+// id, rowid ou link_id comparados com número ou parâmetro: =, !=, <>, <, <=, >, >=, IN, BETWEEN.
+const ID_PREDICATE = /(?:\b\w+\.)?\b(?:link_|row)?id\s*(?:=|!=|<>|<=|>=|<|>|\bIN\b|\bBETWEEN\b)\s*\(?\s*[-+]?\s*[\d:?@$]/i;
 
 export function violations(sql) {
   return statements(sql).filter((s) => TOUCHES_LINKS.test(s) && ID_PREDICATE.test(s));
