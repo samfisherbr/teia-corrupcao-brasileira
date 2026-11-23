@@ -54,6 +54,87 @@ export type AmountKind = (typeof AMOUNT_KINDS)[number];
 export const toAmountKind = (v: unknown): AmountKind | null =>
   typeof v === 'string' && (AMOUNT_KINDS as readonly string[]).includes(v) ? (v as AmountKind) : null;
 
+/**
+ * LINHA DO TEMPO DE UM ESQUEMA (tabela `scheme_timelines`, migração 0010; cópia
+ * de reserva em `timeline` de data/schemeDetails.ts — as duas precisam bater:
+ * `npm run check:timeline-sync`).
+ *
+ * Datas no formato ISO com a precisão que a fonte permite: 'AAAA', 'AAAA-MM'
+ * ou 'AAAA-MM-DD'.
+ *
+ * Âncoras (regras completas no cabeçalho de data/schemeDetails.ts):
+ *  - start   quando o esquema começou a operar, segundo a documentação.
+ *  - end     quando a atividade terminou. Sem data documentada de fim, é o
+ *            PRIMEIRO ATO OFICIAL PÚBLICO (operação, prisão, CPI instalada,
+ *            decisão judicial, relatório de órgão de controle). Reportagem
+ *            sozinha não conta; inquérito sigiloso também não (vai na nota).
+ *  - exposed só quando o esquema já tinha parado antes de ser descoberto
+ *            (ex.: Mensalão Mineiro, 1998 → 2005): o primeiro ato oficial.
+ */
+export const START_BASES = [
+  'documented_start', // fontes dizem quando começou
+  'first_known_act', //  ato ilícito mais antigo datado nas fontes
+  'enabling_act', //     nomeação, contrato ou norma que tornou o esquema possível (sem data do 1º ato)
+] as const;
+export const END_BASES = [
+  'documented_end', //        fontes dizem quando a atividade parou
+  'police_investigation', //  operação, prisão ou inquérito público da PF/MP
+  'parliamentary_inquiry', // CPI/CPMI instalada
+  'oversight', //             auditoria, Coaf, CADE, Banco Central, CGU
+  'court_ruling', //          decisão judicial que encerrou a prática
+] as const;
+export type StartBasis = (typeof START_BASES)[number];
+export type EndBasis = (typeof END_BASES)[number];
+export type ExposedBasis = Exclude<EndBasis, 'documented_end'>;
+
+/** 'AAAA', 'AAAA-MM' ou 'AAAA-MM-DD'. */
+export type TimelineDate = `${number}` | `${number}-${number}` | `${number}-${number}-${number}`;
+export const TIMELINE_DATE_RE = /^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/;
+
+export interface TimelinePoint<B extends string> {
+  date: TimelineDate;
+  basis: B;
+  /** Página que sustenta a data (pode estar fora de `sources` do dossiê). */
+  sourceUrl: string;
+  /** Justificativa editorial em português; não aparece no site. */
+  note?: string;
+}
+
+export interface SchemeTimeline {
+  start: TimelinePoint<StartBasis>;
+  end: TimelinePoint<EndBasis>;
+  exposed?: TimelinePoint<ExposedBasis>;
+}
+
+/** Ano de uma TimelineDate. */
+export const timelineYear = (d: string): number => Number(d.slice(0, 4));
+
+/**
+ * Linha do D1 (colunas start_date, start_basis…) → SchemeTimeline, ou null se
+ * faltar algo obrigatório ou vier fora do formato (nunca lança).
+ */
+export function timelineFromRow(r: Record<string, unknown>): SchemeTimeline | null {
+  const point = <B extends string>(prefix: string, bases: readonly B[]): TimelinePoint<B> | null => {
+    const date = r[`${prefix}_date`];
+    const basis = r[`${prefix}_basis`];
+    const url = r[`${prefix}_source_url`];
+    const note = r[`${prefix}_note`];
+    if (typeof date !== 'string' || !TIMELINE_DATE_RE.test(date)) return null;
+    if (typeof basis !== 'string' || !(bases as readonly string[]).includes(basis)) return null;
+    if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return null;
+    return { date: date as TimelineDate, basis: basis as B, sourceUrl: url, ...(typeof note === 'string' && note ? { note } : {}) };
+  };
+  const start = point('start', START_BASES);
+  const end = point('end', END_BASES);
+  if (!start || !end) return null;
+  const exposed = point('exposed', END_BASES.filter((b): b is ExposedBasis => b !== 'documented_end'));
+  return exposed ? { start, end, exposed } : { start, end };
+}
+
+/** Erro de banco sem a tabela scheme_timelines (migração 0010 não rodada): tratar como "sem linha do tempo". */
+export const isMissingTimelineTable = (e: unknown): boolean =>
+  /no such table: scheme_timelines/i.test(e instanceof Error ? `${e.message} ${String(e.cause ?? '')}` : String(e));
+
 /** Uma linha da tabela `nodes`. O D1 devolve NULL do SQL como `null`. */
 export interface GraphNode {
   id: string;
@@ -66,6 +147,8 @@ export interface GraphNode {
   image_credit?: string | null;
   /** Página de origem da foto (onde constam autor e licença). */
   image_source_url?: string | null;
+  /** Só em nós `scheme`: linha do tempo (tabela scheme_timelines). Ausente/null = sem registro. */
+  timeline?: SchemeTimeline | null;
   // Coordenadas preenchidas pelo layout/d3-force em tempo de execução.
   // (Não existem no banco.)
   x?: number;

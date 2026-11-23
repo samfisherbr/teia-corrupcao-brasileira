@@ -16,7 +16,17 @@
  * Banco sem as tabelas de tradução → tudo em português, sem erro.
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { toAmountKind, type AmountKind, type GraphNode, type LinkStatus, type LinkType, type NodeType } from '@/types/graph';
+import {
+  isMissingTimelineTable,
+  timelineFromRow,
+  toAmountKind,
+  type AmountKind,
+  type GraphNode,
+  type LinkStatus,
+  type LinkType,
+  type NodeType,
+  type SchemeTimeline,
+} from '@/types/graph';
 import type { Locale } from '@/lib/i18n';
 import {
   applyLinkTranslation,
@@ -234,7 +244,16 @@ export async function loadScheme(
             reviewed_at: (clean(r.reviewed_at) as string | null) ?? null,
           });
         }
-        return { scheme: self.results[0] ? toNode(self.results[0]) : null, connections };
+        if (!self.results[0]) return { scheme: null, connections };
+        // Linha do tempo (migração 0010) à parte: banco sem a tabela não derruba o dossiê.
+        let timeline: SchemeTimeline | null = null;
+        try {
+          const [tl] = await db.batch<Row>([db.prepare('SELECT * FROM scheme_timelines WHERE scheme_id = ?1').bind(id)]);
+          timeline = tl.results[0] ? timelineFromRow(tl.results[0]) : null;
+        } catch (e) {
+          if (!isMissingTimelineTable(e)) throw e;
+        }
+        return { scheme: { ...toNode(self.results[0]), timeline }, connections };
       },
       { ...PAGE_CACHE, shouldCache: (v) => v.scheme !== null }
     );

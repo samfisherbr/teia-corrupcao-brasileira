@@ -65,6 +65,12 @@ SELECT 'aviso: traduções órfãs (nó ou vínculo não existe mais)' AS checag
     SELECT COUNT(*) FROM link_translations WHERE link_id NOT IN (SELECT id FROM links)
   ) AS problemas;
 
+-- Linha do tempo (migração 0010). Antes dela, estas duas consultas dão "no such table".
+SELECT 'esquemas sem linha do tempo (scheme_timelines)' AS checagem, COUNT(*) AS problemas
+  FROM nodes n WHERE n.type = 'scheme' AND NOT EXISTS (SELECT 1 FROM scheme_timelines t WHERE t.scheme_id = n.id);
+SELECT 'linhas do tempo de nó que não é esquema' AS checagem, COUNT(*) AS problemas
+  FROM scheme_timelines t JOIN nodes n ON n.id = t.scheme_id WHERE n.type <> 'scheme';
+
 -- Para LISTAR os itens (em vez de contar), rode à parte, trocando 'en' por 'es' se quiser:
 --   SELECT n.id FROM nodes n LEFT JOIN node_translations t ON t.node_id = n.id AND t.lang = 'en'
 --    WHERE t.node_id IS NULL OR t.source_text <> n.label || char(10) || COALESCE(n.summary, '');

@@ -10,7 +10,17 @@
  * JavaScript da página inicial, e os textos dos dossiês (~115 KB) não devem
  * ir junto. O que depende dos textos fica em lib/dossiers.ts.
  */
-import type { GraphLink, GraphNode } from '@/types/graph';
+import { timelineYear, type GraphLink, type GraphNode, type SchemeTimeline } from '@/types/graph';
+
+/**
+ * Anos de início, fim e (se houver) descoberta de um esquema, para gráficos.
+ * A linha do tempo vem de `node.timeline` (/api/graph) ou de schemeTimeline()
+ * em lib/dossiers.ts. Não substitui computeSchemeStartYears (abaixo), que segue
+ * alimentando o slider "Ano de Início" com o ano do vínculo mais antigo.
+ */
+export function timelineYears(t: SchemeTimeline): { start: number; end: number; exposed: number | null } {
+  return { start: timelineYear(t.start.date), end: timelineYear(t.end.date), exposed: t.exposed ? timelineYear(t.exposed.date) : null };
+}
 import { getLinkEnds } from '@/lib/graphConfig';
 
 const PREFIX = 'esquema_';
