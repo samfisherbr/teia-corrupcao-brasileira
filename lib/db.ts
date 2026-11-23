@@ -16,7 +16,7 @@
  * Banco sem as tabelas de tradução → tudo em português, sem erro.
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import type { GraphNode, LinkStatus, LinkType, NodeType } from '@/types/graph';
+import { toAmountKind, type AmountKind, type GraphNode, type LinkStatus, type LinkType, type NodeType } from '@/types/graph';
 import type { Locale } from '@/lib/i18n';
 import {
   applyLinkTranslation,
@@ -90,6 +90,7 @@ export interface SchemeConnection {
   year: number | null;
   amount: string | null;
   amount_note: string | null;
+  amount_kind: AmountKind | null;
   source_url: string | null;
   reviewed_at: string | null;
 }
@@ -228,6 +229,7 @@ export async function loadScheme(
             year: clean(r.year) !== null && Number.isFinite(year) && year > 0 ? Math.trunc(year) : null,
             amount: (clean(r.amount) as string | null) ?? null,
             amount_note: (clean(r.amount_note) as string | null) ?? null,
+            amount_kind: toAmountKind(r.amount_kind),
             source_url: safeHttpUrl(r.source_url),
             reviewed_at: (clean(r.reviewed_at) as string | null) ?? null,
           });

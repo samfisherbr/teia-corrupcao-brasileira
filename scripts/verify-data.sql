@@ -35,6 +35,10 @@ SELECT 'textos com quebra de linha ou espaço no meio de palavra' AS checagem, C
                 OR relation GLOB '* [çãõáéíóúâêô]*[a-z]*' AND relation GLOB '*[a-z] [çãõ]*';
 SELECT 'valores (amount) fora do formato brasileiro' AS checagem, COUNT(*) AS problemas
   FROM links WHERE amount GLOB '*,[0-9][0-9][0-9]*' OR amount GLOB '*$ $*';
+SELECT 'vínculos com valor sem amount_kind (migração 0007)' AS checagem, COUNT(*) AS problemas
+  FROM links WHERE (amount IS NOT NULL OR amount_brl IS NOT NULL) AND amount_kind IS NULL;
+SELECT 'vínculos com amount_kind mas sem valor' AS checagem, COUNT(*) AS problemas
+  FROM links WHERE amount_kind IS NOT NULL AND amount IS NULL AND amount_brl IS NULL;
 SELECT 'aviso: vínculos sem data de conferência (reviewed_at)' AS checagem, COUNT(*) AS problemas
   FROM links WHERE reviewed_at IS NULL;
 SELECT 'aviso: fotos sem crédito (image_credit)' AS checagem, COUNT(*) AS problemas

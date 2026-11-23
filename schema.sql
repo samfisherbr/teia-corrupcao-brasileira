@@ -18,6 +18,9 @@
 -- (node_translations, link_translations): rode este arquivo de novo ou
 -- migrations/0003_translations.sql — os dois criam as tabelas se não existirem.
 --
+-- Banco criado ANTES de 22/11/2026? Falta a coluna links.amount_kind: rode uma
+-- vez migrations/0007_amount_kind.sql.
+--
 -- Fonte da verdade do formato dos dados. Se mudar algo aqui, mude também em
 -- nos master prompts (bloco <schema>, mantidos fora do repositório), em types/graph.ts e em
 -- lib/graphConfig.ts (cores/rótulos de status).
@@ -55,6 +58,13 @@ CREATE TABLE IF NOT EXISTS links (
     amount      TEXT,
     amount_brl  INTEGER,
     amount_note TEXT,
+    -- Natureza do valor; obrigatória quando há amount/amount_brl, NULL quando não há.
+    --   bribe: propina/vantagem indevida · damage: prejuízo ou desvio estimado ·
+    --   illicit_flow: dinheiro movimentado/lavado/remetido, caixa dois ·
+    --   contract: valor de contrato/financiamento/verba (não é o desviado) ·
+    --   recovery: acordo, multa, ressarcimento, bloqueio, apreensão · other
+    amount_kind TEXT CHECK(amount_kind IS NULL OR amount_kind IN (
+                    'bribe','damage','illicit_flow','contract','recovery','other')),
     year        INTEGER,
     source_url  TEXT NOT NULL,
     -- Data (AAAA-MM-DD) em que o status deste vínculo foi conferido pela
