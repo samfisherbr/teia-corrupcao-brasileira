@@ -2,9 +2,11 @@
 -- MIGRAÇÃO 0008 — correções de 23/11/2026: Waldomiro Diniz, F. H. Cardoso,
 -- Delúbio Soares e títulos do Faroeste (JÁ APLICADA em produção em 23/11/2026)
 -- ============================================================================
--- Registra no repositório o que foi corrigido direto no D1, para que um banco
--- reconstruído a partir do repositório não volte ao texto antigo. Pode rodar de
--- novo sem risco: os UPDATEs gravam valores fixos e os DELETEs miram ids fixos.
+-- Registra no repositório o que foi corrigido direto no D1. Os ids são os do
+-- banco de produção, e todos os comandos conferem origem e destino do vínculo
+-- além do id: num banco em que o id aponte para outro vínculo, nada é alterado.
+-- Pré-requisito: migração 0007 aplicada. Pode rodar de novo sem risco: os
+-- UPDATEs gravam valores fixos e os DELETEs miram vínculos fixos.
 --   npx wrangler d1 execute corruption_graph_db --remote --file=./migrations/0008_waldomiro_fhc_delubio_cleanup.sql
 --
 --  1. Vínculo 290 (PT → Caso Waldomiro Diniz): a fonte passa a ser a Folha de
@@ -34,7 +36,7 @@ UPDATE link_translations SET relation = 'Former treasurer of the PT, he was conv
 UPDATE link_translations SET relation = 'Extesorero del PT, fue condenado por blanqueo de capitales por haber, según la acusación, orientado el encubrimiento del préstamo cuyo destinatario final sería el empresario de Santo André; la condena fue anulada por el STJ en 2023 por incompetencia de la justicia federal y el caso se remitió a la justicia electoral.', source_text = (SELECT l.relation || char(10) || COALESCE(l.amount, '') || char(10) || COALESCE(l.amount_note, '') FROM links l WHERE l.id = link_translations.link_id) WHERE link_id = 243 AND lang = 'es';
 
 -- Remoção dos vínculos repetidos e das traduções deles.
-DELETE FROM link_translations WHERE link_id IN (81, 136, 242);
+DELETE FROM link_translations WHERE link_id IN (SELECT id FROM links WHERE (id IN (81, 136) AND source = 'pol_fhc' AND target = 'par_psdb') OR (id = 242 AND source = 'pol_delubio_soares' AND target = 'par_pt'));
 DELETE FROM links WHERE id IN (81, 136) AND source = 'pol_fhc' AND target = 'par_psdb';
 DELETE FROM links WHERE id = 242 AND source = 'pol_delubio_soares' AND target = 'par_pt';
 

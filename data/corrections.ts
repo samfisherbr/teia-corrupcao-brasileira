@@ -49,6 +49,27 @@ export const CORRECTIONS: Correction[] = [
     },
   },
   {
+    date: '2026-11-23',
+    kind: 'correcao',
+    summary:
+      'Os três vínculos de Fernando Henrique Cardoso com o PSDB (fundação em 1988, presidente durante a emenda da reeleição em 1997 e presidente durante a privatização do Sistema Telebrás em 1998) foram reunidos em um só, o de 1988, que agora também registra que ele foi eleito presidente da República em 1994, tomou posse em 1995 e foi reeleito em 1998. Os contextos da reeleição e da privatização continuam nos vínculos dele com os esquemas Compra de Votos da Reeleição e Grampos do BNDES. O texto anterior dizia ainda que ele presidiu o país entre 1995 e 2002; o fim do mandato deixou de constar do vínculo.',
+    translations: {
+      en: 'The three links between Fernando Henrique Cardoso and the PSDB (founding in 1988, president during the re-election amendment in 1997 and president during the Telebrás privatisation in 1998) were merged into one, the 1988 link, which now also records that he was elected President of the Republic in 1994, took office in 1995 and was re-elected in 1998. The re-election and privatisation contexts remain in his links to the Re-election vote-buying and BNDES wiretaps schemes. The previous text also said he governed the country from 1995 to 2002; the end of his term no longer appears in the link.',
+      es: 'Los tres vínculos de Fernando Henrique Cardoso con el PSDB (fundación en 1988, presidente durante la enmienda de la reelección en 1997 y presidente durante la privatización del Sistema Telebrás en 1998) se unificaron en uno, el de 1988, que ahora recoge también que fue elegido presidente de la República en 1994, tomó posesión en 1995 y fue reelegido en 1998. Los contextos de la reelección y de la privatización siguen en sus vínculos con las tramas Compra de votos de la reelección y Escuchas del BNDES. El texto anterior decía además que presidió el país entre 1995 y 2002; el final del mandato ya no consta en el vínculo.',
+    },
+  },
+  {
+    date: '2026-11-23',
+    scheme: 'esquema_santo_andre',
+    kind: 'correcao',
+    summary:
+      'Os dois vínculos de Delúbio Soares com o PT (tesoureiro nacional em 2004, à época do empréstimo investigado na Operação Carbono 14, e saída do cargo em 5 de julho de 2005) foram reduzidos a um, o de 2005. A informação de que ele foi tesoureiro do PT passou também para o vínculo dele com o Esquema de Propinas de Santo André, como ex-tesoureiro. A afirmação de que ocupava a tesouraria nacional à época do empréstimo deixou de constar, porque a fonte do vínculo (CNN Brasil, 03/03/2023) o chama apenas de ex-tesoureiro.',
+    translations: {
+      en: 'The two links between Delúbio Soares and the PT (national treasurer in 2004, at the time of the loan investigated in Operation Carbono 14, and leaving the post on 5 July 2005) were reduced to one, the 2005 link. The information that he was PT treasurer now also appears in his link to the Santo André bribery scheme, as former treasurer. The statement that he held the national treasury at the time of the loan no longer appears, because the link\'s source (CNN Brasil, 03/03/2023) describes him only as a former treasurer.',
+      es: 'Los dos vínculos de Delúbio Soares con el PT (tesorero nacional en 2004, en la época del préstamo investigado en la Operación Carbono 14, y salida del cargo el 5 de julio de 2005) se redujeron a uno, el de 2005. La información de que fue tesorero del PT consta ahora también en su vínculo con la trama de sobornos de Santo André, como extesorero. La afirmación de que ocupaba la tesorería nacional en la época del préstamo ya no consta, porque la fuente del vínculo (CNN Brasil, 03/03/2023) lo describe solo como extesorero.',
+    },
+  },
+  {
     date: '2026-11-19',
     scheme: 'esquema_operacao_placebo',
     kind: 'atualizacao',
