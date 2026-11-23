@@ -20,6 +20,7 @@
 import { SCHEME_DETAILS, type SchemeDetail, type SchemeDetailTranslation } from '@/data/schemeDetails';
 import { schemeSlug } from '@/lib/schemes';
 import type { Locale } from '@/lib/i18n';
+import type { SchemeTimeline } from '@/types/graph';
 
 /** Dossiê pronto para exibir num idioma. */
 export interface LocalizedSchemeDetail extends SchemeDetail {
@@ -36,6 +37,14 @@ const titleFromId = (id: string): string =>
     .split('-')
     .map((w) => (w.length > 2 ? w[0].toUpperCase() + w.slice(1) : w))
     .join(' ');
+
+/**
+ * Linha do tempo do esquema: a do D1 (fonte da verdade, ex.: `node.timeline`
+ * vindo de loadScheme ou /api/graph) e, sem ela, a cópia de reserva do dossiê.
+ * Null se nenhuma das duas existir.
+ */
+export const schemeTimeline = (id: string, fromDb?: SchemeTimeline | null): SchemeTimeline | null =>
+  fromDb ?? SCHEME_DETAILS[id]?.timeline ?? null;
 
 /** Data da última revisão do dossiê (AAAA-MM-DD), se houver. A mesma nos três idiomas. */
 export const dossierReviewedAt = (id: string): string | null => SCHEME_DETAILS[id]?.reviewedAt ?? null;

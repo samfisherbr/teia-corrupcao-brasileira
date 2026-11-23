@@ -35,6 +35,8 @@ jobs:
       - run: npm run typecheck
       # Migrações e seeds não podem identificar vínculos pelo id (migrations/README.md).
       - run: npm run check:migrations
+      # Linha do tempo dos dossiês: datas, âncoras e ordem (data/schemeDetails.ts).
+      - run: npm run check:timelines
       # ESLint: erros reprovam o CI; avisos (ex.: `any` no código do grafo) não.
       - run: npm run lint
       # Build do Worker com o OpenNext (roda o `next build` por dentro).

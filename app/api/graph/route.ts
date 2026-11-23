@@ -16,13 +16,15 @@
  * D1 vai para os logs da Function (não é mostrada ao público).
  *
  * Ajustes comuns:
- *   - colunas devolvidas → normalizeNode / normalizeLink
+ *   - colunas devolvidas → normalizeNode / normalizeLink (nós `scheme` também
+ *     trazem `timeline`, da tabela scheme_timelines; null se não houver linha;
+ *     `presidents` vem da tabela presidents, ausente se não houver a tabela)
  *   - tempo de cache     → CACHE_FRESH_SECONDS / CACHE_MAX_AGE_SECONDS
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { isLocale } from '@/lib/i18n';
 import { edgeCachedText } from '@/lib/edgeCache';
-import { toAmountKind } from '@/types/graph';
+import { isMissingPresidentsTable, isMissingTimelineTable, presidentFromRow, timelineFromRow, toAmountKind, type PresidentTerm, type SchemeTimeline } from '@/types/graph';
 import {
   applyLinkTranslation,
   applyNodeTranslation,
@@ -196,7 +198,31 @@ export async function GET(request: Request) {
       if (!lang || !isMissingTranslationTables(e)) throw e;
       [nodesRes, linksRes] = await query(null);
     }
-    return JSON.stringify({ nodes: nodesRes.results.map(normalizeNode), links: linksRes.results.map(normalizeLink) });
+    // Linha do tempo dos esquemas (migração 0010), em consulta separada: banco
+    // sem a tabela segue funcionando, só sem `timeline` nos nós.
+    const timelines = new Map<string, SchemeTimeline>();
+    try {
+      const [tl] = await DB.batch<Row>([DB.prepare('SELECT * FROM scheme_timelines')]);
+      for (const r of tl.results) {
+        const t = timelineFromRow(r);
+        if (t) timelines.set(String(r.scheme_id), t);
+      }
+    } catch (e) {
+      if (!isMissingTimelineTable(e)) throw e;
+    }
+    // Presidentes (migração 0011), também em consulta separada e tolerante.
+    let presidents: PresidentTerm[] | undefined;
+    try {
+      const [pr] = await DB.batch<Row>([DB.prepare('SELECT * FROM presidents ORDER BY term_start')]);
+      presidents = pr.results.map(presidentFromRow).filter((p): p is PresidentTerm => p !== null);
+    } catch (e) {
+      if (!isMissingPresidentsTable(e)) throw e;
+    }
+    const nodes = nodesRes.results.map((raw) => {
+      const n = normalizeNode(raw);
+      return n.type === 'scheme' ? { ...n, timeline: timelines.get(String(n.id)) ?? null } : n;
+    });
+    return JSON.stringify({ nodes, links: linksRes.results.map(normalizeLink), ...(presidents?.length ? { presidents } : {}) });
   };
 
   try {

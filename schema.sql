@@ -21,6 +21,13 @@
 -- Banco criado ANTES de 22/11/2026? Falta a coluna links.amount_kind: rode uma
 -- vez migrations/0007_amount_kind.sql.
 --
+-- Banco sem a tabela scheme_timelines (anterior à migração 0010)? Rode
+-- migrations/0010_scheme_timelines.sql (cria a tabela e preenche os esquemas).
+--
+-- Banco sem a tabela presidents (anterior à migração 0011)? Rode
+-- migrations/0011_presidents.sql. Sem ela o site usa a lista de reserva em
+-- lib/infographics.ts.
+--
 -- Fonte da verdade do formato dos dados. Se mudar algo aqui, mude também em
 -- nos master prompts (bloco <schema>, mantidos fora do repositório), em types/graph.ts e em
 -- lib/graphConfig.ts (cores/rótulos de status).
@@ -113,6 +120,57 @@ CREATE TABLE IF NOT EXISTS link_translations (
     amount_note TEXT,
     source_text TEXT NOT NULL,
     PRIMARY KEY (link_id, lang)
+);
+
+-- Linha do tempo de cada esquema: quando começou e quando parou (ou foi
+-- descoberto). Uma linha por nó `scheme`. Fonte da verdade; a cópia de reserva
+-- fica em `timeline` de data/schemeDetails.ts (`npm run check:timeline-sync`
+-- compara as duas). Regras das âncoras: cabeçalho de data/schemeDetails.ts.
+-- Datas 'AAAA', 'AAAA-MM' ou 'AAAA-MM-DD' (a precisão que a fonte permite).
+--   start_*   quando o esquema começou a operar
+--   end_*     quando a atividade parou; sem data documentada, o primeiro ato
+--             oficial público (operação, CPI, órgão de controle, decisão)
+--   exposed_* opcional: primeiro ato oficial, quando veio DEPOIS do fim
+-- *_note é justificativa interna em português (não aparece no site).
+CREATE TABLE IF NOT EXISTS scheme_timelines (
+    scheme_id          TEXT PRIMARY KEY REFERENCES nodes(id),
+    start_date         TEXT NOT NULL CHECK(start_date GLOB '[0-9][0-9][0-9][0-9]'
+                                        OR start_date GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]'
+                                        OR start_date GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'),
+    start_basis        TEXT NOT NULL CHECK(start_basis IN ('documented_start','first_known_act','enabling_act')),
+    start_source_url   TEXT NOT NULL CHECK(start_source_url GLOB 'http*://*'),
+    start_note         TEXT,
+    end_date           TEXT NOT NULL CHECK(end_date GLOB '[0-9][0-9][0-9][0-9]'
+                                        OR end_date GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]'
+                                        OR end_date GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'),
+    end_basis          TEXT NOT NULL CHECK(end_basis IN ('documented_end','police_investigation','parliamentary_inquiry','oversight','court_ruling')),
+    end_source_url     TEXT NOT NULL CHECK(end_source_url GLOB 'http*://*'),
+    end_note           TEXT,
+    exposed_date       TEXT CHECK(exposed_date IS NULL
+                                  OR exposed_date GLOB '[0-9][0-9][0-9][0-9]'
+                                  OR exposed_date GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]'
+                                  OR exposed_date GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'),
+    exposed_basis      TEXT CHECK(exposed_basis IS NULL OR exposed_basis IN ('police_investigation','parliamentary_inquiry','oversight','court_ruling')),
+    exposed_source_url TEXT CHECK(exposed_source_url IS NULL OR exposed_source_url GLOB 'http*://*'),
+    exposed_note       TEXT,
+    -- Ordem pelo ano (datas de precisões diferentes no mesmo ano: o
+    -- npm run check:timelines confere o resto).
+    CHECK(substr(start_date, 1, 4) <= substr(end_date, 1, 4)),
+    CHECK(exposed_date IS NULL OR substr(exposed_date, 1, 4) >= substr(end_date, 1, 4)),
+    -- O trio exposed_* vem completo ou não vem.
+    CHECK((exposed_date IS NULL) = (exposed_basis IS NULL) AND (exposed_date IS NULL) = (exposed_source_url IS NULL))
+);
+
+-- Presidentes da República (faixa do gráfico de linha do tempo). Ver migrations/0011_presidents.sql.
+CREATE TABLE IF NOT EXISTS presidents (
+    id         TEXT PRIMARY KEY CHECK(id GLOB '[a-z0-9_]*'),
+    name       TEXT NOT NULL,
+    -- Sigla do partido na posse (texto livre; não é chave para a tabela nodes).
+    party      TEXT NOT NULL,
+    term_start TEXT NOT NULL CHECK(term_start GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'),
+    -- NULL = ainda no cargo.
+    term_end   TEXT CHECK(term_end IS NULL OR term_end GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'),
+    CHECK(term_end IS NULL OR term_end >= term_start)
 );
 
 -- ============================================================================

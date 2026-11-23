@@ -23,7 +23,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { SITE_DOMAIN } from '@/lib/site';
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 
 export type CacheState = 'hit' | 'stale' | 'miss' | 'bypass';
 

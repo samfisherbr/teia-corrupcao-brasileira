@@ -20,11 +20,36 @@
  *    Mudar a data também tira do ar as traduções deste registro até serem
  *    atualizadas (ver SchemeDetailTranslation, abaixo).
  *
+ *  - timeline: início e fim do esquema (tipo SchemeTimeline, types/graph.ts).
+ *    A FONTE DA VERDADE é a tabela `scheme_timelines` do D1; este campo é a
+ *    cópia de reserva (páginas geradas sem banco, banco fora do ar), como o
+ *    `title` em relação ao `label`. Mudou aqui, mude no D1 (e vice-versa) e
+ *    rode `npm run check:timeline-sync`. Regras:
+ *      start: quando o esquema começou a operar. basis = documented_start
+ *        (a fonte diz), first_known_act (ato ilícito mais antigo datado) ou
+ *        enabling_act (nomeação, contrato ou norma que o tornou possível,
+ *        quando nenhuma fonte data o primeiro ato).
+ *      end: quando a atividade terminou (documented_end). Sem fim documentado,
+ *        o PRIMEIRO ATO OFICIAL PÚBLICO: operação/prisão/inquérito público
+ *        (police_investigation), CPI instalada (parliamentary_inquiry), órgão
+ *        de controle (oversight) ou decisão judicial (court_ruling), o que vier
+ *        antes. Reportagem sozinha não é ato oficial. Inquérito sigiloso não
+ *        conta (não parou nada); cite-o em `note`.
+ *      exposed: só se o esquema parou antes de ser descoberto — o primeiro ato
+ *        oficial, posterior ao `end`.
+ *    Datas 'AAAA', 'AAAA-MM' ou 'AAAA-MM-DD', com a precisão da fonte.
+ *    `sourceUrl` é obrigatório e pode estar fora de `sources`; `note` é
+ *    justificativa interna em português, não aparece no site e não é traduzida.
+ *    A linha do tempo não é texto visível: mexer nela NÃO muda o reviewedAt.
+ *    `npm run check:timelines` confere formato e ordem das datas.
+ *
  * TRADUÇÕES: data/schemeDetails.en.ts (inglês) e data/schemeDetails.es.ts
  * (espanhol), com as mesmas chaves. Dossiê novo sem tradução aparece em
  * português nos outros idiomas.
  * ============================================================================
  */
+import type { SchemeTimeline } from '@/types/graph';
+
 /** Formato de cada registro (Glossário, páginas de dossiê, sitemap). */
 export interface SchemeDetail {
   title: string;
@@ -34,6 +59,8 @@ export interface SchemeDetail {
   impact: string;
   legalStatus: string;
   sources: { title: string; url: string }[];
+  /** Início e fim do esquema; cópia de reserva da tabela scheme_timelines do D1. */
+  timeline: SchemeTimeline;
 }
 
 /**
@@ -72,7 +99,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Condenação de PC Farias por esquema de corrupção completa 25 anos", url: "https://www.migalhas.com.br/quentes/302364/condenacao-de-pc-farias-por-esquema-de-corrupcao-completa-25-anos" },
       { title: "Relembre como foi o impeachment de Collor", url: "https://istoedinheiro.com.br/relembre-como-foi-o-impeachment-de-collor" },
       { title: "Filme revisita história do Brasil a partir da trajetória de PC Farias", url: "https://agenciabrasil.ebc.com.br/geral/noticia/2024-03/filme-revisita-historia-do-brasil-partir-da-trajetoria-de-pc-farias" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1990-03-15",
+        basis: "enabling_act",
+        sourceUrl: "https://www.tse.jus.br/jurisprudencia/julgados-historicos/collor",
+        note: "Posse de Collor; PC Farias, tesoureiro da campanha de 1989, passa a operar no governo. O início exato da cobrança não é datado nas fontes.",
+      },
+      end: {
+        date: "1992-06-01",
+        basis: "parliamentary_inquiry",
+        sourceUrl: "https://www2.camara.leg.br/atividade-legislativa/plenario/discursos/escrevendohistoria/20-anos-do-impeachment/cpmi-pc-farias",
+        note: "Instalação da CPMI. A entrevista de Pedro Collor à Veja (maio de 1992) foi revelação da imprensa, não ato oficial.",
+      },
+    },
   },
 
   "esquema_anoes_orcamento": {
@@ -91,7 +132,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "A cobertura de luxo de Ibsen Pinheiro, mais de 30 anos depois (Brazil Journal, 2026)", url: "https://braziljournal.com/a-cobertura-de-luxo-de-ibsen-pinheiro-mais-de-30-anos-depois" },
       { title: "CPI descobre que Genebaldo teve depósitos de US$ 2 milhões (O Globo, 1993)", url: "https://www2.senado.leg.br/jspui/bitstream/id/699336/1/CPI_Orcamento_P008_R0167.pdf" },
       { title: "Relatório final da CPMI do Orçamento (Biblioteca Digital do Senado, 1994)", url: "https://www2.senado.leg.br/jspui/handle/id/84896?mode=full" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1989",
+        basis: "documented_start",
+        sourceUrl: "https://pt.wikipedia.org/wiki/An%C3%B5es_do_Or%C3%A7amento",
+        note: "Fontes situam as fraudes no \"final dos anos 80\", depois da Constituição de 1988; 1989 é o primeiro ano possível, não data exata.",
+      },
+      end: {
+        date: "1993-10",
+        basis: "parliamentary_inquiry",
+        sourceUrl: "https://www2.senado.leg.br/bdsf/handle/id/610023",
+        note: "CPMI do Orçamento (Requerimento 151/1993) instalada depois das denúncias de José Carlos Alves dos Santos.",
+      },
+    },
   },
 
   "esquema_sivam": {
@@ -108,7 +163,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Raytheon Denies Bribery In Brazil", url: "https://www.spokesman.com/stories/1995/nov/19/raytheon-denies-bribery-in-brazil/" },
       { title: "Big Surveillance Project For the Amazon Jungle Teeters Over Scandals", url: "https://www.csmonitor.com/1996/0125/25071.html" },
       { title: "CPI - SIVAM: depoimento de Francisco Graziano (30/10/2001)", url: "https://www2.camara.leg.br/atividade-legislativa/comissoes/comissoes-temporarias/parlamentar-de-inquerito/51-legislatura/cpisivam/notas/nt301001.pdf" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1994-12-27",
+        basis: "enabling_act",
+        sourceUrl: "https://www2.camara.leg.br/legin/fed/ressen/1994/resolucao-97-27-dezembro-1994-392017-publicacaooriginal-1-pl.html",
+        note: "Resolução do Senado que nomeou a Raytheon fornecedora; o lobby gravado é de 1995.",
+      },
+      end: {
+        date: "1995-11",
+        basis: "police_investigation",
+        sourceUrl: "https://www.spokesman.com/stories/1995/nov/19/raytheon-denies-bribery-in-brazil/",
+        note: "Grampo da PF (setembro de 1995, sigiloso) vem a público; embaixador exonerado em 17/11/1995 e CPI do Sivam em seguida.",
+      },
+    },
   },
 
   "esquema_trt_sp": {
@@ -127,7 +196,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Mantida condenação de Lalau e Luiz Estevão por desvio de verbas", url: "https://www.migalhas.com.br/quentes/189701/mantida-condenacao-de-lalau-e-luiz-estevao-por-desvio-de-verbas" },
       { title: "STJ extingue ação de improbidade contra ex-presidente do TRT-2", url: "https://www.migalhas.com.br/quentes/413553/stj-extingue-acao-de-improbidade-contra-ex-presidente-do-trt-2" },
       { title: "AGU cobrará dívida do Grupo OK por desvios nas obras do TRT-SP", url: "https://www.poder360.com.br/justica/agu-cobrara-divida-do-grupo-ok-por-desvios-nas-obras-do-trt-sp/" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1992",
+        basis: "first_known_act",
+        sourceUrl: "https://agenciabrasil.ebc.com.br/geral/noticia/2017-09/mpf-pede-ressarcimento-de-r-1-bilhao-por-desvios-em-obra-do-trt-de-sao-paulo",
+        note: "Licitação do Fórum Trabalhista vencida pela Incal.",
+      },
+      end: {
+        date: "1998",
+        basis: "police_investigation",
+        sourceUrl: "https://agenciabrasil.ebc.com.br/geral/noticia/2017-09/mpf-pede-ressarcimento-de-r-1-bilhao-por-desvios-em-obra-do-trt-de-sao-paulo",
+        note: "Ex-genro do juiz denuncia o patrimônio ao MPF; CPI do Judiciário em 1999.",
+      },
+    },
   },
 
   "esquema_compra_reeleicao": {
@@ -145,7 +228,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Pronunciamento de Eduardo Suplicy em 13/05/1997", url: "https://www25.senado.leg.br/web/atividade/pronunciamentos/-/p/pronunciamento/205577" },
       { title: "Governo FHC comprou votos para aprovar reeleição, diz delator da Lava Jato", url: "https://www.gazetadopovo.com.br/vida-publica/governo-fhc-comprou-votos-para-aprovar-reeleicao-diz-delator-da-lava-jato-0vmyu2n3ahzyjzchy7jffo50c/" },
       { title: "FHC faz mea-culpa e afirma que emenda que permitiu reeleição foi um erro", url: "https://www.folhape.com.br/politica/fhc-faz-mea-culpa-e-afirma-que-emenda-que-permitiu-reeleicao-foi-um/153848/" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1997-01",
+        basis: "first_known_act",
+        sourceUrl: "https://www.congressoemfoco.com.br/noticia/101937/ecos-de-um-escandalo",
+        note: "Votação em primeiro turno da emenda da reeleição na Câmara (28/1/1997).",
+      },
+      end: {
+        date: "1997-05",
+        basis: "police_investigation",
+        sourceUrl: "https://www.congressoemfoco.com.br/noticia/101937/ecos-de-um-escandalo",
+        note: "Mês da revelação pela Folha e das renúncias; a PF abriu inquérito (depois arquivado), mês exato não confirmado. A CPI foi barrada.",
+      },
+    },
   },
 
   "esquema_grampos_bndes": {
@@ -161,7 +258,27 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Época não terá de indenizar ex-diretor do BB", url: "https://conjur.com.br/2006-mar-22/epoca_nao_indenizar_ex-diretor_bb/" },
       { title: "Acervo: lembranças do governo FHC", url: "https://www.cartacapital.com.br/politica/acervo-lembrancas-do-governo-fhc-8756/" },
       { title: "Jereissati v. Mendonça de Barros", url: "https://globalfreedomofexpression.columbia.edu/cases/jereissati-v-mendonca-de-barros/" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1998-07",
+        basis: "first_known_act",
+        sourceUrl: "https://www.correiobraziliense.com.br/app/noticia/economia/2008/07/29/internas_economia,22069/amp.shtml",
+        note: "Articulações gravadas nas semanas do leilão da Telebrás.",
+      },
+      end: {
+        date: "1998-07-29",
+        basis: "documented_end",
+        sourceUrl: "https://www.bndes.gov.br/wps/portal/site/home/transparencia/desestatizacao/projetos-encerrados/privatizacao-federais-telecomunicacoes",
+        note: "Leilões da Telebrás concluídos; o favorecimento suspeito se esgota no leilão.",
+      },
+      exposed: {
+        date: "1998-11",
+        basis: "police_investigation",
+        sourceUrl: "https://www1.folha.uol.com.br/fsp/brasil/fc28119813.htm",
+        note: "Fitas reveladas por Elio Gaspari em 8/11/1998; a PF investigou a autoria do grampo, não o conteúdo.",
+      },
+    },
   },
 
   "esquema_mensalao_mineiro": {
@@ -180,7 +297,27 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "STF envia para Justiça Eleitoral processo sobre ex-governador de Minas", url: "https://agenciabrasil.ebc.com.br/justica/noticia/2021-06/stf-envia-para-justica-eleitoral-processo-sobre-ex-governador-de-minas" },
       { title: "TJ-MG anula processo contra Clésio Andrade por mensalão", url: "https://conjur.com.br/2019-dez-04/tj-mg-anula-processo-clesio-andrade-mensalao/" },
       { title: "STF manda processo de Azeredo para primeira instância", url: "https://www.conjur.com.br/2014-mar-27/stf-manda-processo-eduardo-azeredo-primeira-instancia/" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1998",
+        basis: "documented_start",
+        sourceUrl: "https://www.itatiaia.com.br/politica/mensalao-tucano-o-escandalo-mineiro-que-antecedeu-o-mensalao-do-pt/",
+        note: "Campanha de reeleição de Eduardo Azeredo.",
+      },
+      end: {
+        date: "1998-10",
+        basis: "documented_end",
+        sourceUrl: "https://www.itatiaia.com.br/politica/mensalao-tucano-o-escandalo-mineiro-que-antecedeu-o-mensalao-do-pt/",
+        note: "Eleição de outubro de 1998, perdida por Azeredo.",
+      },
+      exposed: {
+        date: "2005",
+        basis: "parliamentary_inquiry",
+        sourceUrl: "https://www.itatiaia.com.br/politica/mensalao-tucano-o-escandalo-mineiro-que-antecedeu-o-mensalao-do-pt/",
+        note: "Vem à tona sete anos depois, nas investigações do mensalão federal (CPMI dos Correios).",
+      },
+    },
   },
 
   "esquema_sudam_sudene": {
@@ -198,7 +335,27 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "STF deixa processos contra políticos prescreverem", url: "https://www.congressoemfoco.com.br/noticia/52433/stf-deixa-processos-contra-politicos-prescreverem" },
       { title: "Superintendência do Desenvolvimento da Amazônia (Sudam) - verbete temático", url: "https://www18.fgv.br/cpdoc/acervo/dicionarios/verbete-tematico/superintendencia-do-desenvolvimento-da-amazonia-sudam" },
       { title: "Escândalo da Lunus, há 20 anos, tirou Roseana Sarney da sucessão presidencial", url: "https://jornalpequeno.com.br/2022/03/01/escandalo-da-lunus-ha-20-anos-tirou-roseana-sarney-da-sucessao-presidencial/" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1997",
+        basis: "documented_start",
+        sourceUrl: "https://brasil.mongabay.com/2025/03/o-escandalo-da-sudam-ou-como-o-desmatamento-foi-apoiado-pelo-governo/",
+        note: "A investigação se concentrou em atos de 1997 a 1999; fraudes anteriores são presumidas, não documentadas.",
+      },
+      end: {
+        date: "1999",
+        basis: "documented_end",
+        sourceUrl: "https://brasil.mongabay.com/2025/03/o-escandalo-da-sudam-ou-como-o-desmatamento-foi-apoiado-pelo-governo/",
+        note: "Fim do período investigado (1997-1999).",
+      },
+      exposed: {
+        date: "2000",
+        basis: "oversight",
+        sourceUrl: "https://www18.fgv.br/cpdoc/acervo/dicionarios/verbete-tematico/superintendencia-do-desenvolvimento-da-amazonia-sudam",
+        note: "Auditoria do Grupo Especial de Trabalho do Ministério da Integração Nacional.",
+      },
+    },
   },
 
   "esquema_vampiro": {
@@ -217,7 +374,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Procurador denuncia Humberto Costa e Delúbio Soares", url: "https://www.congressoemfoco.com.br/noticia/1398/procurador-denuncia-humberto-costa-e-delubio-soares" },
       { title: "TRF absolve Humberto Costa em processo da \"Operação Vampiro\"", url: "https://www.gazetadopovo.com.br/vida-publica/trf-absolve-humberto-costa-em-processo-da-operacao-vampiro-0492eins3ozcmheju8md0wnke/" },
       { title: "Preso na Operação Vampiro fechou R$ 647 mi em contratos sob Bolsonaro", url: "https://www.metropoles.com/brasil/preso-na-operacao-vampiro-fechou-r-647-mi-em-contratos-sob-bolsonaro" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1990",
+        basis: "documented_start",
+        sourceUrl: "https://memorialdademocracia.com.br/card/deflagrada-a-operacao-vampiro",
+        note: "PF: quadrilha atuava desde 1990 em fraudes contra o Ministério da Saúde.",
+      },
+      end: {
+        date: "2004-05-19",
+        basis: "police_investigation",
+        sourceUrl: "https://www1.folha.uol.com.br/fsp/cotidian/ff2005200401.htm",
+        note: "Operação Vampiro (Folha de 20/5/2004: \"prendeu ontem\"). Pedido de averiguação à PF em 2003 não foi público.",
+      },
+    },
   },
 
   "esquema_banestado": {
@@ -236,7 +407,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Justiça condena Alberto Youssef a 4 anos e 4 meses de prisão", url: "https://www.tribunapr.com.br/noticias/politica/justica-condena-alberto-youssef-a-4-anos-e-4-meses-de-prisao/" },
       { title: "Doleiros do caso Banestado são condenados a prisão", url: "https://conjur.com.br/2008-dez-15/doleiros_banestado_sao_condenados_prisao/" },
       { title: "Juiz absolve último acusado por evasão de divisas no caso Banestado", url: "https://www.conjur.com.br/2009-dez-24/juiz-absolve-ultimo-acusado-evasao-divisas-banestado/" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1996-04-10",
+        basis: "enabling_act",
+        sourceUrl: "https://www.camara.leg.br/noticias/58274-contas-cc5-viabilizaram-as-movimentacoes-ilegais/",
+        note: "Circular 2.677 do Banco Central libera depósitos em espécie nas CC5 de Foz do Iguaçu.",
+      },
+      end: {
+        date: "2003-05",
+        basis: "police_investigation",
+        sourceUrl: "https://www.jusbrasil.com.br/noticias/mpf-pr-balanco-sobre-o-caso-banestado/21051",
+        note: "Criação da força-tarefa CC5 do MPF, primeiro ato público localizado. Antes, alerta da fiscalização do BC levou o MP a pedir inquérito à PF (ano não localizado).",
+      },
+    },
   },
 
   "esquema_waldomiro_diniz": {
@@ -254,7 +439,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Condenados no caso Gtech resistem a pagar à União", url: "https://www.congressoemfoco.com.br/noticia/105209/condenados-no-caso-gtech-nao-pagam-multa-a-uniao" },
       { title: "Justiça Federal recebe denúncia contra Waldomiro Diniz por corrupção", url: "https://conjur.com.br/2011-jan-28/justica-federal-recebe-denuncia-waldomiro-diniz-corrupcao/" },
       { title: "Waldomiro nega ter extorquido dinheiro de Cachoeira", url: "https://www.gazetadopovo.com.br/vida-publica/waldomiro-nega-ter-extorquido-dinheiro-de-cachoeira-9ngu7h1a8g242i04wuxv1ci1a" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2002-02",
+        basis: "first_known_act",
+        sourceUrl: "https://atarde.com.br/politica/tj-reduz-penas-de-waldomiro-e-cachoeira-no-caso-loterj-510900",
+        note: "Pedido de propina gravado na Loterj.",
+      },
+      end: {
+        date: "2004-02-13",
+        basis: "police_investigation",
+        sourceUrl: "https://www.tribunapr.com.br/noticias/lula-demite-assessor-acusado-de-corrupcao-e-manda-abrir-inquerito/",
+        note: "Exoneração e ordem de abertura de inquérito, dias depois da revelação pela Época.",
+      },
+    },
   },
 
   "esquema_santo_andre": {
@@ -273,7 +472,26 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Operação Lava Jato: TRF4 confirma condenação de Ronan Maria Pinto, Delúbio Soares e outros réus envolvidos com lavagem de dinheiro", url: "https://www.trf4.jus.br/trf4/controlador.php?acao=noticia_visualizar&id_noticia=13529" },
       { title: "Sombra, acusado pela morte de Celso Daniel, morre em São Paulo", url: "https://agenciabrasil.ebc.com.br/geral/noticia/2016-09/sombra-acusado-pela-morte-de-celso-daniel-morre-em-sao-paulo" },
       { title: "Ministro do STJ anula condenação de Delúbio na Lava Jato e remete caso à Justiça Eleitoral", url: "https://www.cnnbrasil.com.br/politica/ministro-do-stj-anula-condenacao-de-delubio-na-lava-jato-e-remete-caso-a-justica-eleitoral/" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1997",
+        basis: "documented_start",
+        sourceUrl: "https://www.migalhas.com.br/quentes/239417/pt-e-condenado-a-pagar-r--3-5-mi-por-esquema-de-propina-na-gestao-de-celso-daniel",
+        note: "Esquema montado na gestão Celso Daniel, de 1997 a 2001, segundo a sentença cível.",
+      },
+      end: {
+        date: "2001",
+        basis: "documented_end",
+        sourceUrl: "https://www.migalhas.com.br/quentes/239417/pt-e-condenado-a-pagar-r--3-5-mi-por-esquema-de-propina-na-gestao-de-celso-daniel",
+      },
+      exposed: {
+        date: "2002-01",
+        basis: "police_investigation",
+        sourceUrl: "https://www1.folha.uol.com.br/folha/brasil/ult96u60988.shtml",
+        note: "Assassinato de Celso Daniel; a investigação do crime pelo MP-SP leva ao esquema de propinas.",
+      },
+    },
   },
   "esquema_dolares_na_cueca": {
     title: "Caso dos Dólares na Cueca",
@@ -291,7 +509,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Juiz nega arquivar caso de assessor flagrado com dólares", url: "https://conjur.com.br/2019-out-22/juiz-nega-arquivamento-assessor-flagrado-dolares/" },
       { title: "'Dólares na cueca': sentença exime deputado federal cearense José Guimarães após 16 anos do caso", url: "https://diariodonordeste.verdesmares.com.br/pontopoder/dolares-na-cueca-sentenca-exime-deputado-federal-cearense-jose-guimaraes-apos-16-anos-do-caso-1.3125857" },
       { title: "Após 16 anos, caso dos dólares na cueca de assessor do PT cearense prescreve", url: "https://www.opovo.com.br/noticias/politica/2021/08/20/apos-16-anos-caso-dos-dolares-na-cueca-de-assessor-do-pt-prescreve-na-justica.html" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2004-06-25",
+        basis: "first_known_act",
+        sourceUrl: "https://www.congressoemfoco.com.br/noticia/101576/dolares-na-cueca-mp-denuncia-irmao-de-genoino",
+        note: "Aprovação do financiamento do BNB ao consórcio STN.",
+      },
+      end: {
+        date: "2005-07-08",
+        basis: "police_investigation",
+        sourceUrl: "https://www.aosfatos.org/noticias/deputado-jose-guimaraes-nao-foi-flagrado-com-dolares-na-cueca-nem-preso/",
+        note: "Prisão do assessor no Aeroporto de Congonhas.",
+      },
+    },
   },
 
   "esquema_mensalao": {
@@ -310,7 +542,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "STF concede perdão a todo o núcleo político do mensalão", url: "https://www.congressoemfoco.com.br/noticia/46068/stf-concede-perdao-de-penas-a-todo-o-nucleo-politico-do-mensalao" },
       { title: "Barroso concede livramento condicional a Henrique Pizzolato", url: "https://conjur.com.br/2017-dez-27/barroso-concede-livramento-condicional-henrique-pizzolato/" },
       { title: "Barroso revoga punibilidade de ex-dirigentes do Rural baseado em indulto de Temer", url: "https://www.dgabc.com.br/Noticia/3068843/barroso-revoga-punibilidade-de-ex-dirigentes-do-rural-baseado-em-indulto-de-temer" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2003",
+        basis: "first_known_act",
+        sourceUrl: "https://noticias.stf.jus.br/postsnoticias/pgr-diz-que-e-inafastavel-reconhecimento-de-eficiente-sistema-de-repasse-ilicito-de-recursos/",
+        note: "Primeiros repasses descritos pela PGR e pelo STF (2003).",
+      },
+      end: {
+        date: "2005-06-09",
+        basis: "parliamentary_inquiry",
+        sourceUrl: "https://www.cnnbrasil.com.br/politica/20-anos-de-mensalao-entenda-como-tudo-comecou/",
+        note: "Instalação da CPMI dos Correios, três dias depois da entrevista de Roberto Jefferson. Um inquérito da PF sobre o vídeo dos Correios (maio de 2005) não foi confirmado.",
+      },
+    },
   },
 
   "esquema_sanguessugas": {
@@ -329,7 +575,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "STF reconhece prescrição e anula condenação de mentor de Máfia em MT", url: "https://www.folhamax.com/politica/stf-reconhece-prescricao-e-anula-condenacao-de-mentor-de-mafia-em-mt/368253" },
       { title: "Deputado é absolvido de envolvimento com Máfia dos Sanguessugas", url: "https://www2.oabrs.org.br/jornalDaOrdem/deputado-eacute-absolvido-de-envolvimento-com-maacute-fia-dos-sanguessugas/35634" },
       { title: "Conselho absolve senadores citados na CPI", url: "https://www.congressoemfoco.com.br/noticia/100560/conselho-absolve-senadores-citados-na-cpi" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2000",
+        basis: "documented_start",
+        sourceUrl: "https://www12.senado.leg.br/noticias/materias/2006/07/31/cpi-dos-sanguessugas-deve-decidir-proximos-passos-nesta-terca-feira",
+        note: "CPMI: provas de que o esquema funcionava pelo menos desde 2000.",
+      },
+      end: {
+        date: "2006-05",
+        basis: "police_investigation",
+        sourceUrl: "https://www.congressoemfoco.com.br/noticia/71007/entenda-o-caso-o-que-foi-a-operacao-sanguessuga",
+        note: "Operação Sanguessuga. Órgãos de controle apuravam o caso desde 2004, sem ato público.",
+      },
+    },
   },
 
   "esquema_operacao_navalha": {
@@ -347,7 +607,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Mantida decisão que aceitou denúncia contra acusados na Operação Navalha - Migalhas", url: "https://www.migalhas.com.br/quentes/178584/mantida-decisao-que-aceitou-denuncia-contra-acusados-na-operacao-navalha" },
       { title: "Corte Especial do STJ decide desmembrar ação da Operação Navalha - Consultor Jurídico", url: "https://conjur.com.br/2010-mar-22/corte-especial-stj-decide-desmembrar-acao-operacao-navalha/" },
       { title: "Operação Navalha - O Estado de S. Paulo (19/05/2007), via Senado Federal", url: "https://www2.senado.leg.br/bdsf/bitstream/handle/id/327540/noticia.htm?sequence=1&isAllowed=y" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2003-11",
+        basis: "enabling_act",
+        sourceUrl: "https://www.planalto.gov.br/ccivil_03/decreto/2003/d4873.htm",
+        note: "Criação do Luz para Todos, um dos programas fraudados. O início das fraudes da Gautama não é datado nas fontes.",
+      },
+      end: {
+        date: "2007-05-17",
+        basis: "police_investigation",
+        sourceUrl: "https://g1.globo.com/Noticias/Politica/0,,MUL48053-5601,00.html",
+        note: "Deflagração da operação. A PF investigava em sigilo desde novembro de 2006.",
+      },
+    },
   },
 
   "esquema_caixa_pandora": {
@@ -363,7 +637,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Caixa de Pandora: Justiça do DF absolve Arruda por improbidade administrativa - G1 DF", url: "https://g1.globo.com/df/distrito-federal/noticia/2026/10/22/caixa-de-pandora-justica-do-df-absolve-arruda-e-outros-tres-reus-por-improbidade-administrativa.ghtml" },
       { title: "Condenado a devolver R$ 594 milhões ao erário, Arruda levaria 2.001 anos para quitar dívida - Metrópoles", url: "https://www.metropoles.com/colunas/grande-angular/condenado-a-devolver-r-594-milhoes-ao-erario-arruda-levaria-2-001-anos-para-quitar-divida" },
       { title: "Arruda, Paulo Octávio e a coligação que dilapidou os cofres do DF - Metrópoles", url: "https://www.metropoles.com/materias-especiais/arruda-paulo-octavio-e-a-coligacao-que-dilapidou-os-cofres-do-df" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2007-01",
+        basis: "enabling_act",
+        sourceUrl: "https://www.congressoemfoco.com.br/noticia/77253/esquema-de-durval-comecou-no-governo-roriz",
+        note: "Posse de José Roberto Arruda, recorte do dossiê. O esquema de Durval Barbosa começou antes, no governo Roriz (ano não especificado).",
+      },
+      end: {
+        date: "2009-11-27",
+        basis: "police_investigation",
+        sourceUrl: "https://g1.globo.com/politica/noticia/2012/06/mensalao-do-dem-desviou-pelo-menos-r-110-milhoes-diz-pgr.html",
+        note: "Deflagração da operação.",
+      },
+    },
   },
 
   "esquema_operacao_porto_seguro": {
@@ -382,7 +670,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "MPF pede devolução de R$ 38 milhões de investigados na Operação Porto Seguro - O Globo", url: "https://oglobo.globo.com/politica/mpf-pede-devolucao-de-38-milhoes-de-investigados-na-operacao-porto-seguro-8355189" },
       { title: "Denúncia de propina de auditor levou PF a investigar diretor da ANA - G1", url: "https://g1.globo.com/politica/noticia/2012/11/denuncia-de-propina-de-auditor-levou-pf-investigar-diretor-de-estatal.html" },
       { title: "Justiça Federal aceita denúncia contra investigados da Operação Porto Seguro - Agência Brasil", url: "https://agenciabrasil.ebc.com.br/politica/noticia/2014-02/justica-federal-aceita-denuncia-contra-investigados-da-operacao-porto" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2007",
+        basis: "first_known_act",
+        sourceUrl: "https://g1.globo.com/politica/noticia/2012/11/denuncia-de-propina-de-auditor-levou-pf-investigar-diretor-de-estatal.html",
+        note: "Oferta de R$ 300 mil ao auditor do TCU, primeiro ato datado.",
+      },
+      end: {
+        date: "2012-11-23",
+        basis: "police_investigation",
+        sourceUrl: "https://noticias.uol.com.br/politica/ultimas-noticias/2012/12/03/confira-os-principais-fatos-relacionados-a-operacao-porto-seguro.htm",
+        note: "Deflagração da operação.",
+      },
+    },
   },
 
   "esquema_trensalao": {
@@ -399,7 +701,26 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Consultor confirma ter pago US$ 250 mil para ex-diretor da CPTM - Jornal Nacional", url: "https://g1.globo.com/jornal-nacional/noticia/2014/01/consultor-confirma-ter-pago-us-250-mil-para-ex-diretor-da-cptm.html" },
       { title: "O cartel dos trens leva a maré anticorrupção para São Paulo - EL PAÍS Brasil", url: "https://brasil.elpais.com/brasil/2014/12/05/politica/1417813172_432211.html" },
       { title: "Após 7 anos afastado por suspeita de corrupção, Robson Marinho volta ao TCE-SP - IstoÉ Dinheiro/Estadão Conteúdo", url: "https://istoedinheiro.com.br/apos-7-anos-afastado-por-suspeita-de-corrupcao-robson-marinho-volta-ao-tce-sp" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1998",
+        basis: "documented_start",
+        sourceUrl: "https://g1.globo.com/economia/noticia/2019/07/08/cade-condena-11-empresas-e-42-pessoas-por-cartel-de-trens-e-metros.ghtml",
+        note: "Cartel em licitações da CPTM e do Metrô entre 1998 e 2008.",
+      },
+      end: {
+        date: "2008",
+        basis: "documented_end",
+        sourceUrl: "https://g1.globo.com/economia/noticia/2019/07/08/cade-condena-11-empresas-e-42-pessoas-por-cartel-de-trens-e-metros.ghtml",
+      },
+      exposed: {
+        date: "2013-05",
+        basis: "oversight",
+        sourceUrl: "https://brasil.elpais.com/brasil/2014/12/05/politica/1417813172_432211.html",
+        note: "Acordo de leniência da Siemens com o CADE e o MPF.",
+      },
+    },
   },
 
   "esquema_lava_jato": {
@@ -418,7 +739,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "STF mantém nulidade de atos da Lava Jato contra Marcelo Odebrecht - STF", url: "https://noticias.stf.jus.br/?p=93703" },
       { title: "Dias Toffoli anula todos os atos da Lava Jato contra doleiro Alberto Youssef - SBT News", url: "https://sbtnews.sbt.com.br/noticia/politica/dias-toffoli-anula-todos-os-atos-da-lava-jato-contra-doleiro-alberto-youssef" },
       { title: "STF anula atos processuais de duas ações penais contra José Dirceu - STF", url: "https://noticias.stf.jus.br/postsnoticias/stf-anula-atos-processuais-de-duas-acoes-penais-contra-jose-dirceu/" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2004",
+        basis: "enabling_act",
+        sourceUrl: "https://www.congressoemfoco.com.br/noticias/partidos-receberam-propina-por-contratos-na-petrobras/",
+        note: "Paulo Roberto Costa assume a Diretoria de Abastecimento por indicação do PP; o início dos repasses não tem data única nas fontes.",
+      },
+      end: {
+        date: "2014-03-17",
+        basis: "police_investigation",
+        sourceUrl: "https://brasil.elpais.com/brasil/2015/04/23/politica/1429744001_078177.html",
+        note: "Deflagração da operação. O inquérito sobre doleiros corria em sigilo desde antes.",
+      },
+    },
   },
 
   "esquema_operacao_zelotes": {
@@ -435,7 +770,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Justiça Federal absolve Lula e Gilberto Carvalho na operação Zelotes - Migalhas", url: "https://www.migalhas.com.br/quentes/347371/justica-federal-absolve-lula-e-gilberto-carvalho-na-operacao-zelotes" },
       { title: "TRF1 absolve três ex-conselheiros do Carf denunciados na Operação Zelotes - JOTA", url: "https://www.jota.info/tributos/trf1-absolve-tres-ex-conselheiros-do-carf-denunciados-na-operacao-zelotes" },
       { title: "Justiça arquiva ação penal contra presidente do Bradesco - Agência Brasil", url: "https://agenciabrasil.ebc.com.br/politica/noticia/2017-06/justica-arquiva-acao-penal-contra-presidente-do-bradesco" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2005",
+        basis: "documented_start",
+        sourceUrl: "https://www.politize.com.br/operacao-zelotes-crime-investigado/",
+        note: "Há indícios de que o esquema começou em 2005.",
+      },
+      end: {
+        date: "2015-03-26",
+        basis: "police_investigation",
+        sourceUrl: "https://www1.folha.uol.com.br/mercado/2015/04/1611246-entenda-a-operacao-zelotes-da-policia-federal.shtml",
+        note: "Deflagração da operação; investigação sigilosa desde 2013.",
+      },
+    },
   },
 
   "esquema_operacao_greenfield": {
@@ -453,7 +802,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Juiz vê coação em acordo de leniência da J&F e reduz multa bilionária - Migalhas", url: "https://www.migalhas.com.br/quentes/443706/juiz-ve-coacao-em-acordo-de-leniencia-da-j-f-e-reduz-multa-bilionaria" },
       { title: "TRF-1 tranca investigação contra Paulo Guedes em operação sobre fraudes em fundos de pensão - Migalhas", url: "https://www.migalhas.com.br/quentes/334506/trf-1-tranca-investigacao-contra-paulo-guedes-em-operacao-sobre-fraudes-em-fundos-de-pensao" },
       { title: "Vaccari e ex-diretores da Funcef se tornam réus na Operação Greenfield - Agência Brasil", url: "https://agenciabrasil.ebc.com.br/geral/noticia/2017-05/vaccari-e-ex-diretores-da-funcef-se-tornam-reus-na-operacao-greenfield" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2011",
+        basis: "documented_start",
+        sourceUrl: "https://mpmt.mp.br/conteudo/726/93125/ft-greenfield-aciona-13-pessoas-por-improbidade-administrativa-pela-gestao-temeraria-dos-fundos-de-pensao-petros-funcef-e-previ",
+        note: "Investimentos questionados feitos entre 2011 e 2016.",
+      },
+      end: {
+        date: "2016-09",
+        basis: "police_investigation",
+        sourceUrl: "https://www2.senado.leg.br/bdsf/bitstream/handle/id/525541/noticia.html?sequence=1&isAllowed=y",
+        note: "Deflagração da operação.",
+      },
+    },
   },
 
   "esquema_jbs_mala_rocha_loures": {
@@ -472,7 +835,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Justiça Federal do DF absolve Temer e mais cinco de suposto esquema em portos - G1", url: "https://g1.globo.com/politica/noticia/2021/03/19/justica-federal-do-df-absolve-temer-e-mais-cinco-de-suposto-esquema-de-corrupcao-em-portos.ghtml" },
       { title: "Fachin nega recurso e confirma fim de investigação contra Temer em caso da mala com dinheiro - CartaCapital", url: "https://www.cartacapital.com.br/justica/fachin-nega-recurso-e-confirma-fim-de-investigacao-contra-temer-em-caso-da-mala-com-dinheiro/" },
       { title: "Justiça Federal absolve deputado federal Aécio Neves da acusação de corrupção passiva no caso J&F - TRF-3", url: "https://web.trf3.jus.br/noticias-sjsp/Noticiar/ExibirNoticia/227-justica-federal-absolve-deputado-federal-aecio-neves" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2017-03",
+        basis: "first_known_act",
+        sourceUrl: "https://g1.globo.com/politica/noticia/delacao-da-jbs-veja-os-videos-dos-depoimentos.ghtml",
+        note: "Conversa gravada de Joesley Batista com Michel Temer no Jaburu.",
+      },
+      end: {
+        date: "2017-05-18",
+        basis: "police_investigation",
+        sourceUrl: "https://g1.globo.com/politica/noticia/stf-libera-conteudo-da-delacao-dos-donos-da-jbs.ghtml",
+        note: "Operação Patmos. A entrega da mala, em abril, foi ação controlada sigilosa.",
+      },
+    },
   },
 
   "esquema_operacao_cadeia_velha": {
@@ -488,7 +865,27 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "STF anula condenação do ex-presidente da Alerj Paulo Melo a 12 anos de prisão na Lava Jato - G1", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2022/03/17/por-3-votos-a-2-stf-anula-condenacao-do-ex-presidente-da-alerj-paulo-melo-a-12-anos-de-prisao-na-lava-jato.ghtml" },
       { title: "Justiça arquiva acusações da operação Cadeia Velha contra Edson Albertassi e Paulo Melo - G1", url: "https://g1.globo.com/rj/sul-do-rio-costa-verde/noticia/2023/11/29/justica-arquiva-acusacoes-da-operacao-cadeia-velha-contra-edson-albertassi-e-paulo-melo.ghtml" },
       { title: "TRF-2 manda para a Justiça estadual processo da operação Cadeia Velha - Migalhas", url: "https://www.migalhas.com.br/quentes/371799/trf-2-manda-para-a-justica-estadual-processo-da-operacao-cadeia-velha" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "1990",
+        basis: "documented_start",
+        sourceUrl: "http://combateacorrupcao.mpf.mp.br/feeder_novo/lava-jato/4c37f792bb76be936cab4ef9e67f3bc4",
+        note: "MPF: Picciani recebia propinas \"desde os anos 1990\"; 1990 é aproximação da década.",
+      },
+      end: {
+        date: "2017-03",
+        basis: "documented_end",
+        sourceUrl: "https://oglobo.globo.com/politica/mpf-picciani-albertassi-receberam-propina-da-fetranspor-ate-2017-22070175",
+        note: "Último pagamento da Fetranspor apontado pelo MPF.",
+      },
+      exposed: {
+        date: "2017-11-14",
+        basis: "police_investigation",
+        sourceUrl: "https://g1.globo.com/rio-de-janeiro/noticia/operacao-cadeia-velha-investiga-cupula-da-alerj.ghtml",
+        note: "Deflagração da operação.",
+      },
+    },
   },
 
   "esquema_caso_queiroz_rachadinhas": {
@@ -507,7 +904,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "MPRJ pede anulação da denúncia contra Flávio Bolsonaro no caso das rachadinhas - G1", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2022/05/11/mp-pede-anulacao-da-denuncia-contra-flavio-bolsonaro-no-caso-das-rachadinhas-sem-prejuizo-do-reinicio-das-investigacoes.ghtml" },
       { title: "Órgão Especial rejeita denúncia no caso das rachadinhas depois da anulação de provas no STJ e STF e de MP pedir extinção do processo - TJ-RJ", url: "https://portaltj.tjrj.jus.br/noticias/noticia/-/visualizar-conteudo/5111210/92111643" },
       { title: "Gilmar Mendes nega recursos para reabrir caso da rachadinha contra Flávio Bolsonaro - Folha", url: "https://www1.folha.uol.com.br/blogs/brasilia-hoje/2025/02/gilmar-mendes-nega-recursos-para-reabrir-caso-da-rachadinha-contra-flavio-bolsonaro.shtml" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2007",
+        basis: "documented_start",
+        sourceUrl: "https://conjur.com.br/2020-nov-04/mp-denuncia-flavio-bolsonaro-esquema-rachadinha-alerj/",
+        note: "Denúncia do MP-RJ: esquema entre 2007 e 2018.",
+      },
+      end: {
+        date: "2018-12",
+        basis: "oversight",
+        sourceUrl: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2019/01/18/caso-fabricio-queiroz-o-que-e-cronologia-dos-fatos-personagens.ghtml",
+        note: "Relatório do Coaf vem a público. A denúncia situa o fim do esquema no mesmo ano (2018).",
+      },
+    },
   },
 
   "esquema_laranjas_do_psl": {
@@ -525,7 +936,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "TSE decide que candidatura laranja de mulheres gera cassação integral da chapa - Congresso em Foco", url: "https://www.congressoemfoco.com.br/noticia/32161/tse-decide-que-candidatura-laranja-de-mulheres-gera-cassacao-integral-da-chapa" },
       { title: "Candidatas do PSL são absolvidas na Justiça eleitoral no caso das laranjas de 2018 - O Globo", url: "https://oglobo.globo.com/politica/noticia/2022/06/candidatas-do-psl-sao-absolvidas-na-justica-eleitoral-no-caso-das-laranjas-de-2018.ghtml" },
       { title: "Gilmar arquiva inquérito contra ex-ministro de Bolsonaro por candidaturas laranjas - Amado Mundo", url: "https://amadomundo.com/gilmar-arquiva-inquerito-contra-ex-ministro-de-bolsonaro-por-candidaturas-laranjas/" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2018",
+        basis: "first_known_act",
+        sourceUrl: "https://g1.globo.com/politica/noticia/2019/04/29/entenda-as-investigacoes-sobre-candidatos-laranja.ghtml",
+        note: "Candidaturas fictícias nas eleições de 2018.",
+      },
+      end: {
+        date: "2019-02-27",
+        basis: "police_investigation",
+        sourceUrl: "https://www.poder360.com.br/governo/pf-abre-inquerito-sobre-suspeitas-de-candidaturas-laranjas-do-psl-em-minas/",
+        note: "PF abre inquérito em Minas, depois das reportagens da Folha.",
+      },
+    },
   },
 
   "esquema_operacao_placebo": {
@@ -546,7 +971,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Em relatório, governo do RJ vê omissão de Edmar Santos na compra de respiradores - CNN Brasil", url: "https://www.cnnbrasil.com.br/politica/em-relatorio-governo-do-rj-ve-omissao-de-edmar-santos-na-compra-de-respiradores/" },
       { title: "Conselho de Medicina cassa registro de ex-secretário de Saúde do RJ - Agência Brasil", url: "https://agenciabrasil.ebc.com.br/geral/noticia/2023-06/conselho-de-medicina-cassa-registro-de-ex-secretario-de-saude-do-rj" },
       { title: "Justiça do RJ condena ex-secretário Edmar Santos e ex-subsecretário por superfaturamento na pandemia - G1", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2025/10/02/justica-do-rj-condena-ex-secretario-edmar-santos-e-ex-subsecretario-por-superfaturamento-na-pandemia.ghtml" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2020-03",
+        basis: "first_known_act",
+        sourceUrl: "https://www.cnnbrasil.com.br/politica/em-relatorio-governo-do-rj-ve-omissao-de-edmar-santos-na-compra-de-respiradores/",
+        note: "Contratações emergenciais da Saúde do RJ no início da pandemia.",
+      },
+      end: {
+        date: "2020-05-26",
+        basis: "police_investigation",
+        sourceUrl: "https://g1.globo.com/politica/noticia/2020/05/26/bolsonaro-ri-ao-ser-questionado-sobre-operacao-contra-witzel-e-da-parabens-a-pf.ghtml",
+        note: "Deflagração da operação.",
+      },
+    },
   },
 
   "esquema_orcamento_secreto_rp9": {
@@ -565,7 +1004,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "PF faz operação para investigar suspeita de desvios na Codevasf - G1 JN", url: "https://g1.globo.com/jornal-nacional/noticia/2022/07/20/pf-faz-operacao-para-investigar-suspeita-de-desvios-na-codevasf.ghtml" },
       { title: "O que é este tal Orçamento Secreto - Jornal Extra Classe", url: "https://www.extraclasse.org.br/politica/2022/10/o-que-e-este-tal-orcamento-secreto/" },
       { title: "Lira ficará frente a frente com deputado que denunciou indicação irregular de emendas, decide Dino - G1", url: "https://g1.globo.com/politica/noticia/2026/02/04/dino-autoriza-acareacao-entre-lira-e-deputado-que-denunciou-indicacao-irregular-de-emendas.ghtml" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2020",
+        basis: "enabling_act",
+        sourceUrl: "https://www.cnnbrasil.com.br/politica/em-quase-3-anos-orcamento-secreto-pago-supera-emendas-individuais-e-e-mais-que-o-dobro-das-de-bancada/",
+        note: "Emendas de relator (RP9) usadas a partir do Orçamento de 2020.",
+      },
+      end: {
+        date: "2022-12-19",
+        basis: "court_ruling",
+        sourceUrl: "https://g1.globo.com/politica/noticia/2022/12/19/entenda-a-decisao-do-supremo-que-considerou-o-orcamento-secreto-inconstitucional.ghtml",
+        note: "STF declara inconstitucional o modelo. A suspensão liminar de novembro de 2021 não encerrou as emendas.",
+      },
+    },
   },
 
   "esquema_bolsolao_do_mec": {
@@ -583,7 +1036,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Prefeito diz que não pagou por Bíblias com fotos de Milton Ribeiro e pastores distribuídas em evento no Pará - G1 PA", url: "https://g1.globo.com/pa/para/noticia/2022/03/30/prefeito-diz-que-nao-pagou-por-biblias-distribuidas-com-fotos-milton-ribeiro-e-pastores-durante-evento-no-para.ghtml" },
       { title: "Governo destitui servidor envolvido em esquema de propina com pastores - Agência Brasil", url: "https://agenciabrasil.ebc.com.br/politica/noticia/2024-01/governo-destitui-servidor-envolvido-em-esquema-de-propina-com-pastores" },
       { title: "Cármen determina inquérito para apurar áudio do ministro da Educação - Migalhas", url: "https://www.migalhas.com.br/quentes/362361/carmen-determina-inquerito-para-apurar-audio-do-ministro-da-educacao" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2021-01",
+        basis: "first_known_act",
+        sourceUrl: "https://legis.senado.leg.br/sdleg-getter/documento?dm=9096890",
+        note: "Pastores negociavam com prefeituras \"ao menos desde janeiro de 2021\".",
+      },
+      end: {
+        date: "2022-03",
+        basis: "police_investigation",
+        sourceUrl: "https://www.migalhas.com.br/quentes/362361/carmen-determina-inquerito-para-apurar-audio-do-ministro-da-educacao",
+        note: "Cármen Lúcia determina inquérito no STF, dias depois das reportagens.",
+      },
+    },
   },
 
   "esquema_operacao_venire_joias_presidencia": {
@@ -601,7 +1068,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "PF indicia Bolsonaro e Mauro Cid no caso das joias sauditas - Agência Brasil", url: "https://agenciabrasil.ebc.com.br/justica/noticia/2024-07/pf-indicia-bolsonaro-no-caso-das-joias-sauditas" },
       { title: "Moraes decide arquivar caso do cartão de vacina de Bolsonaro - Congresso em Foco", url: "https://www.congressoemfoco.com.br/noticia/107333/moraes-decide-arquivar-caso-do-cartao-de-vacina-de-bolsonaro" },
       { title: "PGR pede arquivamento de investigação sobre joias dadas a Bolsonaro - Congresso em Foco", url: "https://www.congressoemfoco.com.br/noticia/116979/pgr-pede-arquivamento-de-investigacao-sobre-joias-dadas-a-bolsonaro" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2021-10",
+        basis: "first_known_act",
+        sourceUrl: "https://g1.globo.com/politica/noticia/2024/07/04/pf-indicia-bolsonaro-em-inquerito-das-joias.ghtml",
+        note: "Retenção das joias sauditas em Guarulhos.",
+      },
+      end: {
+        date: "2023-03",
+        basis: "police_investigation",
+        sourceUrl: "https://www.estadao.com.br/150-anos/150-momentos/caso-das-joias-veio-a-publico-pela-primeira-vez-no-estadao/",
+        note: "Estadão revela o caso no início de março de 2023 e a PF abre inquérito no mesmo mês.",
+      },
+    },
   },
 
   "esquema_banco_master_inss": {
@@ -620,7 +1101,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "PF indicia Vorcaro e ex-presidente do BRB por crimes financeiros - Estadão Conteúdo / Diário do Grande ABC", url: "https://www.dgabc.com.br/Noticia/4365628/pf-indicia-vorcaro-e-ex-presidente-do-brb-por-crimes-financeiros" },
       { title: "Fachin homologa delação de fundador da Reag, investigado no caso Master - G1", url: "https://g1.globo.com/politica/noticia/2026/11/06/fachin-homologa-delacao-de-fundador-da-reag-investigado-no-caso-master.ghtml" },
       { title: "PGR envia ao Supremo parecer favorável a manter prisão de Vorcaro - Agência Brasil", url: "https://agenciabrasil.ebc.com.br/justica/noticia/2026-11/pgr-envia-ao-supremo-parecer-favoravel-manter-prisao-de-vorcaro" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2024-07",
+        basis: "documented_start",
+        sourceUrl: "https://www.cnnbrasil.com.br/economia/mercado/entenda-operacao-que-prendeu-daniel-vorcaro-dono-do-banco-master/",
+        note: "Primeiras cessões de carteiras do Master ao BRB.",
+      },
+      end: {
+        date: "2025-11-18",
+        basis: "police_investigation",
+        sourceUrl: "https://www.cnnbrasil.com.br/economia/mercado/entenda-operacao-que-prendeu-daniel-vorcaro-dono-do-banco-master/",
+        note: "Operação Compliance Zero e liquidação do Master. O veto do BC à compra (setembro de 2025) não interrompeu as cessões.",
+      },
+    },
   },
 
   "esquema_inss_sem_desconto": {
@@ -636,7 +1131,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "INSS: PF indicia ex-presidente, \"Careca\" e mais 46 por corrupção - Metrópoles", url: "https://www.metropoles.com/brasil/inss-pf-indicia-ex-presidente-careca-e-mais" },
       { title: "PF indicia ex-presidente do INSS por corrupção em desvio de aposentadorias - Viva", url: "https://viva.com.br/noticias/pf-indicia-ex-presidente-do-inss-por-corrupcao-em-desvio-de-aposentadorias.html" },
       { title: "INSS: veja o que a PF diz sobre os indiciados na primeira investigação sobre descontos indevidos - G1", url: "https://g1.globo.com/politica/noticia/2026/07/15/inss-veja-o-que-a-pf-diz-sobre-os-indiciados-na-primeira-investigacao-sobre-descontos-indevidos.ghtml" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2019",
+        basis: "documented_start",
+        sourceUrl: "https://agenciabrasil.ebc.com.br/geral/noticia/2025-05/inss-descontos-indevidos-partir-de-marco-de-2020-serao-restituidos",
+        note: "PF e CGU apontam descontos indevidos de 2019 a 2024.",
+      },
+      end: {
+        date: "2025-04-23",
+        basis: "police_investigation",
+        sourceUrl: "https://agenciagov.ebc.com.br/noticias/202504/201cprotecao-aos-aposentados201d-diz-lewandowski-sobre-operacao-contra-fraudes-em-descontos-no-inss",
+        note: "Deflagração da operação; investigação desde 2023, sem ato público.",
+      },
+    },
   },
 
   "esquema_faroeste": {
@@ -655,7 +1164,21 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       { title: "Operação Faroeste: MPF pede manutenção da prisão preventiva de seis investigados", url: "https://g1.globo.com/ba/bahia/noticia/2020/07/02/operacao-faroeste-mpf-requer-manutencao-da-prisao-preventiva-de-seis-investigados.ghtml" },
       { title: "Investigação revela esquema de corrupção entre juízes e ruralistas no oeste da Bahia", url: "https://brasil.mongabay.com/2019/11/investigacao-revela-esquema-de-corrupcao-entre-juizes-e-ruralistas-no-oeste-da-bahia/" },
       { title: "STJ condena desembargadora e juiz em primeiras punições da operação Faroeste", url: "https://www.jota.info/justica/stj-condena-desembargadora-e-juiz-em-primeiras-punicoes-da-operacao-faroeste" }
-    ]
+    ],
+    timeline: {
+      start: {
+        date: "2013-01",
+        basis: "first_known_act",
+        sourceUrl: "https://brasil.mongabay.com/2019/11/investigacao-revela-esquema-de-corrupcao-entre-juizes-e-ruralistas-no-oeste-da-bahia/",
+        note: "Início das movimentações financeiras investigadas (janeiro de 2013).",
+      },
+      end: {
+        date: "2019-11-19",
+        basis: "police_investigation",
+        sourceUrl: "https://www.stj.jus.br/sites/portalp/Paginas/Comunicacao/Noticias/2026/21102026-Operacao-Faroeste-Corte-Especial-condena-magistrados-por-venda-de-decisoes-judiciais-na-Bahia.aspx",
+        note: "Deflagração da operação; apurações do MP-BA desde 2015, sem ato público.",
+      },
+    },
   }
 
 };
