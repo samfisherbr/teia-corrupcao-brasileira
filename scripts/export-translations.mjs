@@ -12,7 +12,8 @@
  * (source, target, type, status, COALESCE(year, -1)), nunca pelo id
  * (ver migrations/README.md).
  *
- * Só lê o banco (SELECT). Precisa do wrangler logado na conta do projeto.
+ * Só lê o banco (SELECT). Precisa do wrangler logado na conta do projeto. Lê em
+ * páginas: rode sem edições em andamento no banco (uma tradução repetida aborta).
  */
 import { spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -23,10 +24,13 @@ const OUT = fileURLToPath(new URL('../data/translations/links.en-es.sql', import
 const PAGE = 200;
 
 function d1(sql) {
-  const r = spawnSync('npx', ['wrangler', 'd1', 'execute', DB, '--remote', '--json', '--command', sql], {
+  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  const r = spawnSync(npx, ['wrangler', 'd1', 'execute', DB, '--remote', '--json', '--command', sql], {
     encoding: 'utf8',
     maxBuffer: 256 * 1024 * 1024,
+    shell: process.platform === 'win32',
   });
+  if (r.error) throw new Error(`não consegui rodar o wrangler: ${r.error.message}`);
   if (r.status !== 0) throw new Error(`wrangler falhou (código ${r.status}): ${(r.stderr || r.stdout).slice(-500)}`);
   // O wrangler pode imprimir avisos antes do JSON: tenta cada linha que começa com '['.
   let parsed;

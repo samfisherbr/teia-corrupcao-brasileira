@@ -16,7 +16,8 @@
  * de fora. Em cada comando que cita `links` ou `link_translations`, procura
  * `id = 12`, `id IN (1, 2)`, `id <= 5`, `id BETWEEN 1 AND 9`, `rowid = 5` ou
  * `link_id = 12` (os textos entre aspas e os comentários são ignorados;
- * `id = 'pol_x'` de nós é permitido).
+ * `id = 'pol_x'` de nós é permitido). É uma conferência por padrões, não uma
+ * prova: não pega, por exemplo, `id = (SELECT …)`; ela complementa a revisão.
  */
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

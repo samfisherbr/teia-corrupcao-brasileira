@@ -7,8 +7,10 @@
 -- pelo id (ver migrations/README.md); os números 290, 68, 243, 81, 136 e 242 nos
 -- comentários são ids de produção, só para referência. Se um vínculo não casar,
 -- o comando não altera nada.
--- Pré-requisito: migração 0007 aplicada. Pode rodar de novo sem risco: os
--- UPDATEs gravam valores fixos e os DELETEs miram vínculos fixos.
+-- Pré-requisito: migração 0007 aplicada. Foi pensada para rodar uma vez. Rodar de
+-- novo não grava no vínculo errado (os UPDATEs gravam valores fixos e os DELETEs
+-- miram vínculos fixos), mas, se o status de um vínculo mudou depois, o comando
+-- dele não casa e não altera nada: confira com npm run check:data.
 --   npx wrangler d1 execute corruption_graph_db --remote --file=./migrations/0008_waldomiro_fhc_delubio_cleanup.sql
 --
 --  1. Vínculo 290 (PT → Caso Waldomiro Diniz): a fonte passa a ser a Folha de
