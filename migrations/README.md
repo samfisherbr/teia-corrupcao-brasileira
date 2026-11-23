@@ -50,3 +50,4 @@ não grava no vínculo errado. Consequências:
 | 0002 a 0006 | Aplicadas. Usam ids (histórico); não reescrever. |
 | 0007 `amount_kind` | Aplicada em 22/11/2026. Chave natural. |
 | 0008 correções de 23/11/2026 | Aplicada em 23/11/2026. Chave natural. |
+| 0009 valor de Sandra Inês Azevedo (Faroeste) | Aplicada em 23/11/2026. Chave natural. |

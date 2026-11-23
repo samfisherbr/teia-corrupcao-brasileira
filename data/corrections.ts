@@ -39,6 +39,17 @@ export interface Correction {
 export const CORRECTIONS: Correction[] = [
   {
     date: '2026-11-23',
+    scheme: 'esquema_faroeste',
+    kind: 'correcao',
+    summary:
+      'O vínculo de Sandra Inês Rusciolelli Azevedo com a Operação Faroeste registrava R$ 2,4 milhões como propina dela. Segundo o g1 (04/11/2026), esse valor é o que o grupo teria recebido, de cerca de R$ 4 milhões prometidos, e não um valor dela. O vínculo passou a registrar R$ 250 mil: propina que, segundo o g1, ela teria recebido e que, segundo o STJ, a Polícia Federal apreendeu na casa dela e do filho. O total de R$ 2,4 milhões continua descrito no resumo do dossiê, como valor do grupo.',
+    translations: {
+      en: 'The link between Sandra Inês Rusciolelli Azevedo and Operation Faroeste recorded R$ 2.4 million as a bribe attributed to her. According to g1 (04/11/2026), that is the amount the group allegedly received, out of about R$ 4 million promised, and not an amount attributed to her. The link now records R$ 250,000: a bribe that, according to g1, she allegedly received and that, according to the STJ, the Federal Police seized at her and her son\'s home. The R$ 2.4 million total remains described in the dossier summary, as the group\'s amount.',
+      es: 'El vínculo de Sandra Inês Rusciolelli Azevedo con la Operación Faroeste registraba 2,4 millones de reales como soborno suyo. Según g1 (04/11/2026), esa es la cantidad que el grupo habría recibido, de unos 4 millones prometidos, y no una cantidad atribuida a ella. El vínculo registra ahora 250.000 reales: un soborno que, según g1, habría recibido y que, según el STJ, la Policía Federal incautó en la casa de ella y de su hijo. El total de 2,4 millones de reales sigue descrito en el resumen del dosier, como cantidad del grupo.',
+    },
+  },
+  {
+    date: '2026-11-23',
     scheme: 'esquema_waldomiro_diniz',
     kind: 'correcao',
     summary:
