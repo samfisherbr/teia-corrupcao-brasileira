@@ -20,12 +20,15 @@
 --     que era tesoureiro do PT passa ao vínculo 243, cuja fonte a sustenta.
 --  4. Traduções do nó esquema_faroeste: o rótulo em português passou a ser
 --     "Operação Faroeste"; os rótulos em inglês e espanhol acompanham.
--- A natureza do valor do vínculo 290 (illicit_flow) está na migração 0007.
+-- Também grava a natureza do valor do vínculo 290 (illicit_flow, ver 0007) e o
+-- rótulo curto do nó esquema_faroeste.
 -- ============================================================================
 
 UPDATE links SET source_url = 'https://www1.folha.uol.com.br/folha/brasil/ult96u58129.shtml', relation = 'No vídeo divulgado pela Época, Waldomiro pedia a Cachoeira dinheiro para campanhas de candidatos do PT, além de propina para si; à revista, à Assembleia Legislativa do Rio e à CPI dos Bingos, ele afirmou ter repassado R$ 100 mil à campanha de Geraldo Magela, candidato do PT ao governo do DF, valor que, segundo ele, foi doação de Cachoeira, e disse nunca ter sido filiado ao PT. Cachoeira disse à CPI que nada destinou à campanha de Magela, e Magela negou ter recebido recursos e anunciou ação por danos morais contra Waldomiro. O partido não consta como investigado ou réu nas fontes consultadas.', reviewed_at = '2026-11-23' WHERE id = 290 AND source = 'par_pt' AND target = 'esquema_waldomiro_diniz';
 UPDATE links SET relation = 'Um dos fundadores da legenda em 1988; eleito presidente da República em 1994, tomou posse em 1995 e foi reeleito em 1998.', reviewed_at = '2026-11-23' WHERE id = 68 AND source = 'pol_fhc' AND target = 'par_psdb';
 UPDATE links SET relation = 'Ex-tesoureiro do PT, foi condenado por lavagem de dinheiro por ter, segundo a denúncia, orientado a dissimulação do empréstimo cujo destinatário final seria o empresário de Santo André; a condenação foi anulada pelo STJ em 2023 por incompetência da Justiça Federal e o caso remetido à Justiça Eleitoral.', reviewed_at = '2026-11-23' WHERE id = 243 AND source = 'pol_delubio_soares' AND target = 'esquema_santo_andre';
+
+UPDATE links SET amount_kind = 'illicit_flow' WHERE id = 290 AND source = 'par_pt' AND target = 'esquema_waldomiro_diniz' AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 -- Traduções dos vínculos 290, 68 e 243 (source_text recalculado pelo próprio comando).
 UPDATE link_translations SET relation = 'In the video released by Época, Waldomiro asked Cachoeira for money for PT candidates'' campaigns, as well as a bribe for himself; to the magazine, to the Rio de Janeiro Legislative Assembly and to the Bingos CPI, he said he passed R$ 100,000 to the campaign of Geraldo Magela, the PT candidate for governor of the Federal District, an amount that, according to him, was a donation from Cachoeira, and said he had never been a member of the PT. Cachoeira told the CPI that he allocated nothing to Magela''s campaign, and Magela denied having received any funds and announced a lawsuit for moral damages against Waldomiro. The party is not named as a subject of investigation or a defendant in the sources consulted.', source_text = (SELECT l.relation || char(10) || COALESCE(l.amount, '') || char(10) || COALESCE(l.amount_note, '') FROM links l WHERE l.id = link_translations.link_id) WHERE link_id = 290 AND lang = 'en';
@@ -40,6 +43,7 @@ DELETE FROM link_translations WHERE link_id IN (SELECT id FROM links WHERE (id I
 DELETE FROM links WHERE id IN (81, 136) AND source = 'pol_fhc' AND target = 'par_psdb';
 DELETE FROM links WHERE id = 242 AND source = 'pol_delubio_soares' AND target = 'par_pt';
 
--- Rótulos traduzidos do esquema Faroeste.
+-- Rótulo do esquema Faroeste e suas traduções (o source_text depende do rótulo).
+UPDATE nodes SET label = 'Operação Faroeste' WHERE id = 'esquema_faroeste';
 UPDATE node_translations SET label = 'Operation Faroeste', source_text = (SELECT n.label || char(10) || COALESCE(n.summary, '') FROM nodes n WHERE n.id = node_translations.node_id) WHERE node_id = 'esquema_faroeste' AND lang = 'en';
 UPDATE node_translations SET label = 'Operación Faroeste', source_text = (SELECT n.label || char(10) || COALESCE(n.summary, '') FROM nodes n WHERE n.id = node_translations.node_id) WHERE node_id = 'esquema_faroeste' AND lang = 'es';

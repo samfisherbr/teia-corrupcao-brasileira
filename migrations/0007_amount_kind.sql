@@ -32,8 +32,9 @@
 -- de damage para contract e 290 (R$ 100 mil repassados à campanha de Geraldo
 -- Magela, segundo Waldomiro Diniz) de bribe para illicit_flow; este arquivo já
 -- reflete isso, para que rodá-lo de novo não desfaça as correções.
--- Os ids valem só para o banco de produção: num banco reconstruído, use os
--- INSERTs dos dossiês com a coluna amount_kind (Master Prompt v7).
+-- Os ids valem só para o banco de produção. Banco criado com o schema.sql atual
+-- já tem a coluna: não rode esta migração; use os INSERTs dos dossiês com
+-- amount_kind (Master Prompt v7).
 -- Não mexe nas traduções: amount_kind não é texto traduzido nem entra no
 -- source_text.
 -- ============================================================================

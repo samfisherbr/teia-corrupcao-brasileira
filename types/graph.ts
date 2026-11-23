@@ -94,7 +94,7 @@ export interface GraphLink {
   /** Ressalva sobre o número (estimativa, moeda estrangeira, total de acordo…). */
   amount_note: string | null;
   /** O que o valor representa (propina, prejuízo, contrato…). NULL sem valor ou antes da migração 0007. */
-  amount_kind?: AmountKind | null;
+  amount_kind: AmountKind | null;
   year: number | null;
   source_url: string | null;
   /** Data (AAAA-MM-DD) em que o status foi conferido pela última vez. NULL = não registrada. */
