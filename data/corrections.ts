@@ -38,6 +38,49 @@ export interface Correction {
 
 export const CORRECTIONS: Correction[] = [
   {
+    date: '2026-11-23',
+    scheme: 'esquema_waldomiro_diniz',
+    kind: 'correcao',
+    summary:
+      'No vínculo entre o PT e o Caso Waldomiro Diniz, a fonte passou a ser a reportagem da Folha de 13/02/2004 (antes, uma matéria do Tribuna do Paraná) e o texto passou a registrar o que não constava: o depoimento de Waldomiro à CPI dos Bingos em 2005 (disse que os R$ 100 mil foram doação de Carlos Cachoeira à campanha de Geraldo Magela e que nunca foi filiado ao PT), a versão de Cachoeira à CPI (disse que nada destinou à campanha de Magela) e a de Magela (negou ter recebido recursos e anunciou ação por danos morais). O texto anterior trazia apenas a versão de Waldomiro à revista Época.',
+    translations: {
+      en: 'In the link between the PT and the Waldomiro Diniz case, the source is now the Folha report of 13/02/2004 (previously an article from Tribuna do Paraná) and the text now records what was missing: Waldomiro\'s 2005 testimony to the Bingos CPI (he said the R$ 100,000 was a donation from Carlos Cachoeira to Geraldo Magela\'s campaign and that he had never been a PT member), Cachoeira\'s account to the CPI (he said he allocated nothing to Magela\'s campaign) and Magela\'s (he denied having received any funds and announced a lawsuit for moral damages). The previous text carried only Waldomiro\'s account to Época magazine.',
+      es: 'En el vínculo entre el PT y el caso Waldomiro Diniz, la fuente pasó a ser el reportaje de Folha del 13/02/2004 (antes, un artículo de Tribuna do Paraná) y el texto recoge ahora lo que faltaba: la declaración de Waldomiro a la CPI de los Bingos en 2005 (dijo que los 100.000 reales fueron una donación de Carlos Cachoeira a la campaña de Geraldo Magela y que nunca estuvo afiliado al PT), la versión de Cachoeira ante la CPI (dijo que no destinó nada a la campaña de Magela) y la de Magela (negó haber recibido fondos y anunció una demanda por daños morales). El texto anterior solo contenía la versión de Waldomiro a la revista Época.',
+    },
+  },
+  {
+    date: '2026-11-23',
+    kind: 'correcao',
+    summary:
+      'Os três vínculos de Fernando Henrique Cardoso com o PSDB (fundação em 1988, presidente durante a emenda da reeleição em 1997 e presidente durante a privatização do Sistema Telebrás em 1998) foram reunidos em um só, o de 1988, que agora também registra que ele foi eleito presidente da República em 1994, tomou posse em 1995 e foi reeleito em 1998. Os contextos da reeleição e da privatização continuam nos vínculos dele com os esquemas Compra de Votos da Reeleição e Grampos do BNDES. O texto anterior dizia ainda que ele presidiu o país entre 1995 e 2002; o fim do mandato deixou de constar do vínculo.',
+    translations: {
+      en: 'The three links between Fernando Henrique Cardoso and the PSDB (founding in 1988, president during the re-election amendment in 1997 and president during the Telebrás privatisation in 1998) were merged into one, the 1988 link, which now also records that he was elected President of the Republic in 1994, took office in 1995 and was re-elected in 1998. The re-election and privatisation contexts remain in his links to the Re-election vote-buying and BNDES wiretaps schemes. The previous text also said he governed the country from 1995 to 2002; the end of his term no longer appears in the link.',
+      es: 'Los tres vínculos de Fernando Henrique Cardoso con el PSDB (fundación en 1988, presidente durante la enmienda de la reelección en 1997 y presidente durante la privatización del Sistema Telebrás en 1998) se unificaron en uno, el de 1988, que ahora recoge también que fue elegido presidente de la República en 1994, tomó posesión en 1995 y fue reelegido en 1998. Los contextos de la reelección y de la privatización siguen en sus vínculos con las tramas Compra de votos de la reelección y Escuchas del BNDES. El texto anterior decía además que presidió el país entre 1995 y 2002; el final del mandato ya no consta en el vínculo.',
+    },
+  },
+  {
+    date: '2026-11-23',
+    scheme: 'esquema_santo_andre',
+    kind: 'correcao',
+    summary:
+      'Os dois vínculos de Delúbio Soares com o PT (tesoureiro nacional em 2004, à época do empréstimo investigado na Operação Carbono 14, e saída do cargo em 5 de julho de 2005) foram reduzidos a um, o de 2005. A informação de que ele foi tesoureiro do PT passou também para o vínculo dele com o Esquema de Propinas de Santo André, como ex-tesoureiro. A afirmação de que ocupava a tesouraria nacional à época do empréstimo deixou de constar, porque a fonte do vínculo (CNN Brasil, 03/03/2023) o chama apenas de ex-tesoureiro.',
+    translations: {
+      en: 'The two links between Delúbio Soares and the PT (national treasurer in 2004, at the time of the loan investigated in Operation Carbono 14, and leaving the post on 5 July 2005) were reduced to one, the 2005 link. The information that he was PT treasurer now also appears in his link to the Santo André bribery scheme, as former treasurer. The statement that he held the national treasury at the time of the loan no longer appears, because the link\'s source (CNN Brasil, 03/03/2023) describes him only as a former treasurer.',
+      es: 'Los dos vínculos de Delúbio Soares con el PT (tesorero nacional en 2004, en la época del préstamo investigado en la Operación Carbono 14, y salida del cargo el 5 de julio de 2005) se redujeron a uno, el de 2005. La información de que fue tesorero del PT consta ahora también en su vínculo con la trama de sobornos de Santo André, como extesorero. La afirmación de que ocupaba la tesorería nacional en la época del préstamo ya no consta, porque la fuente del vínculo (CNN Brasil, 03/03/2023) lo describe solo como extesorero.',
+    },
+  },
+  {
+    date: '2026-11-23',
+    scheme: 'esquema_faroeste',
+    kind: 'correcao',
+    summary:
+      'O nome do esquema e o título do dossiê passaram de "Operação Faroeste (venda de decisões judiciais no TJ-BA)" para "Operação Faroeste", para que o grafo, as listas e o dossiê usem o mesmo nome. O conteúdo não mudou.',
+    translations: {
+      en: 'The name of the scheme and the dossier title changed from "Operation Faroeste (sale of court rulings in the Bahia Court of Justice)" to "Operation Faroeste", so that the graph, the lists and the dossier use the same name. The content did not change.',
+      es: 'El nombre de la trama y el título del dosier pasaron de "Operación Faroeste (venta de resoluciones judiciales en el Tribunal de Justicia de Bahía)" a "Operación Faroeste", para que el grafo, las listas y el dosier usen el mismo nombre. El contenido no cambió.',
+    },
+  },
+  {
     date: '2026-11-19',
     scheme: 'esquema_operacao_placebo',
     kind: 'atualizacao',

@@ -21,14 +21,21 @@
 --
 -- Rodar UMA vez:
 --   npx wrangler d1 execute corruption_graph_db --remote --file=./migrations/0007_amount_kind.sql
--- (rodar de novo dá "duplicate column name" no ALTER; os UPDATEs gravam
--- valores fixos e podem ser repetidos à parte.)
+-- (rodar de novo dá "duplicate column name" no ALTER. Para reaplicar só as
+-- classificações num banco que já tem a coluna, rode os UPDATEs abaixo sem o
+-- ALTER: eles gravam valores fixos e podem ser repetidos.)
 --
 -- Os ids abaixo são os do banco de produção (110 vínculos com valor,
--- classificados em 22/11/2026 pela leitura de amount e amount_note). Os vínculos
--- 359 (total movimentado pelo grupo) e 652 (ativos repassados com fraude) foram
--- reclassificados depois, em produção, de damage para illicit_flow e contract;
--- este arquivo já reflete isso, para que rodá-lo de novo não desfaça a correção.
+-- classificados em 22/11/2026 pela leitura de amount e amount_note). Três
+-- vínculos foram reclassificados depois, em produção: 359 (total movimentado
+-- pelo grupo) de damage para illicit_flow, 652 (ativos repassados com fraude)
+-- de damage para contract e 290 (R$ 100 mil repassados à campanha de Geraldo
+-- Magela, segundo Waldomiro Diniz) de bribe para illicit_flow; este arquivo já
+-- reflete isso, para que rodá-lo de novo não desfaça as correções.
+-- Os ids valem só para o banco de produção (cada UPDATE só grava em vínculo que
+-- tenha valor; depois de aplicar, rode npm run check:data). Banco criado com o
+-- schema.sql atual já tem a coluna: não rode esta migração; use os INSERTs dos
+-- dossiês com amount_kind (Master Prompt v7).
 -- Não mexe nas traduções: amount_kind não é texto traduzido nem entra no
 -- source_text.
 -- ============================================================================
@@ -37,23 +44,23 @@ ALTER TABLE links ADD COLUMN amount_kind TEXT
     CHECK(amount_kind IS NULL OR amount_kind IN ('bribe','damage','illicit_flow','contract','recovery','other'));
 
 UPDATE links SET amount_kind = 'bribe' WHERE id IN (
-    20, 70, 72, 78, 260, 267, 274, 286, 290, 323, 330, 357, 369, 372, 378, 395,
-    403, 442, 449, 509, 511, 515, 532, 607, 608, 613, 665, 671, 672, 675, 676, 677);
+    20, 70, 72, 78, 260, 267, 274, 286, 323, 330, 357, 369, 372, 378, 395,
+    403, 442, 449, 509, 511, 515, 532, 607, 608, 613, 665, 671, 672, 675, 676, 677) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 UPDATE links SET amount_kind = 'damage' WHERE id IN (
-    165, 186, 196, 272, 289, 345, 404, 465, 477, 670);
+    165, 186, 196, 272, 289, 345, 404, 465, 477, 670) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 UPDATE links SET amount_kind = 'illicit_flow' WHERE id IN (
     4, 13, 19, 179, 183, 184, 185, 189, 210, 218, 224, 225, 227, 229, 232, 234,
-    250, 298, 352, 359, 513, 531, 544, 545, 564, 579);
+    250, 290, 298, 352, 359, 513, 531, 544, 545, 564, 579) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 UPDATE links SET amount_kind = 'contract' WHERE id IN (
     42, 46, 47, 50, 163, 182, 193, 206, 308, 312, 350, 472, 563, 581, 595, 597,
-    605, 616, 651, 652);
+    605, 616, 651, 652) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 UPDATE links SET amount_kind = 'recovery' WHERE id IN (
     84, 93, 94, 192, 195, 205, 207, 237, 253, 269, 271, 275, 285, 307, 309, 452,
-    466, 501, 572, 653);
+    466, 501, 572, 653) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 -- 156: indenização pedida em ação por danos morais; 631: valor das joias apreendidas.
-UPDATE links SET amount_kind = 'other' WHERE id IN (156, 631);
+UPDATE links SET amount_kind = 'other' WHERE id IN (156, 631) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
