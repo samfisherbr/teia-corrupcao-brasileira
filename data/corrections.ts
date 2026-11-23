@@ -38,6 +38,17 @@ export interface Correction {
 
 export const CORRECTIONS: Correction[] = [
   {
+    date: '2026-11-23',
+    scheme: 'esquema_waldomiro_diniz',
+    kind: 'correcao',
+    summary:
+      'No vínculo entre o PT e o Caso Waldomiro Diniz, a fonte passou a ser a reportagem da Folha de 13/02/2004 (antes, uma matéria do Tribuna do Paraná, fora da lista de fontes aceitas) e o texto passou a registrar o que não constava: o depoimento de Waldomiro à CPI dos Bingos em 2005 (disse que os R$ 100 mil foram doação de Carlos Cachoeira à campanha de Geraldo Magela e que nunca foi filiado ao PT), a versão de Cachoeira à CPI (disse que nada destinou à campanha de Magela) e a de Magela (negou ter recebido recursos e anunciou ação por danos morais). O texto anterior trazia apenas a versão de Waldomiro à revista Época. A natureza do valor também passou a constar como dinheiro movimentado, e não como propina.',
+    translations: {
+      en: 'In the link between the PT and the Waldomiro Diniz case, the source is now the Folha report of 13/02/2004 (previously an article from Tribuna do Paraná, which is not on the accepted-sources list) and the text now records what was missing: Waldomiro\'s 2005 testimony to the Bingos CPI (he said the R$ 100,000 was a donation from Carlos Cachoeira to Geraldo Magela\'s campaign and that he had never been a PT member), Cachoeira\'s account to the CPI (he said he allocated nothing to Magela\'s campaign) and Magela\'s (he denied having received any funds and announced a lawsuit for moral damages). The previous text carried only Waldomiro\'s account to Época magazine. The nature of the amount is also now recorded as money moved, not as a bribe.',
+      es: 'En el vínculo entre el PT y el caso Waldomiro Diniz, la fuente pasó a ser el reportaje de Folha del 13/02/2004 (antes, un artículo de Tribuna do Paraná, que no figura en la lista de fuentes aceptadas) y el texto recoge ahora lo que faltaba: la declaración de Waldomiro a la CPI de los Bingos en 2005 (dijo que los 100.000 reales fueron una donación de Carlos Cachoeira a la campaña de Geraldo Magela y que nunca estuvo afiliado al PT), la versión de Cachoeira ante la CPI (dijo que no destinó nada a la campaña de Magela) y la de Magela (negó haber recibido fondos y anunció una demanda por daños morales). El texto anterior solo contenía la versión de Waldomiro a la revista Época. La naturaleza del importe consta ahora como dinero movido, y no como soborno.',
+    },
+  },
+  {
     date: '2026-11-19',
     scheme: 'esquema_operacao_placebo',
     kind: 'atualizacao',

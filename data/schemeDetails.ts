@@ -640,7 +640,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
   },
 
   "esquema_faroeste": {
-    title: "Operação Faroeste (venda de decisões judiciais no TJ-BA)",
+    title: "Operação Faroeste",
     reviewedAt: "2026-11-17",
     context: "A Operação Faroeste foi deflagrada pela Polícia Federal em 19 de novembro de 2019 para apurar um esquema de venda de decisões judiciais ligado à grilagem de terras no oeste da Bahia, com afastamento de seis magistrados, entre eles o presidente do TJ-BA da época. Segundo o CNJ, as apurações remontam a 2015, no âmbito do Ministério Público da Bahia, e o caso envolve disputas por áreas rurais em Formosa do Rio Preto e Santa Rita de Cássia.",
     mechanism: "Segundo o STJ, o grupo usava ordens judiciais de bloqueio e anulação de matrículas de imóveis, obtidas mediante propina a magistrados, para transformar produtores rurais em ocupantes irregulares das áreas reivindicadas pelo grupo, que os forçava a acordos milionários de destinação da produção, parte dos quais custeava a propina. O pagamento era ocultado por meio de terceiros, inclusive uma pessoa em situação de vulnerabilidade usada como laranja; o relator afirmou que o esquema começou com a pretensão de um borracheiro a extensas áreas rurais e foi replicado na Fazenda do Estrondo, em Formosa do Rio Preto.",
