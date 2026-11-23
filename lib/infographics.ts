@@ -5,7 +5,7 @@
  * grafo; nada é fixo no código, exceto a lista de presidentes.
  */
 import { getLinkEnds } from '@/lib/graphConfig';
-import { type EndBasis, type GraphData, type GraphNode, type LinkStatus, type NodeType, type SchemeTimeline } from '@/types/graph';
+import { type EndBasis, type GraphData, type GraphNode, type LinkStatus, type NodeType, type PresidentTerm, type SchemeTimeline } from '@/types/graph';
 
 /* ------------------------------------------------------------------ */
 /* Presidentes                                                         */
@@ -24,8 +24,13 @@ export interface President {
 /** Fração do ano para 'AAAA-MM-DD'. */
 const yf = (y: number, m = 1, d = 1) => y + (m - 1) / 12 + (d - 1) / 365;
 
-/** Presidentes do Brasil desde 1985 (mandatos). Temer assume em definitivo em 31/08/2016. */
-export const PRESIDENTS: President[] = [
+/**
+ * Lista de RESERVA, usada só quando o banco não tem a tabela `presidents`
+ * (migração 0011) ou ela está vazia. A fonte da verdade é o D1: para um novo
+ * presidente, atualize a tabela (ver migrations/0011_presidents.sql), não este
+ * arquivo. Temer assume em definitivo em 31/08/2016.
+ */
+export const DEFAULT_PRESIDENTS: President[] = [
   { id: 'sarney', name: 'Sarney', party: 'PMDB', from: yf(1985, 3, 15), to: yf(1990, 3, 15) },
   { id: 'collor', name: 'Collor', party: 'PRN', from: yf(1990, 3, 15), to: yf(1992, 12, 29) },
   { id: 'itamar', name: 'Itamar', party: 'PMDB', from: yf(1992, 12, 29), to: yf(1995) },
@@ -37,9 +42,17 @@ export const PRESIDENTS: President[] = [
   { id: 'lula2', name: 'Lula', party: 'PT', from: yf(2023), to: null },
 ];
 
+/** Mandatos do D1 (`graphData.presidents`) → faixa do gráfico; sem eles, a lista de reserva. */
+export function resolvePresidents(terms?: PresidentTerm[]): President[] {
+  if (!terms?.length) return DEFAULT_PRESIDENTS;
+  return [...terms]
+    .sort((a, b) => a.start.localeCompare(b.start))
+    .map((t) => ({ id: t.id, name: t.name, party: t.party, from: dateToYear(t.start), to: t.end ? dateToYear(t.end) : null }));
+}
+
 /** Presidentes no cargo entre dois anos fracionários. */
-export const presidentsBetween = (a: number, b: number, now: number): President[] =>
-  PRESIDENTS.filter((p) => p.from < Math.max(a, b) && (p.to ?? now) > Math.min(a, b));
+export const presidentsBetween = (list: President[], a: number, b: number, now: number): President[] =>
+  list.filter((p) => p.from < Math.max(a, b) && (p.to ?? now) > Math.min(a, b));
 
 /* ------------------------------------------------------------------ */
 /* Datas                                                               */

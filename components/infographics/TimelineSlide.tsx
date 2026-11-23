@@ -12,12 +12,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { GanttChartSquare, Minus, Plus } from 'lucide-react';
-import { PRESIDENTS, buildGantt, presidentsBetween, type GanttRow } from '@/lib/infographics';
+import { buildGantt, presidentsBetween, resolvePresidents, type GanttRow } from '@/lib/infographics';
 import { entityChipStyle, NODE_STYLE } from '@/lib/graphConfig';
 import { schemePath } from '@/lib/schemes';
 import { formatDate } from '@/lib/format';
 import { schemeTimeline } from '@/lib/dossiers';
-import type { EndBasis, GraphNode } from '@/types/graph';
+import type { EndBasis, GraphNode, PresidentTerm } from '@/types/graph';
 import { useI18n } from '@/components/I18nProvider';
 import { Segmented, SlideHeader, useElementSize } from './shared';
 
@@ -49,7 +49,7 @@ function showDate(date: string, locale: Parameters<typeof formatDate>[1]): strin
   return formatDate(date, locale) ?? date;
 }
 
-export default function TimelineSlide({ schemeNodes }: { schemeNodes: GraphNode[] }) {
+export default function TimelineSlide({ schemeNodes, presidentTerms }: { schemeNodes: GraphNode[]; presidentTerms?: PresidentTerm[] }) {
   const { t, locale, href } = useI18n();
   const d = t.infographics.deck.timeline;
   const [sort, setSort] = useState<Sort>('start');
@@ -61,6 +61,7 @@ export default function TimelineSlide({ schemeNodes }: { schemeNodes: GraphNode[
     if (sel) cardRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [sel]);
 
+  const presidents = useMemo(() => resolvePresidents(presidentTerms), [presidentTerms]);
   const rows = useMemo(() => buildGantt(schemeNodes, (id) => schemeTimeline(id)), [schemeNodes]);
   const sorted = useMemo(() => {
     const byName = (a: GanttRow, b: GanttRow) => a.label.localeCompare(b.label, locale);
@@ -68,7 +69,7 @@ export default function TimelineSlide({ schemeNodes }: { schemeNodes: GraphNode[
   }, [rows, sort, locale]);
 
   const now = useMemo(() => { const n = new Date(); return n.getFullYear() + n.getMonth() / 12; }, []);
-  const minY = Math.floor(Math.min(...rows.map((r) => r.start), PRESIDENTS[2].from)) - 1;
+  const minY = Math.floor(Math.min(...rows.map((r) => r.start), presidents[Math.min(2, presidents.length - 1)].from)) - 1;
   const maxY = Math.ceil(Math.max(...rows.map((r) => Math.max(r.end, r.exposed ?? 0)), now)) + 1;
   const span = maxY - minY;
   const labelW = wrap.w >= 640 ? 188 : LABEL_W;
@@ -78,8 +79,8 @@ export default function TimelineSlide({ schemeNodes }: { schemeNodes: GraphNode[
   const X = (y: number) => (y - minY) * ppy;
 
   const selected = sorted.find((r) => r.id === sel) ?? null;
-  const inOffice = selected ? presidentsBetween(selected.start, selected.start + 0.001, now)[0] : null;
-  const inOfficeEnd = selected ? presidentsBetween(selected.end, selected.end + 0.001, now)[0] : null;
+  const inOffice = selected ? presidentsBetween(presidents, selected.start, selected.start + 0.001, now)[0] : null;
+  const inOfficeEnd = selected ? presidentsBetween(presidents, selected.end, selected.end + 0.001, now)[0] : null;
   const ticks: number[] = [];
   for (let y = Math.ceil(minY / 5) * 5; y <= maxY; y += 5) ticks.push(y);
   const bodyH = sorted.length * ROW_H;
@@ -119,7 +120,7 @@ export default function TimelineSlide({ schemeNodes }: { schemeNodes: GraphNode[
                 ))}
               </div>
               <div className="relative h-8">
-                {PRESIDENTS.map((p, i) => {
+                {presidents.map((p, i) => {
                   const a = X(Math.max(p.from, minY));
                   const b = X(Math.min(p.to ?? now, maxY));
                   const w = b - a;
@@ -159,7 +160,7 @@ export default function TimelineSlide({ schemeNodes }: { schemeNodes: GraphNode[
 
             <div className="relative" style={{ width: chartW + 24 }}>
               {/* faixas dos presidentes ao fundo + grade de anos */}
-              {PRESIDENTS.map((p, i) => (
+              {presidents.map((p, i) => (
                 <div key={p.id} className="absolute top-0 bottom-0" style={{ left: X(Math.max(p.from, minY)), width: X(Math.min(p.to ?? now, maxY)) - X(Math.max(p.from, minY)), backgroundColor: i % 2 ? 'transparent' : `${NODE_STYLE.politician.color}0a` }} />
               ))}
               {ticks.map((y) => <div key={y} className="absolute top-0 bottom-0 w-px bg-slate-800/80" style={{ left: X(y) }} />)}

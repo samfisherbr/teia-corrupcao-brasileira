@@ -52,3 +52,4 @@ não grava no vínculo errado. Consequências:
 | 0008 correções de 23/11/2026 | Aplicada em 23/11/2026. Chave natural. |
 | 0009 valor de Sandra Inês Azevedo (Faroeste) | Aplicada em 23/11/2026. Chave natural. |
 | 0010 tabela `scheme_timelines` (linha do tempo dos esquemas) | Aplicada em 23/11/2026 (via conector Cloudflare, 33 linhas). Chave: `scheme_id` (id de texto do nó). Pode rodar de novo (`INSERT OR REPLACE`). |
+| 0011 tabela `presidents` (faixa de presidentes dos Infográficos) | **Ainda não aplicada.** Sem a tabela o site usa a lista de reserva. Pode rodar de novo (`INSERT OR REPLACE`). |

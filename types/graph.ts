@@ -184,8 +184,33 @@ export interface GraphLink {
   reviewed_at?: string | null;
 }
 
+/** Presidente da República (tabela `presidents`, migração 0011). Datas 'AAAA-MM-DD'; end null = no cargo. */
+export interface PresidentTerm {
+  id: string;
+  name: string;
+  party: string;
+  start: string;
+  end: string | null;
+}
+
+/** Linha do D1 → PresidentTerm, ou null se vier fora do formato (nunca lança). */
+export function presidentFromRow(r: Record<string, unknown>): PresidentTerm | null {
+  const day = /^\d{4}-\d{2}-\d{2}$/;
+  const { id, name, party, term_start: start, term_end: end } = r;
+  if (typeof id !== 'string' || typeof name !== 'string' || typeof party !== 'string') return null;
+  if (typeof start !== 'string' || !day.test(start)) return null;
+  if (end !== null && end !== undefined && (typeof end !== 'string' || !day.test(end))) return null;
+  return { id, name, party, start, end: typeof end === 'string' ? end : null };
+}
+
+/** Erro de banco sem a tabela presidents (migração 0011 não rodada): usar a lista de reserva. */
+export const isMissingPresidentsTable = (e: unknown): boolean =>
+  /no such table: presidents/i.test(e instanceof Error ? `${e.message} ${String(e.cause ?? '')}` : String(e));
+
 /** Formato que a API `/api/graph` devolve e que o grafo consome. */
 export interface GraphData {
   nodes: GraphNode[];
   links: GraphLink[];
+  /** Mandatos presidenciais do D1; ausente = banco sem a tabela (usa-se a lista de reserva). */
+  presidents?: PresidentTerm[];
 }

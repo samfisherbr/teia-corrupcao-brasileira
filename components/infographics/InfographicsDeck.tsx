@@ -109,7 +109,7 @@ export default function InfographicsDeck(props: Props) {
           {key === 'overview' && <OverviewSlide {...props} />}
           {key === 'who' && <WhoSlide graphData={props.graphData} startYears={props.startYears} />}
           {key === 'funnel' && <FunnelSlide graphData={props.graphData} />}
-          {key === 'timeline' && <TimelineSlide schemeNodes={props.schemeNodes} />}
+          {key === 'timeline' && <TimelineSlide schemeNodes={props.schemeNodes} presidentTerms={props.graphData.presidents} />}
           {key === 'flow' && <FlowSlide {...props} />}
           {key === 'money' && <MoneySlide {...props} />}
         </div>

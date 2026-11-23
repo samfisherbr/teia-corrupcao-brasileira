@@ -77,3 +77,9 @@ SELECT 'linhas do tempo de nó que não é esquema' AS checagem, COUNT(*) AS pro
 --   SELECT l.id, l.source, l.target FROM links l LEFT JOIN link_translations t ON t.link_id = l.id AND t.lang = 'en'
 --    WHERE t.link_id IS NULL
 --       OR t.source_text <> l.relation || char(10) || COALESCE(l.amount, '') || char(10) || COALESCE(l.amount_note, '');
+
+-- Presidentes (migração 0011). Antes dela, estas consultas dão "no such table".
+-- Mais de um presidente "no cargo" (term_end NULL) — deve ser 0 linhas:
+-- SELECT id FROM presidents WHERE term_end IS NULL AND (SELECT COUNT(*) FROM presidents WHERE term_end IS NULL) > 1;
+-- Mandatos que se sobrepõem — deve ser 0 linhas:
+-- SELECT a.id, b.id FROM presidents a JOIN presidents b ON a.id < b.id AND a.term_start < COALESCE(b.term_end, '9999-12-31') AND b.term_start < COALESCE(a.term_end, '9999-12-31');

@@ -24,6 +24,10 @@
 -- Banco sem a tabela scheme_timelines (anterior à migração 0010)? Rode
 -- migrations/0010_scheme_timelines.sql (cria a tabela e preenche os esquemas).
 --
+-- Banco sem a tabela presidents (anterior à migração 0011)? Rode
+-- migrations/0011_presidents.sql. Sem ela o site usa a lista de reserva em
+-- lib/infographics.ts.
+--
 -- Fonte da verdade do formato dos dados. Se mudar algo aqui, mude também em
 -- nos master prompts (bloco <schema>, mantidos fora do repositório), em types/graph.ts e em
 -- lib/graphConfig.ts (cores/rótulos de status).
@@ -155,6 +159,18 @@ CREATE TABLE IF NOT EXISTS scheme_timelines (
     CHECK(exposed_date IS NULL OR substr(exposed_date, 1, 4) >= substr(end_date, 1, 4)),
     -- O trio exposed_* vem completo ou não vem.
     CHECK((exposed_date IS NULL) = (exposed_basis IS NULL) AND (exposed_date IS NULL) = (exposed_source_url IS NULL))
+);
+
+-- Presidentes da República (faixa do gráfico de linha do tempo). Ver migrations/0011_presidents.sql.
+CREATE TABLE IF NOT EXISTS presidents (
+    id         TEXT PRIMARY KEY CHECK(id GLOB '[a-z0-9_]*'),
+    name       TEXT NOT NULL,
+    -- Sigla do partido na posse (texto livre; não é chave para a tabela nodes).
+    party      TEXT NOT NULL,
+    term_start TEXT NOT NULL CHECK(term_start GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'),
+    -- NULL = ainda no cargo.
+    term_end   TEXT CHECK(term_end IS NULL OR term_end GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'),
+    CHECK(term_end IS NULL OR term_end >= term_start)
 );
 
 -- ============================================================================
