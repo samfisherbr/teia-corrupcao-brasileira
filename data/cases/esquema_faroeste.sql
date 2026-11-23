@@ -4,7 +4,7 @@
 
 -- INSERÇÃO DE ENTIDADES (NODES)
 INSERT OR IGNORE INTO nodes (id, label, type, party, image_url, summary, image_credit, image_source_url) VALUES
-('esquema_faroeste', 'Operação Faroeste (venda de decisões judiciais no TJ-BA)', 'scheme', NULL, NULL, 'Esquema de venda de decisões judiciais ligado à grilagem de terras no oeste da Bahia, investigado pela Polícia Federal e pelo MPF desde a operação deflagrada em novembro de 2019.', NULL, NULL),
+('esquema_faroeste', 'Operação Faroeste', 'scheme', NULL, NULL, 'Esquema de venda de decisões judiciais ligado à grilagem de terras no oeste da Bahia, investigado pela Polícia Federal e pelo MPF desde a operação deflagrada em novembro de 2019.', NULL, NULL),
 ('emp_tjba', 'Tribunal de Justiça da Bahia (TJ-BA)', 'company', NULL, NULL, 'Tribunal de segunda instância da Justiça estadual da Bahia, com sede em Salvador.', NULL, NULL),
 ('op_maria_do_socorro_santiago', 'Maria do Socorro Barreto Santiago', 'operator', NULL, NULL, 'Desembargadora do Tribunal de Justiça da Bahia, que presidiu a corte de 2016 a 2018.', NULL, NULL),
 ('op_sergio_sampaio', 'Sérgio Humberto de Quadros Sampaio', 'operator', NULL, NULL, 'Juiz de Direito da Bahia, aposentado, que atuou na comarca de Formosa do Rio Preto.', NULL, NULL),
@@ -103,10 +103,10 @@ WHERE NOT EXISTS (SELECT 1 FROM links WHERE source = 'op_marcio_braga' AND targe
 
 -- TRADUÇÕES DE ENTIDADES
 INSERT INTO node_translations (node_id, lang, label, summary, source_text)
-SELECT id, 'en', 'Operation Faroeste (sale of court rulings in the Bahia Court of Justice)', 'Scheme for selling court rulings linked to land grabbing (grilagem) in western Bahia, investigated by the Federal Police and the Federal Prosecution Service (MPF) since the operation launched in November 2019.', label || char(10) || COALESCE(summary, '') FROM nodes WHERE id = 'esquema_faroeste'
+SELECT id, 'en', 'Operation Faroeste', 'Scheme for selling court rulings linked to land grabbing (grilagem) in western Bahia, investigated by the Federal Police and the Federal Prosecution Service (MPF) since the operation launched in November 2019.', label || char(10) || COALESCE(summary, '') FROM nodes WHERE id = 'esquema_faroeste'
 ON CONFLICT(node_id, lang) DO NOTHING;
 INSERT INTO node_translations (node_id, lang, label, summary, source_text)
-SELECT id, 'es', 'Operación Faroeste (venta de resoluciones judiciales en el Tribunal de Justicia de Bahía)', 'Trama de venta de resoluciones judiciales vinculada al acaparamiento ilegal de tierras (grilagem) en el oeste de Bahía, investigada por la Policía Federal y el Ministerio Público Federal (MPF) desde la operación desencadenada en noviembre de 2019.', label || char(10) || COALESCE(summary, '') FROM nodes WHERE id = 'esquema_faroeste'
+SELECT id, 'es', 'Operación Faroeste', 'Trama de venta de resoluciones judiciales vinculada al acaparamiento ilegal de tierras (grilagem) en el oeste de Bahía, investigada por la Policía Federal y el Ministerio Público Federal (MPF) desde la operación desencadenada en noviembre de 2019.', label || char(10) || COALESCE(summary, '') FROM nodes WHERE id = 'esquema_faroeste'
 ON CONFLICT(node_id, lang) DO NOTHING;
 INSERT INTO node_translations (node_id, lang, label, summary, source_text)
 SELECT id, 'en', 'Court of Justice of Bahia (TJ-BA)', 'Second-instance court of the Bahia state judiciary, based in Salvador.', label || char(10) || COALESCE(summary, '') FROM nodes WHERE id = 'emp_tjba'

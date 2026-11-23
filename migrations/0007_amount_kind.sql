@@ -21,8 +21,9 @@
 --
 -- Rodar UMA vez:
 --   npx wrangler d1 execute corruption_graph_db --remote --file=./migrations/0007_amount_kind.sql
--- (rodar de novo dá "duplicate column name" no ALTER; os UPDATEs gravam
--- valores fixos e podem ser repetidos à parte.)
+-- (rodar de novo dá "duplicate column name" no ALTER. Para reaplicar só as
+-- classificações num banco que já tem a coluna, rode os UPDATEs abaixo sem o
+-- ALTER: eles gravam valores fixos e podem ser repetidos.)
 --
 -- Os ids abaixo são os do banco de produção (110 vínculos com valor,
 -- classificados em 22/11/2026 pela leitura de amount e amount_note). Três
