@@ -4,6 +4,8 @@
 --   npm run check:data
 -- Cada consulta devolve uma linha com o nome da checagem e quantos problemas
 -- achou (uma consulta por checagem: o D1 limita o número de UNION ALL). Tudo deve dar 0 (as linhas "aviso:" podem ser > 0).
+-- As duas checagens de amount_kind precisam da migração 0007 (migrations/0007_amount_kind.sql);
+-- num banco sem a coluna o wrangler aborta nelas e o relatório não sai.
 -- As checagens de tradução precisam da migração 0003 (migrations/0003_translations.sql).
 -- "tradução desatualizada" = o texto em português mudou depois de traduzido;
 -- o site mostra o português nesses itens até a tradução ser regravada.

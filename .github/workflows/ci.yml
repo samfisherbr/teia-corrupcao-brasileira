@@ -33,6 +33,8 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
+      # Migrações e seeds não podem identificar vínculos pelo id (migrations/README.md).
+      - run: npm run check:migrations
       # ESLint: erros reprovam o CI; avisos (ex.: `any` no código do grafo) não.
       - run: npm run lint
       # Build do Worker com o OpenNext (roda o `next build` por dentro).

@@ -85,6 +85,10 @@ CREATE TABLE IF NOT EXISTS links (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_links_unique
     ON links(source, target, type, status, COALESCE(year, -1));
 
+-- CONVENÇÃO: migrações e seeds identificam vínculos pela chave natural acima
+-- (source, target, type, status, COALESCE(year, -1)), nunca pelo id autoincremento,
+-- que só vale no banco onde nasceu (ver migrations/README.md). O CI reprova o contrário.
+
 -- Índices de apoio (não fazem parte do prompt; só aceleram consultas por ponta).
 CREATE INDEX IF NOT EXISTS idx_links_source ON links(source);
 CREATE INDEX IF NOT EXISTS idx_links_target ON links(target);
