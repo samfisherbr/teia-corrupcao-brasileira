@@ -8,33 +8,32 @@
  * Sempre usa os dados COMPLETOS (não os filtrados), para os números não
  * mudarem conforme os filtros da barra lateral.
  *
- *   Infográficos:
- *     1. Ranking de partidos por número de vínculos (centralidade de grau)
- *     2. Rosca com a proporção de tipos de vínculo + contagem por status
- *     3. Cartões com o valor financeiro de cada esquema
+ *   Infográficos: carrossel em components/infographics/ (um painel por vez):
+ *     visão geral + ranking de partidos, quem está em cada esquema, do nome à
+ *     condenação, quanto tempo cada esquema durou (com presidentes), fluxo
+ *     operacional e mapa de calor financeiro.
  *   Glossário:
  *     Um cartão por esquema, com o texto de data/schemeDetails*.ts (no idioma
  *     da página, carregado sob demanda), e uma barra de busca fixa no topo
  *     que filtra os cartões (ver glossaryMatches).
  *
- * Ajustes comuns: quantos partidos mostrar → PARTY_RANKING_SIZE;
- * cores da rosca → `categories` em operationalFlowMetrics.
+ * Ajustes comuns: quantos partidos mostrar → PARTY_RANKING_SIZE em
+ * infographics/ClassicSlides.tsx.
  * ============================================================================
  */
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ActivePage } from './HeaderBar';
 import { GraphData, GraphNode } from '@/types/graph';
-import { getLinkEnds, normalizeText, STATUS_STYLE, NODE_STYLE, entityChipStyle } from '@/lib/graphConfig';
+import { getLinkEnds, normalizeText, NODE_STYLE, entityChipStyle } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
-import type { LinkStatus } from '@/types/graph';
-import { parseAmount, formatAmount } from '@/lib/money';
 import { loadSchemeDetails, type LocalizedSchemeDetail } from '@/lib/dossiers';
 import { LOCALE_INFO } from '@/lib/i18n';
 import { useI18n } from '@/components/I18nProvider';
 import { schemePath, computeSchemeStartYears, compareByYearDesc } from '@/lib/schemes';
 import Link from 'next/link';
 import BlinkingSquares from './BlinkingSquares';
+import InfographicsDeck from './infographics/InfographicsDeck';
 import { 
   ExternalLink, 
   Coins, 
@@ -42,11 +41,6 @@ import {
   ChevronUp, 
   BookOpen,
   ChartPie as PieChartIcon,
-  BarChart3,
-  Layers,
-  Activity,
-  TrendingUp,
-  ShieldExclamationPoint,
   Search,
   X
 } from 'lucide-react';
@@ -57,9 +51,6 @@ const TYPE_ORDER = Object.keys(NODE_STYLE) as GraphNode['type'][];
 const PoliticianIcon = NODE_ICONS.politician;
 const CompanyIcon = NODE_ICONS.company;
 const OperatorIcon = NODE_ICONS.operator;
-
-/** Quantos partidos aparecem no ranking do infográfico 1. */
-const PARTY_RANKING_SIZE = 6;
 
 interface HeaderOverlayProps {
   activePage: ActivePage;
@@ -157,159 +148,6 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
     return map;
   }, [graphData.links]);
 
-  // ===========================================================================
-  // INFOGRÁFICO 1 — RANKING DE CENTRALIDADE POR PARTIDO
-  // Conta, para cada sigla, quantas pontas de link pertencem a nós daquela
-  // sigla (o próprio partido + seus políticos). A barra é relativa ao 1º lugar.
-  // ===========================================================================
-  const partyCentralityRanking = useMemo(() => {
-    const partyMap: Record<string, { party: string; count: number; politicians: Set<string> }> = {};
-
-    graphData.nodes.forEach((node) => {
-      if (!node.party) return;
-      const p = node.party.toUpperCase();
-      if (!partyMap[p]) partyMap[p] = { party: p, count: 0, politicians: new Set() };
-      if (node.type === 'politician') partyMap[p].politicians.add(node.id);
-    });
-
-    // Degree centrality: each link endpoint belonging to a party counts once.
-    graphData.links.forEach((link) => {
-      const { sourceId, targetId } = getLinkEnds(link);
-      [nodeById.get(sourceId), nodeById.get(targetId)].forEach((node) => {
-        const key = node?.party?.toUpperCase();
-        if (key && partyMap[key]) partyMap[key].count += 1;
-      });
-    });
-
-    const ranked = Object.values(partyMap).sort((a, b) => b.count - a.count);
-    const maxCount = Math.max(...ranked.map((r) => r.count), 1);
-
-    return ranked.map((item) => ({
-      ...item,
-      percentage: Math.round((item.count / maxCount) * 100),
-      politicianCount: item.politicians.size
-    }));
-  }, [graphData, nodeById]);
-
-  // ===========================================================================
-  // INFOGRÁFICO 2 — FLUXO OPERACIONAL
-  // Proporção de links por tipo (transação / contrato / processo) e contagem
-  // por status jurídico (os 6 status de STATUS_STYLE).
-  // ===========================================================================
-  const operationalFlowMetrics = useMemo(() => {
-    const totalLinks = graphData.links.length;
-    const pct = (n: number) => (totalLinks ? Math.round((n / totalLinks) * 100) : 0);
-
-    let transactions = 0;
-    let contracts = 0;
-    let processes = 0;
-
-    // Contagem por status, já com as 6 chaves zeradas.
-    const statusCounts = Object.fromEntries(Object.keys(STATUS_STYLE).map((k) => [k, 0])) as Record<LinkStatus, number>;
-
-    graphData.links.forEach((link) => {
-      const linkType = (link.type as string) || '';
-
-      // Unknown/NULL types are no longer silently counted as "processes".
-      if (linkType === 'transaction') transactions++;
-      else if (linkType === 'contract') contracts++;
-      else if (linkType === 'process') processes++;
-
-      // Legal status metric aggregation
-      if (link.status in statusCounts) statusCounts[link.status] += 1;
-    });
-
-    const categories = [
-      {
-        name: t.infographics.categoryTransaction,
-        typeKey: 'transaction',
-        count: transactions,
-        percentage: pct(transactions),
-        color: '#f59e0b',
-        bgClass: 'bg-amber-500'
-      },
-      {
-        name: t.infographics.categoryContract,
-        typeKey: 'contract',
-        count: contracts,
-        percentage: pct(contracts),
-        color: '#10b981',
-        bgClass: 'bg-emerald-500'
-      },
-      {
-        name: t.infographics.categoryProcess,
-        typeKey: 'process',
-        count: processes,
-        percentage: pct(processes),
-        color: '#3b82f6',
-        bgClass: 'bg-blue-500'
-      }
-    ];
-
-    return {
-      totalLinks,
-      categories,
-      statusCounts
-    };
-  }, [graphData.links, t]);
-
-  // ===========================================================================
-  // INFOGRÁFICO 3 — VALOR FINANCEIRO POR ESQUEMA
-  // Prioridade do número de cada esquema:
-  //   1. soma de `amount_brl` (inteiro em reais, schema v2) dos links do esquema;
-  //   2. se não houver, soma do texto `amount` interpretado por lib/money.ts;
-  //   3. se ainda for zero, a 1ª cifra do campo `impact` em schemeDetails.ts.
-  // Reais e dólares nunca são somados entre si.
-  // ===========================================================================
-  const financialTreemapData = useMemo(() => {
-    // NOTE: summing every link touching a scheme can double-count the same money
-    // (scheme→party and party→politician often describe one flow). A numeric
-    // `amount_value` column in D1 would let you sum only "primary" links.
-    const items = schemeNodes.map((scheme) => {
-      let brl = 0;
-      graphData.links.forEach((link) => {
-        const { sourceId, targetId } = getLinkEnds(link);
-        if (sourceId !== scheme.id && targetId !== scheme.id) return;
-        if (typeof link.amount_brl === 'number' && link.amount_brl > 0) {
-          brl += link.amount_brl;
-          return;
-        }
-        const parsed = parseAmount(link.amount);
-        if (parsed?.currency === 'BRL') brl += parsed.value;
-      });
-
-      let amount = brl;
-      let currency: 'BRL' | 'USD' = 'BRL';
-      if (amount === 0) {
-        const fallback = parseAmount(schemeDetails[scheme.id]?.impact);
-        if (fallback) {
-          amount = fallback.value;
-          currency = fallback.currency;
-        }
-      }
-
-      return {
-        id: scheme.id,
-        label: scheme.label,
-        amount,
-        currency,
-        formatted: amount > 0 ? formatAmount(amount, currency, locale) : t.infographics.amountPending,
-      };
-    });
-
-    // Never add BRL and USD together (the old parser did, after concatenating digits).
-    const totalBRL = items.filter((i) => i.currency === 'BRL').reduce((acc, i) => acc + i.amount, 0);
-    const totalUSD = items.filter((i) => i.currency === 'USD').reduce((acc, i) => acc + i.amount, 0);
-    items.sort((a, b) => (b.currency === a.currency ? b.amount - a.amount : a.currency === 'BRL' ? -1 : 1));
-
-    const parts = [
-      totalBRL > 0 ? formatAmount(totalBRL, 'BRL', locale) : null,
-      totalUSD > 0 ? formatAmount(totalUSD, 'USD', locale) : null,
-    ].filter(Boolean);
-
-    return { items, formattedGrandTotal: parts.length ? parts.join(' + ') : t.infographics.totalPending };
-  }, [schemeNodes, graphData.links, schemeDetails, locale, t]);
-
   // Toggle scheme expansion state
   const toggleExpand = (id: string) => {
     setExpandedSchemeId((prev) => (prev === id ? null : id));
@@ -397,263 +235,28 @@ export default function HeaderOverlay({ activePage, graphData }: HeaderOverlayPr
         />
       )}
       <div ref={scrollRef} className="absolute inset-0 overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-10">
+      <div className={`max-w-6xl mx-auto px-4 sm:px-8 ${activePage === 'infographics' ? 'h-full flex flex-col py-4 sm:py-6' : 'py-8 space-y-10'}`}>
         
         {/* =================================================================== */}
         {/* INFOGRAPHICS DASHBOARD PAGE                                        */}
         {/* =================================================================== */}
         {activePage === 'infographics' && (
-          <div className="space-y-10 animate-in fade-in duration-300">
+          <div className="flex flex-col flex-1 min-h-0 gap-4 animate-in fade-in duration-300">
             {/* Title Section */}
             <div>
               <div className="flex items-center space-x-2 text-cyan-400 text-xs font-mono font-semibold uppercase tracking-wider">
                 <PieChartIcon className="w-4 h-4" />
                 <span>{t.infographics.eyebrow}</span>
               </div>
-              <h1 ref={infographicsTitleRef} className="text-3xl font-extrabold tracking-tight text-white mt-1">
+              <h1 ref={infographicsTitleRef} className="text-xl sm:text-3xl font-extrabold tracking-tight text-white mt-1">
                 {t.infographics.title}
               </h1>
-              <p className="mt-6 text-sm text-slate-400 leading-relaxed">
+              <p className="hidden [@media(min-height:860px)]:block mt-3 text-sm text-slate-400 leading-relaxed">
                 {t.infographics.intro}
               </p>
             </div>
 
-            {/* Global Aggregated Metrics Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-xs flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
-                    {t.infographics.mappedVolume}
-                  </span>
-                  <span className="text-2xl font-bold text-emerald-400 mt-1 block">
-                    {financialTreemapData.formattedGrandTotal}
-                  </span>
-                </div>
-                <div className="p-3 bg-emerald-950/60 border border-emerald-800/40 rounded-lg text-emerald-400">
-                  <Coins className="w-6 h-6" />
-                </div>
-              </div>
-
-              <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-xs flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
-                    {t.infographics.registeredSchemes}
-                  </span>
-                  <span className="text-2xl font-bold mt-1 block" style={{ color: NODE_STYLE.scheme.labelColor }}>
-                    {t.infographics.cases(schemeNodes.length)}
-                  </span>
-                </div>
-                <div className="p-3 border rounded-lg" style={entityChipStyle('scheme')}>
-                  <ShieldExclamationPoint className="w-6 h-6" />
-                </div>
-              </div>
-
-              <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-xl shadow-xs flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">
-                    {t.infographics.activeConnections}
-                  </span>
-                  <span className="text-2xl font-bold text-blue-400 mt-1 block">
-                    {t.infographics.links(graphData.links.length)}
-                  </span>
-                </div>
-                <div className="p-3 bg-blue-950/60 border border-blue-800/40 rounded-lg text-blue-400">
-                  <Activity className="w-6 h-6" />
-                </div>
-              </div>
-            </div>
-
-            {/* Main Infographics Grid (Cards 1 & 2) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Infographic 1: Party Centrality Ranking */}
-              <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-6 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5" style={{ color: NODE_STYLE.party.labelColor }} />
-                      {t.infographics.rankingTitle}
-                    </h2>
-                    <span className="shrink-0 whitespace-nowrap text-[11px] font-mono border px-2 py-0.5 rounded-sm" style={entityChipStyle('party')}>
-                      {t.infographics.rankingBadge}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {t.infographics.rankingIntro}
-                  </p>
-                </div>
-
-                <div className="space-y-4 my-2">
-                  {partyCentralityRanking.length === 0 ? (
-                    <p className="text-xs text-muted italic">{t.infographics.rankingEmpty}</p>
-                  ) : (
-                    partyCentralityRanking.slice(0, PARTY_RANKING_SIZE).map((item) => (
-                      <div key={item.party} className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-bold font-mono text-slate-200">
-                            {item.party} <span className="text-muted font-normal">{t.infographics.politiciansCount(item.politicianCount)}</span>
-                          </span>
-                          <span className="font-mono font-semibold" style={{ color: NODE_STYLE.party.labelColor }}>
-                            {t.infographics.linksCount(item.count)}
-                          </span>
-                        </div>
-                        <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${item.percentage}%`,
-                              backgroundImage: `linear-gradient(to right, ${NODE_STYLE.party.color}, ${NODE_STYLE.party.labelColor})`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-lg text-[11px] text-slate-400 leading-relaxed">
-                  💡 <strong>{t.infographics.insightLabel}</strong> {t.infographics.insight}
-                </div>
-              </div>
-
-              {/* Infographic 2: Operational Flow Diagram */}
-              <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-6 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                      <Layers className="w-5 h-5 text-amber-400" />
-                      {t.infographics.flowTitle}
-                    </h2>
-                    <span className="text-[11px] font-mono bg-amber-950/80 text-amber-300 border border-amber-800/50 px-2 py-0.5 rounded-sm">
-                      {t.infographics.flowBadge}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {t.infographics.flowIntro}
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-6 my-2">
-                  <div className="relative w-36 h-36 shrink-0 flex items-center justify-center">
-                    <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
-                      {operationalFlowMetrics.categories.map((cat, idx) => {
-                        const strokeDasharray = `${cat.percentage} ${100 - cat.percentage}`;
-                        const offset = operationalFlowMetrics.categories
-                          .slice(0, idx)
-                          .reduce((acc, curr) => acc + curr.percentage, 0);
-
-                        return (
-                          <circle
-                            key={cat.typeKey}
-                            cx="18"
-                            cy="18"
-                            r="15.915"
-                            fill="transparent"
-                            stroke={cat.color}
-                            strokeWidth="3.8"
-                            strokeDasharray={strokeDasharray}
-                            strokeDashoffset={-offset}
-                          />
-                        );
-                      })}
-                    </svg>
-                    <div className="absolute text-center">
-                      <span className="text-lg font-extrabold text-white block">
-                        {operationalFlowMetrics.totalLinks}
-                      </span>
-                      <span className="text-[9px] font-mono text-slate-400 block uppercase">
-                        {t.infographics.connections}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2.5 w-full">
-                    {operationalFlowMetrics.categories.map((cat) => (
-                      <div key={cat.typeKey} className="flex items-center justify-between text-xs p-2 bg-slate-950/60 border border-slate-800/80 rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <span className={`w-2.5 h-2.5 rounded-full ${cat.bgClass}`} />
-                          <span className="text-slate-200">{cat.name}</span>
-                        </div>
-                        <span className="font-mono font-bold text-slate-300">
-                          {cat.count} ({cat.percentage}%)
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
-                  <span className="text-slate-400">{t.infographics.legalStatus}</span>
-                  {/* Uma etiqueta por status, com a cor de STATUS_STYLE */}
-                  <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
-                    {(Object.keys(STATUS_STYLE) as LinkStatus[]).map((key) => (
-                      <span key={key} className="flex items-center gap-1" style={{ color: STATUS_STYLE[key].labelColor }}>
-                        <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: STATUS_STYLE[key].color }} />
-                        {operationalFlowMetrics.statusCounts[key]} {t.status[key]}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Infographic 3: Scheme Financial Heatmap */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-6">
-              <div>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-emerald-400" />
-                    {t.infographics.heatmapTitle}
-                  </h2>
-                  <span className="text-[11px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800/50 px-2.5 py-0.5 rounded-sm">
-                    {t.infographics.total} {financialTreemapData.formattedGrandTotal}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  {t.infographics.heatmapIntro}
-                </p>
-              </div>
-
-              {financialTreemapData.items.length === 0 ? (
-                <p className="text-xs text-muted italic">{t.infographics.heatmapEmpty}</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {financialTreemapData.items.map((item, index) => {
-                    const intensityColors = [
-                      'from-emerald-950/90 to-emerald-900/60 border-emerald-500/50 text-emerald-300',
-                      'from-cyan-950/90 to-cyan-900/60 border-cyan-500/50 text-cyan-300',
-                      'from-slate-900 to-slate-950 border-slate-800 text-slate-300'
-                    ];
-
-                    const colorStyle = intensityColors[Math.min(index, 2)];
-
-                    return (
-                      <Link
-                        key={item.id}
-                        href={href(schemePath(item.id))}
-                        title={t.glossary.openPage}
-                        className={`p-5 rounded-xl border bg-linear-to-br ${colorStyle} flex flex-col justify-between space-y-3 transition-all hover:scale-[1.01] hover:border-cyan-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400`}
-                      >
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
-                            {t.infographics.schemeNumber(index + 1)}
-                          </span>
-                          <h3 className="font-bold text-sm text-white line-clamp-2">
-                            {item.label}
-                          </h3>
-                        </div>
-
-                        <div className="pt-2 border-t border-slate-800/80 flex items-baseline justify-between">
-                          <span className="text-[11px] font-mono text-slate-400">{t.infographics.estimatedFigure}</span>
-                          <span className="text-lg font-mono font-extrabold text-emerald-400">
-                            {item.formatted}
-                          </span>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <InfographicsDeck graphData={graphData} schemeNodes={schemeNodes} schemeDetails={schemeDetails} startYears={schemeYears} />
           </div>
         )}
 
