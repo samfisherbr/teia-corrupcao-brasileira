@@ -49,16 +49,28 @@ function d1(sql) {
 
 const q = (v) => (v === null || v === undefined ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`);
 
-const BASE = `SELECT l.source, l.target, l.type, l.status, l.year, t.lang, t.relation, t.amount, t.amount_note
+const BASE = `SELECT l.source, l.target, l.type, l.status, l.year, t.lang, t.relation, t.amount, t.amount_note,
+  (t.source_text = l.relation || char(10) || COALESCE(l.amount, '') || char(10) || COALESCE(l.amount_note, '')) AS fresh
   FROM link_translations t JOIN links l ON l.id = t.link_id
   ORDER BY l.source, l.target, l.type, l.status, COALESCE(l.year, -1), t.lang`;
 
-const rows = [];
+const countRows = () => d1('SELECT COUNT(*) AS n FROM link_translations')[0].n;
+const before = countRows();
+const all = [];
 for (let off = 0; ; off += PAGE) {
   const part = d1(`${BASE} LIMIT ${PAGE} OFFSET ${off}`);
-  rows.push(...part);
+  all.push(...part);
   if (part.length < PAGE) break;
 }
+if (countRows() !== before || all.length !== before) {
+  throw new Error('o banco mudou durante a leitura (ou faltou linha); rode de novo sem edições em andamento');
+}
+// Tradução que já está desatualizada em produção (o português mudou depois) não entra no
+// seed: o seed recalcula o source_text e a daria como em dia. Sem ela, o site mostra o português.
+const stale = all.filter((r) => !r.fresh);
+for (const r of stale.slice(0, 10)) console.warn(`desatualizada, fora do seed: ${r.source} -> ${r.target} (${r.type}, ${r.status}, ${r.year ?? 'sem ano'}) [${r.lang}]`);
+if (stale.length) console.warn(`${stale.length} tradução(ões) desatualizada(s) ficaram fora do seed; refaça-as no D1 e rode de novo.`);
+const rows = all.filter((r) => r.fresh);
 
 const seen = new Set();
 const statements = rows.map((r) => {
@@ -82,7 +94,8 @@ const header = `-- ARQUIVO GERADO: não edite à mão. Regere com: npm run expor
 -- COALESCE(year, -1)), nunca pelo id (ver migrations/README.md). O status faz
 -- parte da chave: depois que o status de um vínculo muda em produção, a linha
 -- dele aqui deixa de casar e é ignorada, sem erro. Por isso, regere o arquivo
--- antes de usá-lo. O source_text é recalculado pelo próprio SELECT.
+-- antes de usá-lo. O source_text é recalculado pelo próprio SELECT; por isso
+-- traduções já desatualizadas em produção ficam fora do arquivo.
 --   npx wrangler d1 execute ${DB} --remote --file=./data/translations/links.en-es.sql
 `;
 
