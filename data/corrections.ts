@@ -70,6 +70,17 @@ export const CORRECTIONS: Correction[] = [
     },
   },
   {
+    date: '2026-11-23',
+    scheme: 'esquema_faroeste',
+    kind: 'correcao',
+    summary:
+      'O nome do esquema e o título do dossiê passaram de "Operação Faroeste (venda de decisões judiciais no TJ-BA)" para "Operação Faroeste", para que o grafo, as listas e o dossiê usem o mesmo nome. O conteúdo não mudou.',
+    translations: {
+      en: 'The name of the scheme and the dossier title changed from "Operation Faroeste (sale of court rulings in the Bahia Court of Justice)" to "Operation Faroeste", so that the graph, the lists and the dossier use the same name. The content did not change.',
+      es: 'El nombre de la trama y el título del dosier pasaron de "Operación Faroeste (venta de resoluciones judiciales en el Tribunal de Justicia de Bahía)" a "Operación Faroeste", para que el grafo, las listas y el dosier usen el mismo nombre. El contenido no cambió.',
+    },
+  },
+  {
     date: '2026-11-19',
     scheme: 'esquema_operacao_placebo',
     kind: 'atualizacao',

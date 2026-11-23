@@ -32,9 +32,10 @@
 -- de damage para contract e 290 (R$ 100 mil repassados à campanha de Geraldo
 -- Magela, segundo Waldomiro Diniz) de bribe para illicit_flow; este arquivo já
 -- reflete isso, para que rodá-lo de novo não desfaça as correções.
--- Os ids valem só para o banco de produção. Banco criado com o schema.sql atual
--- já tem a coluna: não rode esta migração; use os INSERTs dos dossiês com
--- amount_kind (Master Prompt v7).
+-- Os ids valem só para o banco de produção (cada UPDATE só grava em vínculo que
+-- tenha valor; depois de aplicar, rode npm run check:data). Banco criado com o
+-- schema.sql atual já tem a coluna: não rode esta migração; use os INSERTs dos
+-- dossiês com amount_kind (Master Prompt v7).
 -- Não mexe nas traduções: amount_kind não é texto traduzido nem entra no
 -- source_text.
 -- ============================================================================
@@ -44,22 +45,22 @@ ALTER TABLE links ADD COLUMN amount_kind TEXT
 
 UPDATE links SET amount_kind = 'bribe' WHERE id IN (
     20, 70, 72, 78, 260, 267, 274, 286, 323, 330, 357, 369, 372, 378, 395,
-    403, 442, 449, 509, 511, 515, 532, 607, 608, 613, 665, 671, 672, 675, 676, 677);
+    403, 442, 449, 509, 511, 515, 532, 607, 608, 613, 665, 671, 672, 675, 676, 677) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 UPDATE links SET amount_kind = 'damage' WHERE id IN (
-    165, 186, 196, 272, 289, 345, 404, 465, 477, 670);
+    165, 186, 196, 272, 289, 345, 404, 465, 477, 670) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 UPDATE links SET amount_kind = 'illicit_flow' WHERE id IN (
     4, 13, 19, 179, 183, 184, 185, 189, 210, 218, 224, 225, 227, 229, 232, 234,
-    250, 290, 298, 352, 359, 513, 531, 544, 545, 564, 579);
+    250, 290, 298, 352, 359, 513, 531, 544, 545, 564, 579) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 UPDATE links SET amount_kind = 'contract' WHERE id IN (
     42, 46, 47, 50, 163, 182, 193, 206, 308, 312, 350, 472, 563, 581, 595, 597,
-    605, 616, 651, 652);
+    605, 616, 651, 652) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 UPDATE links SET amount_kind = 'recovery' WHERE id IN (
     84, 93, 94, 192, 195, 205, 207, 237, 253, 269, 271, 275, 285, 307, 309, 452,
-    466, 501, 572, 653);
+    466, 501, 572, 653) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
 
 -- 156: indenização pedida em ação por danos morais; 631: valor das joias apreendidas.
-UPDATE links SET amount_kind = 'other' WHERE id IN (156, 631);
+UPDATE links SET amount_kind = 'other' WHERE id IN (156, 631) AND (amount IS NOT NULL OR amount_brl IS NOT NULL);
