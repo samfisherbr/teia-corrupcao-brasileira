@@ -119,6 +119,13 @@ const PREWARM_DECAY = 0.045;
 const WARMUP_TICKS = 10;
 const ALPHA_DECAY = 1 - Math.pow(0.25, 1 / WARMUP_TICKS); // ≈ 0,129
 const ALPHA_MIN = 0.01;
+/**
+ * Depois de soltar um nó arrastado, a física decai mais devagar por
+ * RELEASE_MS: ~70 quadros (~1,2 s) em vez de ~25 (~0,4 s), para os vizinhos
+ * reagirem e o nó se acomodar de forma visível. Só vale depois de arrastar.
+ */
+const RELEASE_ALPHA_DECAY = 0.05;
+const RELEASE_MS = 2500;
 const COOLDOWN_MS = 4000;
 const VELOCITY_DECAY = 0.35;
 /** Grafo vazio estável (a biblioteca recebe isto até o pré-aquecimento terminar). */
@@ -392,6 +399,9 @@ export default function NetworkGraph({
 }: NetworkGraphProps) {
   const { t, href } = useI18n();
   const driftEnabled = DRIFT_ENABLED;
+  const [lively, setLively] = useState(false);
+  const livelyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (livelyTimer.current) clearTimeout(livelyTimer.current); }, []);
   const canHover = useHoverPointer();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -1931,6 +1941,11 @@ export default function NetworkGraph({
           if (node.type === 'scheme') {
             node.fx = node.x;
             node.fy = node.y;
+          } else {
+            // Solto: acomodação mais lenta e visível (ver RELEASE_ALPHA_DECAY).
+            setLively(true);
+            if (livelyTimer.current) clearTimeout(livelyTimer.current);
+            livelyTimer.current = setTimeout(() => setLively(false), RELEASE_MS);
           }
         }}
         onEngineTick={handleEngineTick}
@@ -1940,7 +1955,7 @@ export default function NetworkGraph({
         // Com DRIFT_ENABLED = false (padrão), a simulação para depois de
         // COOLDOWN_MS e a teia fica em repouso em todos os aparelhos.
         cooldownTime={driftEnabled ? Infinity : COOLDOWN_MS}
-        d3AlphaDecay={ALPHA_DECAY}
+        d3AlphaDecay={lively ? RELEASE_ALPHA_DECAY : ALPHA_DECAY}
         d3AlphaMin={ALPHA_MIN}
         d3VelocityDecay={VELOCITY_DECAY} // "atrito": ↑ nós param mais cedo, menos tremedeira
         // Transparente: o fundo vem do contêiner (bg-surface-canvas = BG_COLOR),
