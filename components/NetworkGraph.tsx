@@ -551,6 +551,8 @@ export default function NetworkGraph({
   const timelineTweenRef = useRef(0);
   const timelineMountedRef = useRef(false);
   const focusSchemeRef = useRef<string | null>(null);
+  const timelineHighlightRef = useRef<ReadonlySet<string>>(new Set());
+  const nodeTypeOf = useMemo(() => new Map(graphData.nodes.map((n) => [n.id, n.type])), [graphData.nodes]);
   const saved25dRef = useRef(false);
   const timelineLayout = useMemo(
     () => (timelineActive ? computeTimelineLayout(graphData.nodes, graphData.links, expandedSchemes) : null),
@@ -821,6 +823,16 @@ export default function NetworkGraph({
   }, [focus, adjacency]);
 
   const hasFocus = focusIds.size > 0;
+  // Linha do tempo: esquemas em foco (mouse > seleção) têm a faixa do período acesa.
+  const timelineHighlight = useMemo(() => {
+    const out = new Set<string>();
+    if (hasFocus) for (const id of litIds) if (nodeTypeOf.get(id) === 'scheme') out.add(id);
+    return out;
+  }, [hasFocus, litIds, nodeTypeOf]);
+  timelineHighlightRef.current = timelineHighlight;
+  useEffect(() => {
+    if (timelineRawRef.current > 0) requestFrame(); // repinta o eixo quando o foco muda
+  }, [timelineHighlight, requestFrame]);
   const isNodeLit = useCallback((id: string) => !hasFocus || litIds.has(id), [hasFocus, litIds]);
   const focusLinkKey = focus && 'link' in focus ? getLinkKey(focus.link) : null;
   const isLinkLit = useCallback(
@@ -1962,7 +1974,7 @@ export default function NetworkGraph({
     const TL = timelineLayoutRef.current;
     if (TL && timelineRawRef.current > 0) {
       const a = easeInOutCubic(timelineRawRef.current);
-      drawTimelineAxis(ctx, TL, globalScale, a, YEAR_PX, (id) => TL.pos.get(id)?.y ?? null);
+      drawTimelineAxis(ctx, TL, globalScale, a, YEAR_PX, (id) => TL.pos.get(id)?.y ?? null, timelineHighlightRef.current);
       drawTimelineTwins(ctx, TL, globalScale, a * a);
     }
     const on = st.m > 0;
@@ -2156,10 +2168,10 @@ export default function NetworkGraph({
   // Só nas linhas em FOCO (nó/linha selecionado ou sob o mouse): enquanto houver
   // uma partícula na tela, a biblioteca redesenha o grafo inteiro a cada quadro.
   // Sem foco, sem partículas — a teia assentada fica parada e não gasta CPU.
-  // No 2.5D, sem partículas: a biblioteca as desenha em x/y (no plano), não na linha projetada.
+  // No 2.5D e na linha do tempo, sem partículas: a biblioteca as desenha em x/y (na teia), não na linha projetada.
   const linkParticles = useCallback(
-    (link: any) => (!active25d && hasFocus && isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0),
-    [isLinkLit, active25d, hasFocus]
+    (link: any) => (!active25d && !timelineActive && hasFocus && isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0),
+    [isLinkLit, active25d, timelineActive, hasFocus]
   );
   const linkParticleColor = useCallback((link: any) => statusColor(link.status), []);
   // Hover (só com mouse; ver HOVER_POINTER_QUERY e suppressHoverUntilRef).

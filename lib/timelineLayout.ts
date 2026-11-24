@@ -70,7 +70,7 @@ export interface TimelineLayout {
   /** Entidade → esquema onde ela está (aberto, se houver; senão o 1º dela). */
   host: Map<string, string>;
   /** Faixa do período de cada esquema sobre o eixo. */
-  bars: { id: string; x0: number; x1: number }[];
+  bars: { id: string; x0: number; x1: number; startYear: number; endYear: number }[];
   /** Cópias de uma entidade em outros esquemas abertos + a linha até o nó real. */
   twins: { entityId: string; type: string; x: number; y: number; hostX: number; hostY: number }[];
   axis: { y: number; x0: number; x1: number; minYear: number; maxYear: number };
@@ -284,7 +284,8 @@ export function computeTimelineLayout(
     pos.set(s.id, { x: p.x, y: p.y, visible: true });
     grow(p.x, p.y, radius(s));
     const per = period.get(s.id);
-    if (per) bars.push({ id: s.id, x0: xOf(per[0]), x1: xOf(per[1]) });
+    // endYear: o período termina no ÚLTIMO ano coberto (o fim é inclusivo: 2005 vira 2006 no cálculo).
+    if (per) bars.push({ id: s.id, x0: xOf(per[0]), x1: xOf(per[1]), startYear: Math.floor(per[0] + 1e-9), endYear: Math.floor(per[1] - 1e-4) });
     if (expanded.has(s.id)) {
       const { slots } = fanSlots(s, members.get(s.id)!, p.sd);
       const m = new Map<string, { x: number; y: number }>();

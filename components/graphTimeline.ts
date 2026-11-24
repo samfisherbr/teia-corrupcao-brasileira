@@ -14,8 +14,11 @@ import { getNodeRadius, NODE_STYLE } from '@/lib/graphConfig';
 import type { NodeType } from '@/types/graph';
 
 const AXIS = '#ffffff';
-const BAR = 'rgba(255, 0, 200, 0.6)';
-const STEM = 'rgba(255, 0, 200, 0.35)';
+const BAR_DIM = 'rgba(255, 0, 200, 0.22)';
+const BAR_ON = '#ff00c8';
+const BAR_LABEL = '#ff9cec';
+const STEM_DIM = 'rgba(255, 0, 200, 0.16)';
+const STEM_ON = 'rgba(255, 92, 224, 0.9)';
 const LABEL_BG = '#080d16';
 
 /** Passo (anos) entre rótulos, conforme quantos px cada ano ocupa na tela. */
@@ -26,13 +29,19 @@ function yearStep(pxPerYear: number): number {
   return 10;
 }
 
+/**
+ * `highlight` = esquemas em foco (passar o mouse / selecionar). Sem foco, todas
+ * as faixas ficam apagadas; as em foco acendem, ficam mais grossas e mostram o
+ * ano de início e o de fim.
+ */
 export function drawTimelineAxis(
   ctx: CanvasRenderingContext2D,
   L: TimelineLayout,
   scale: number,
   alpha: number,
   yearPx: number,
-  schemeY: (id: string) => number | null
+  schemeY: (id: string) => number | null,
+  highlight: ReadonlySet<string>
 ) {
   if (alpha <= 0.01) return;
   const px = 1 / (scale || 1);
@@ -41,22 +50,38 @@ export function drawTimelineAxis(
   ctx.globalAlpha = alpha;
   ctx.lineCap = 'round';
 
-  // Faixa do período de cada esquema + haste até o círculo.
-  for (const b of L.bars) {
-    ctx.fillStyle = BAR;
-    const h = 6 * px;
-    ctx.beginPath();
-    ctx.roundRect(b.x0, y - h / 2, Math.max(b.x1 - b.x0, 8 * px), h, h / 2);
-    ctx.fill();
+  // Faixas apagadas + hastes até o círculo; as em foco depois, por cima.
+  const stem = (b: TimelineLayout['bars'][number], color: string, width: number) => {
     const sy = schemeY(b.id);
-    if (sy != null) {
-      ctx.beginPath();
-      ctx.moveTo((b.x0 + b.x1) / 2, y);
-      ctx.lineTo((b.x0 + b.x1) / 2, sy);
-      ctx.strokeStyle = STEM;
-      ctx.lineWidth = px;
-      ctx.stroke();
-    }
+    if (sy == null) return;
+    ctx.beginPath();
+    ctx.moveTo((b.x0 + b.x1) / 2, y);
+    ctx.lineTo((b.x0 + b.x1) / 2, sy);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width * px;
+    ctx.stroke();
+  };
+  const bar = (b: TimelineLayout['bars'][number], h: number) => {
+    ctx.beginPath();
+    ctx.roundRect(b.x0, y - (h * px) / 2, Math.max(b.x1 - b.x0, 8 * px), h * px, (h * px) / 2);
+    ctx.fill();
+  };
+  ctx.fillStyle = BAR_DIM;
+  for (const b of L.bars) {
+    if (highlight.has(b.id)) continue;
+    bar(b, 6);
+    stem(b, STEM_DIM, 1);
+  }
+  const on = L.bars.filter((b) => highlight.has(b.id));
+  ctx.fillStyle = BAR_ON;
+  for (const b of on) {
+    bar(b, 10);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.lineWidth = px;
+    ctx.beginPath();
+    ctx.roundRect(b.x0, y - 5 * px, Math.max(b.x1 - b.x0, 8 * px), 10 * px, 5 * px);
+    ctx.stroke();
+    stem(b, STEM_ON, 1.5);
   }
 
   // Eixo e extremidades.
@@ -98,6 +123,28 @@ export function drawTimelineAxis(
       ctx.strokeText(String(yr), x, y + 11 * px);
       ctx.fillStyle = AXIS;
       ctx.fillText(String(yr), x, y + 11 * px);
+    }
+  }
+
+  // Início e fim dos esquemas em foco, acima do eixo.
+  if (on.length) {
+    ctx.font = `700 ${12 * px}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+    ctx.textBaseline = 'bottom';
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = 3.5 * px;
+    for (const b of on) {
+      const same = b.startYear === b.endYear;
+      const ends: [number, number, string][] = same
+        ? [[(b.x0 + b.x1) / 2, 0, String(b.startYear)]]
+        : [[b.x0, -1, String(b.startYear)], [b.x1, 1, String(b.endYear)]];
+      for (const [x, side, text] of ends) {
+        ctx.textAlign = side < 0 ? 'right' : side > 0 ? 'left' : 'center';
+        const tx = x + side * 4 * px;
+        ctx.strokeStyle = LABEL_BG;
+        ctx.strokeText(text, tx, y - 9 * px);
+        ctx.fillStyle = BAR_LABEL;
+        ctx.fillText(text, tx, y - 9 * px);
+      }
     }
   }
   ctx.restore();
