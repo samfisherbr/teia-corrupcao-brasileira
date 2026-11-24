@@ -1179,6 +1179,37 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
         note: "Deflagração da operação; apurações do MP-BA desde 2015, sem ato público.",
       },
     },
-  }
-
+  },
+  "esquema_operacao_calicute": {
+    title: "Operação Calicute",
+    reviewedAt: "2026-11-24",
+    context: "A Operação Calicute foi deflagrada pela Polícia Federal em 17 de novembro de 2016, em ação coordenada das forças-tarefa da Lava Jato no Rio de Janeiro e no Paraná, e prendeu o ex-governador Sérgio Cabral (PMDB), que governou o estado de 2007 a 2014. A investigação partiu das delações de executivos da Andrade Gutierrez feitas no caso Eletronuclear e se apoiou também nas colaborações da Carioca Engenharia e de Fernando Cavendish, ex-dono da Delta. O nome faz referência à região da Índia onde Pedro Álvares Cabral enfrentou uma de suas maiores tormentas.",
+    mechanism: "Segundo a PF, o esquema tinha quatro núcleos: um econômico, formado por um cartel de empreiteiras; um político, liderado por Cabral; um administrativo, com os secretários Wilson Carlos e Hudson Braga; e um operacional, com Carlos Miranda, Luiz Carlos Bezerra e Wagner Jordão Garcia. Delatores relataram a cobrança de 5% sobre o valor de grandes contratos, como a reforma do Maracanã, o PAC Favelas e o Arco Metropolitano, com entregas de dinheiro em espécie. Segundo a sentença, a lavagem ocorria pela compra de joias sem nota fiscal e por contratos fictícios de consultoria e do escritório Ancelmo Advogados.",
+    impact: "R$ 220 milhões em propinas pagas por empreiteiras para garantir obras públicas, segundo o inquérito concluído pela PF em dezembro de 2016. As cifras seguem critérios diferentes e não se somam: na deflagração, o G1 relatou que, segundo as investigações, só a Carioca Engenharia teria pago mais de R$ 176 milhões ao grupo, enquanto Ricardo Pernambuco, então controlador da empresa, disse em colaboração premiada que a propina a Cabral chegou a R$ 30 milhões. Na sentença de 2017, a Procuradoria apontou provas de pagamento de ao menos R$ 7,7 milhões, e o juiz considerou lavados R$ 6.562.270 em joias.",
+    legalStatus: "Em setembro de 2017 o juiz Marcelo Bretas condenou Cabral (45 anos e 2 meses), Adriana Ancelmo (18 anos e 3 meses) e outros réus, e absolveu Pedro Ramos Miranda; em dezembro de 2018 o TRF-2 confirmou 11 condenações, elevou a pena de Cabral para 45 anos e 9 meses e reduziu a de Adriana para 12 anos e 11 meses, e Pedro Ramos e José Orlando Rabelo terminaram absolvidos. A defesa de Cabral negou as acusações; ele admitiu propinas em 2019, teve a delação firmada com a PF anulada pelo STF em 2021 e voltou a negar as denúncias depois de sair da prisão, em dezembro de 2022. No braço de Curitiba, a condenação imposta por Sergio Moro (14 anos e 2 meses, caso Comperj) foi mantida pelo TRF-4; em dezembro de 2022 o STF validou os atos de Moro no processo, e em maio de 2023 o TRF-4 derrubou a anulação da sentença decidida pelo juiz Eduardo Appio. O TRF-2 reconheceu em 2024 que a Calicute é de competência da 7ª Vara Federal Criminal do Rio. Situação em novembro de 2026: as fontes lidas não registram trânsito em julgado nem anulação da condenação da Calicute; em maio de 2025, após o STF ampliar o foro especial, ações contra Cabral começaram a ser enviadas ao STJ.",
+    sources: [
+      { title: "Ex-governador Sérgio Cabral é preso pela PF na Zona Sul do Rio", url: "https://g1.globo.com/rio-de-janeiro/noticia/2016/11/ex-governador-sergio-cabral-e-preso-pela-pf-na-zona-sul-do-rio.html" },
+      { title: "Polícia Federal indicia Sérgio Cabral e mais 15 pessoas na Operação Calicute", url: "https://agenciabrasil.ebc.com.br/politica/noticia/2016-12/policia-federal-indicia-sergio-cabral-e-mais-15-pessoas-na-operacao" },
+      { title: "Cabral é condenado a 45 anos de prisão por crimes investigados na Operação Calicute", url: "https://g1.globo.com/rio-de-janeiro/noticia/cabral-e-condenado-a-45-anos-de-prisao-por-crimes-investigados-na-operacao-calicute.ghtml" },
+      { title: "TRF-2 mantém condenações de Cabral e mulher, mas altera as penas", url: "https://noticias.uol.com.br/politica/ultimas-noticias/2018/12/04/pena-sergio-cabral-adriana-ancelmo-segunda-instancia-prisao.htm" },
+      { title: "STF decide soltar Sérgio Cabral, último preso da Lava Jato", url: "https://www1.folha.uol.com.br/poder/2022/12/stf-decide-soltar-sergio-cabral-ultimo-preso-da-lava-jato.shtml" },
+      { title: "TRF-4 derruba decisão de juiz que anulou sentença de Moro contra Cabral", url: "https://g1.globo.com/rs/rio-grande-do-sul/noticia/2023/05/16/trf-4-derruba-decisao-de-juiz-que-anulou-sentenca-de-moro-contra-cabral.ghtml" },
+      { title: "Justiça Federal anula três condenações do ex-governador Sergio Cabral", url: "https://agenciabrasil.ebc.com.br/justica/noticia/2024-03/justica-federal-anula-tres-condenacoes-do-ex-governador-sergio-cabral" },
+      { title: "Ações contra Cabral são enviadas ao STJ após decisão do STF sobre foro especial", url: "https://www1.folha.uol.com.br/poder/2025/05/acoes-contra-cabral-sao-enviadas-ao-stj-apos-decisao-do-stf-sobre-foro-especial.shtml" }
+    ],
+    timeline: {
+      start: {
+        date: "2007",
+        basis: "first_known_act",
+        sourceUrl: "https://g1.globo.com/rio-de-janeiro/noticia/cabral-e-condenado-a-45-anos-de-prisao-por-crimes-investigados-na-operacao-calicute.ghtml",
+        note: "Segundo a sentença, Cabral pediu propina a Rogério Nora (Andrade Gutierrez) em reunião no início de 2007.",
+      },
+      end: {
+        date: "2016-11-17",
+        basis: "police_investigation",
+        sourceUrl: "https://g1.globo.com/rio-de-janeiro/noticia/2016/11/ex-governador-sergio-cabral-e-preso-pela-pf-na-zona-sul-do-rio.html",
+        note: "Deflagração da operação e prisão de Cabral.",
+      },
+    },
+  },
 };
