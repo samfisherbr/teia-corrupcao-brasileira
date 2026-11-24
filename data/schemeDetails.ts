@@ -1244,4 +1244,35 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       },
     },
   },
+  "esquema_quinto_do_ouro": {
+    title: "Operações Quinto do Ouro e Descontrole (TCE-RJ)",
+    reviewedAt: "2026-11-24",
+    context: "Segundo o MPF e o STJ, conselheiros do Tribunal de Contas do Estado do Rio de Janeiro (TCE-RJ), órgão que fiscaliza o governo estadual e 91 prefeituras, cobraram e receberam vantagens indevidas entre 1999 e 2016. O caso veio a público em 13/12/2016, com a Operação Descontrole, da força-tarefa da Lava Jato no Rio, que levou o então presidente do tribunal, Jonas Lopes de Carvalho Júnior, a depor. Jonas Lopes e o filho fecharam acordo de colaboração premiada, e em 29/03/2017 a Operação Quinto do Ouro, autorizada pelo STJ, prendeu temporariamente cinco dos sete conselheiros e levou o presidente da Alerj, Jorge Picciani, a depor.",
+    mechanism: "Segundo a denúncia do MPF e o voto da relatora no STJ, os conselheiros recebiam percentuais de contratos do estado em troca de fiscalização menos rigorosa: 1% dos editais de obras acima de R$ 5 milhões, parte dos pagamentos a fornecedores de alimentação da Seap e do Degase liberados com recursos do fundo do TCE-RJ e uma mesada de empresas de ônibus ligadas à Fetranspor. O relator Felix Fischer registrou em 2019 que o dinheiro, em espécie, era levado para dentro do tribunal e partilhado entre os conselheiros. Delatores da Carioca Engenharia e da Andrade Gutierrez citaram pedidos de vantagem e um operador que recolhia os valores; as defesas sustentam que a acusação se apoia só em delações, tese rejeitada pelo STJ e pelo STF ao manter a ação.",
+    impact: "R$ 3,85 milhões em propina da Fetranspor: 11 pagamentos mensais de R$ 70 mil a cada um dos cinco conselheiros réus, entre maio de 2015 e março de 2016, segundo a denúncia do MPF e o voto da relatora no STJ (julgamento não concluído). A denúncia atribui ainda a Aloysio Neves uma mesada de R$ 100 mil paga por Sérgio Cabral entre 2007 e 2014 e cerca de R$ 463 mil em lavagem por compra de obras de arte. Na ação penal 927, José Gomes Graciosa e a ex-esposa foram condenados a ressarcir R$ 3,8 milhões ao erário.",
+    legalStatus: "Em 13/06/2019 a Corte Especial do STJ recebeu a denúncia contra Aloysio Neves, Domingos Brazão, José Gomes Graciosa, José Maurício Nolasco e Marco Antônio Alencar (ação penal 897), mantida pelo STF em 2023 ao negar habeas corpus de Brazão. Em 04/02/2026 a Corte Especial condenou Graciosa a 13 anos por lavagem de dinheiro, com perda do cargo, e a ex-esposa Flávia Graciosa, em ação separada (927); a corrupção antecedente foi declarada prescrita, e não foi localizada decisão sobre recursos. Em 16/09/2026 a relatora Isabel Gallotti votou por condenar os cinco réus da ação 897 a penas de 27 a 55 anos, mas pedido de vista de Sebastião Reis Júnior suspendeu o julgamento; todos seguem presumidos inocentes nessa ação. Situação verificada em 24/11/2026: julgamento da ação 897 suspenso, sem data localizada para a retomada.",
+    sources: [
+      { title: "Presidente do TCE-RJ é levado para depor pela PF em operação ligada à Lava Jato", url: "https://agenciabrasil.ebc.com.br/geral/noticia/2016-12/presidente-do-tce-rj-e-levado-para-depor-pela-pf-em-operacao-ligada-lava-jato" },
+      { title: "PF prende 5 dos 7 conselheiros do TCE-RJ e leva presidente da Alerj para depor", url: "https://noticias.uol.com.br/politica/ultimas-noticias/2017/03/29/pf-prende-5-dos-7-conselheiros-do-tce-rj-e-leva-presidente-da-alerj-para-depor.htm" },
+      { title: "Ex-presidente do TCE-RJ diz que Picciani era elo com empresários de transporte", url: "https://agenciabrasil.ebc.com.br/politica/noticia/2018-02/ex-presidente-do-tce-rj-diz-que-picciani-era-elo-com-empresarios-de" },
+      { title: "Corte Especial recebe denúncia contra cinco conselheiros do Tribunal de Contas do Rio de Janeiro", url: "https://www.stj.jus.br/sites/portalp/Paginas/Comunicacao/Noticias/2019/Corte-Especial-recebe-denuncia-contra-cinco-conselheiros-do-Tribunal-de-Contas-do-Rio-de-Janeiro.aspx" },
+      { title: "2ª Turma mantém ação penal contra Domingos Brazão, conselheiro do Tribunal de Contas do RJ", url: "https://noticias.stf.jus.br/postsnoticias/2a-turma-mantem-acao-penal-contra-domingos-brazao-conselheiro-do-tribunal-de-contas-do-rj/" },
+      { title: "Após ação do MPF, STJ condena conselheiro do TCE/RJ e ex-esposa por lavagem de dinheiro", url: "https://www.mpf.mp.br/o-mpf/unidades/procuradoria-geral-da-republica-pgr/noticias/apos-acao-do-mpf-stj-condena-conselheiro-do-tce-rj-e-esposa-por-lavagem-de-dinheiro" },
+      { title: "Relatora vota pela condenação de ex-conselheiros do TCE-RJ; pedido de vista suspende o julgamento", url: "https://www.stj.jus.br/sites/portalp/Paginas/Comunicacao/Noticias/2026/16092026-Relatora-vota-pela-condenacao-de-ex-conselheiros-do-TCE-RJ--pedido-de-vista-suspende-o-julgamento.aspx" },
+    ],
+    timeline: {
+      start: {
+        date: "1999",
+        basis: "documented_start",
+        sourceUrl: "https://www.mpf.mp.br/o-mpf/unidades/procuradoria-geral-da-republica-pgr/noticias/apos-acao-do-mpf-stj-condena-conselheiro-do-tce-rj-e-esposa-por-lavagem-de-dinheiro",
+        note: "MPF e STJ situam os crimes entre 1999 e 2016, sem mês.",
+      },
+      end: {
+        date: "2016-12-13",
+        basis: "police_investigation",
+        sourceUrl: "https://agenciabrasil.ebc.com.br/geral/noticia/2016-12/presidente-do-tce-rj-e-levado-para-depor-pela-pf-em-operacao-ligada-lava-jato",
+        note: "Operação Descontrole: primeiro ato oficial público; o MPF situa o fim da atividade em 2016, sem mês, por isso o fim é a operação.",
+      },
+    },
+  },
 };
