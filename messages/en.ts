@@ -114,6 +114,8 @@ export const en: Messages = {
     legalMenuAria: 'Legal pages menu',
     termsAndPrivacy: 'Terms & Privacy',
     toggle25dAria: '2.5D view when zooming in',
+    toggleTimeline: 'Timeline',
+    toggleTimelineAria: 'Switch between the network and the timeline of schemes',
   },
 
   inspector: {

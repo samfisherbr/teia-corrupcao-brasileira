@@ -134,6 +134,8 @@ export const pt = {
     legalMenuAria: 'Menu de páginas legais',
     termsAndPrivacy: 'Termos & Privacidade',
     toggle25dAria: 'Visão 2.5D ao aproximar',
+    toggleTimeline: 'Linha do tempo',
+    toggleTimelineAria: 'Alternar entre a teia e a linha do tempo dos esquemas',
   },
 
   inspector: {
