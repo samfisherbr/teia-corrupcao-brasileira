@@ -1212,4 +1212,36 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       },
     },
   },
+  esquema_operacao_unha_e_carne: {
+    title: "Operação Unha e Carne",
+    reviewedAt: "2026-11-24",
+    context: "A Operação Unha e Carne foi deflagrada pela Polícia Federal em 3 de dezembro de 2025, por ordem do ministro Alexandre de Moraes, do STF, no inquérito aberto a partir da ADPF 635 (ADPF das Favelas) para apurar conexões de grupos criminosos violentos do Rio de Janeiro com agentes públicos. O alvo inicial foi o então presidente da Alerj, Rodrigo Bacellar (União Brasil), suspeito de ter vazado ao então deputado TH Joias informações sigilosas da Operação Zargun, que prendeu TH Joias em setembro de 2025. Até outubro de 2026, a operação teve nove fases, que se estenderam a compras da Seeduc, ao jogo do bicho e a uma rede de postos de combustíveis.",
+    mechanism: "Segundo a denúncia da PGR, o desembargador Macário Júdice Neto, relator do caso Zargun no TRF-2, repassou a Bacellar num jantar informações sobre as medidas sigilosas, e Bacellar alertou TH Joias, cuja casa e cujo gabinete foram esvaziados na véspera. Nas fases seguintes, a PF passou a investigar o direcionamento de contratações de escolas da Seeduc para empresas ligadas ao deputado Thiago Rangel (Avante), pagamentos do jogo do bicho e da Máfia do Cigarro a agentes públicos e o uso de uma rede de postos de combustíveis como plataforma de lavagem de dinheiro, com o ex-prefeito de Belford Roxo Márcio Canella (União Brasil) apontado como articulador político; na frente do jogo do bicho, o ex-deputado federal Marco Antônio Cabral (MDB) foi alvo de buscas. Os citados negam irregularidades ou disseram que só se manifestariam após ter acesso aos autos.",
+    impact: "R$ 7,6 bilhões: valor movimentado entre 2020 e 2026 pelo grupo ligado à rede de postos de combustíveis, segundo relatório do Coaf citado pela PF; é dinheiro movimentado, não prejuízo apurado. Na 5ª fase, o STF determinou o sequestro de até R$ 22 milhões em bens e valores, e na 9ª a PF apreendeu joias avaliadas em cerca de R$ 900 mil. A Operação Zargun, cujo vazamento deu origem ao caso, havia determinado o sequestro de R$ 40 milhões em bens.",
+    legalStatus: "Em agosto de 2026, a 1ª Turma do STF recebeu por unanimidade a denúncia da PGR, e Bacellar, TH Joias, Macário Júdice Neto, a esposa de TH Joias e um ex-assessor tornaram-se réus por obstrução de investigação contra organização criminosa armada; as defesas alegaram inépcia da denúncia e cerceamento de defesa, e os acusados negam as acusações. Bacellar, cassado pelo TSE em março de 2026 no caso Ceperj, foi preso de novo naquele mês; Thiago Rangel, Márcio Canella e o ex-chefe da Polícia Civil Marcus Amim foram presos preventivamente e são investigados, sem denúncia localizada. Márcio Poncio teve a preventiva convertida em domiciliar, e Canella, preso em flagrante em julho, foi solto em três dias antes da nova prisão em outubro. Situação verificada em 24 de novembro de 2026.",
+    sources: [
+      { title: "Rodrigo Bacellar, presidente da Alerj, é preso pela PF por suspeita de ter avisado a TH Joias sobre prisão iminente em setembro (G1, 03/12/2025)", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2025/12/03/pf-deflagra-operacao-unha-e-carne-no-rj.ghtml" },
+      { title: "PGR denuncia Bacellar, TH Joias, desembargador e mais 2 por obstrução de investigação ligada ao CV (G1, 16/03/2026)", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2026/03/16/pgr-denuncia-bacellar-th-joias-e-desembargador-por-obstrucao-de-investigacao-ligada-ao-cv.ghtml" },
+      { title: "STF aceita denúncia contra ex-deputados estaduais Rodrigo Bacellar e TH Joias (STF, 20/08/2026)", url: "https://noticias.stf.jus.br/postsnoticias/stf-aceita-denuncia-contra-ex-deputados-estaduais-rodrigo-bacellar-e-th-joias/" },
+      { title: "Deputado estadual Thiago Rangel é preso pela PF na 4ª fase da Operação Unha e Carne (G1, 05/05/2026)", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2026/05/05/pf-deflagra-4a-fase-da-operacao-unha-e-carne-no-rj.ghtml" },
+      { title: "Pastor Márcio Poncio é preso na 5ª fase da Operação Unha e Carne, da PF, investigado por ligação com a Máfia do Cigarro (G1, 02/07/2026)", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2026/07/02/pf-deflagra-a-5a-fase-da-operacao-unha-e-carne.ghtml" },
+      { title: "PF aponta Canella como articulador político de organização criminosa que movimentou 7,6 bilhões em 6 anos (G1, 15/10/2026)", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2026/10/15/investigacao-pf-marcio-canella.ghtml" },
+      { title: "PF deflagra 9ª fase da Operação Unha e Carne para apurar lavagem de dinheiro e outros crimes (Polícia Federal, 29/10/2026)", url: "https://www.gov.br/pf/pt-br/assuntos/noticias/2026/10/pf-deflagra-9a-fase-da-operacao-unha-e-carne-para-apurar-lavagem-de-dinheiro-e-outros-crimes" },
+      { title: "Unha e Carne 9: Márcio Poncio e sobrinho de Adilsinho são alvo de buscas da PF (G1, 29/10/2026)", url: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2026/10/29/pf-deflagra-9a-fase-da-operacao-unha-e-carne.ghtml" },
+    ],
+    timeline: {
+      start: {
+        date: "2020",
+        basis: "first_known_act",
+        sourceUrl: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2026/10/15/investigacao-pf-marcio-canella.ghtml",
+        note: "Fato datado mais antigo entre os núcleos da operação: segundo a PF, o grupo da rede de postos movimentou R$ 7,6 bilhões entre 2020 e 2026. O vazamento ao TH Joias, núcleo original, é de 2 de setembro de 2025.",
+      },
+      end: {
+        date: "2025-12-03",
+        basis: "police_investigation",
+        sourceUrl: "https://g1.globo.com/rj/rio-de-janeiro/noticia/2025/12/03/pf-deflagra-operacao-unha-e-carne-no-rj.ghtml",
+        note: "Primeira fase pública da operação (prisão de Bacellar). Os núcleos da Seeduc (maio de 2026), do jogo do bicho (julho de 2026) e dos postos (julho de 2026) só foram alvo de atos públicos depois; sem fim documentado para eles.",
+      },
+    },
+  },
 };
