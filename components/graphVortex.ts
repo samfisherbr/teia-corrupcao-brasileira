@@ -14,10 +14,10 @@
  * ============================================================================
  */
 import { IsoState, project } from '@/lib/iso';
-import { CORE_RADIUS } from '@/lib/layout';
+import { layoutGeometry } from '@/lib/layout';
 
 /** Raio da boca do funil (unidades do grafo): por dentro dos partidos (raio 70 em CORE_RADIUS). */
-const MOUTH_RADIUS = CORE_RADIUS * 0.72;
+const MOUTH_FRACTION = 0.72;
 /** Raio da garganta ÷ raio da boca. */
 const THROAT = 0.18;
 /** ↑ = o raio cai mais rápido (mais anéis no tubo, menos na boca). */
@@ -131,6 +131,7 @@ export function drawVortex(
   const dt = vs.lastTime < 0 ? 0 : Math.min(0.1, Math.max(0, time - vs.lastTime));
   vs.lastTime = time;
   if (alpha <= 0.01) return;
+  const MOUTH_RADIUS = layoutGeometry.coreR * MOUTH_FRACTION;
 
   // Fora da tela (ou pequeno demais para ver): não desenha.
   const [sx, sy] = project(st, cx, cy, 0);

@@ -25,6 +25,16 @@
  * Depende só de como os casos se sobrepõem — nunca do tamanho ou da
  * importância de um partido —, então a posição não carrega juízo editorial.
  *
+ * ESCALA AUTOMÁTICA: CORE_RADIUS, LANE_NEAR e LANE_FAR são PISOS. O raio do
+ * núcleo cresce com o nº de partidos (cabem lado a lado no círculo) e a faixa
+ * de órbita cresce com a área total dos esquemas (+ "pontes", abaixo), para
+ * que novos casos ganhem espaço em vez de se espremer. Os valores efetivos
+ * ficam em `layoutGeometry` (lidos pelo desenho do chão 2.5D e do funil).
+ *
+ * PONTES: entidades compartilhadas pelo MESMO conjunto de esquemas (≥ 2)
+ * ganham uma área reservada própria, que entra na mesma relaxação das áreas
+ * dos esquemas: nenhuma área (esquema ou ponte) invade outra.
+ *
  * Custo: só os ~30 esquemas e os partidos têm posição calculada aqui
  * (geometria pura, poucos milissegundos). As demais entidades se acomodam
  * na animação normal da biblioteca, guiadas pelas forças de applyLayoutForces.
@@ -40,6 +50,28 @@ import { getLinkEnds, getNodeRadius } from '@/lib/graphConfig';
 
 /** Raio do círculo dos partidos no centro (unidades do grafo). */
 export const CORE_RADIUS = 520;
+
+/** Espaço mínimo entre dois partidos vizinhos no círculo do núcleo. */
+export const PARTY_GAP = 60;
+
+/** Fração da faixa de órbita que pode ser ocupada por áreas (empacotamento de círculos). */
+export const PACKING = 0.55;
+
+/** Área reservada de uma ponte = BRIDGE_BASE + AREA_PER_MEMBER × √(nº de entidades). */
+export const BRIDGE_BASE = 60;
+
+/**
+ * Relaxação das áreas: passos COM puxão para a faixa (o layout de sempre),
+ * depois passos SÓ de afastamento até não sobrar sobreposição (máximo), com
+ * tolerância em unidades do grafo. Medir durante o puxão não serve: ele
+ * reintroduz sobreposição a cada passo.
+ */
+const RELAX_PULL_ITERS = 300;
+const RELAX_SETTLE_ITERS = 1000;
+const RELAX_TOLERANCE = 1;
+/** Se sobrar sobreposição, as faixas crescem por este fator (até RELAX_MAX_GROWTHS vezes). */
+const RELAX_GROWTH = 1.1;
+const RELAX_MAX_GROWTHS = 3;
 
 /** Distância mínima entre a borda do núcleo e a área de qualquer esquema. */
 export const CORE_GAP = 160;
@@ -114,7 +146,18 @@ export interface LayoutTarget {
   home?: string[];
   /** Raio da área protegida (só esquemas). */
   area?: number;
+  /**
+   * Só entidades compartilhadas com ponte: raio da ponte e deslocamento do
+   * centro dela em relação à média das posições dos seus esquemas.
+   */
+  bridge?: { r: number; dx: number; dy: number };
 }
+
+/**
+ * Geometria EFETIVA do último layout calculado (os pisos acima, ampliados
+ * conforme os dados). Lida pelo desenho do chão 2.5D e do funil.
+ */
+export const layoutGeometry = { coreR: CORE_RADIUS, laneNear: LANE_NEAR, laneFar: LANE_FAR };
 
 /** Hash determinístico simples: mesmo id → mesmo "ruído", layout reproduzível. */
 function hashUnit(id: string): number {
@@ -190,6 +233,9 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
   }
 
   // 4. Ordem dos partidos no núcleo que espalha os esquemas por igual.
+  //    O círculo cresce se os partidos não couberem lado a lado.
+  const partyR = getNodeRadius('party');
+  const coreR = Math.max(CORE_RADIUS, (parties.length * (2 * partyR + PARTY_GAP)) / (2 * Math.PI));
   const slot = (i: number) => (i / Math.max(1, parties.length)) * 2 * Math.PI - Math.PI / 2;
   const directions = (order: GraphNode[]) => {
     const pos = new Map(order.map((p, i) => [p.id, slot(i)]));
@@ -269,48 +315,111 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
     }
     cachedPartyOrder = order.map((p) => p.id);
   }
-  order.forEach((p, i) => targets.set(p.id, { x: CORE_RADIUS * Math.cos(slot(i)), y: CORE_RADIUS * Math.sin(slot(i)) }));
+  order.forEach((p, i) => targets.set(p.id, { x: coreR * Math.cos(slot(i)), y: coreR * Math.sin(slot(i)) }));
 
-  // 5. Esquemas: alvo na faixa de órbita, depois afasta sobreposições de
-  //    áreas e do núcleo (só 30 círculos — geometria pura, barata).
+  // 5. Áreas (esquemas + pontes): alvo na faixa de órbita, depois afasta
+  //    sobreposições entre áreas e do núcleo (geometria pura, barata).
+  //    Pontes: entidades compartilhadas pelo mesmo conjunto de esquemas.
+  const bridgeGroups = new Map<string, { homes: string[]; ids: string[] }>();
+  for (const [id, hs] of home) {
+    if (hs.length < 2) continue;
+    const key = [...hs].sort().join('|');
+    const g = bridgeGroups.get(key) ?? { homes: [...hs].sort(), ids: [] };
+    g.ids.push(id);
+    bridgeGroups.set(key, g);
+  }
+  const bridges = [...bridgeGroups.entries()]
+    .filter(([, g]) => g.ids.length >= 2)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, g]) => ({ key, ...g, r: BRIDGE_BASE + AREA_PER_MEMBER * Math.sqrt(g.ids.length) }));
+
   const dirs = directions(order);
-  const pos = schemes.map((s, i) => {
-    const lane = LANE_NEAR + (LANE_FAR - LANE_NEAR) * dirs[i].focus;
+  const maxArea = Math.max(0, ...area.values());
+  const laneNear = Math.max(LANE_NEAR, coreR + CORE_GAP + maxArea);
+  const areaSum = [...area.values(), ...bridges.map((b) => b.r)].reduce((a, r) => a + (r + AREA_GAP / 2) ** 2, 0);
+  const laneFar = Math.max(LANE_FAR, laneNear + 1, Math.sqrt(laneNear ** 2 + areaSum / PACKING));
+  layoutGeometry.coreR = coreR;
+  layoutGeometry.laneNear = laneNear;
+  layoutGeometry.laneFar = laneFar;
+
+  interface Item { id: string; tx: number; ty: number; x: number; y: number; r: number; homes?: string[] }
+  const pos: Item[] = schemes.map((s, i) => {
+    const lane = laneNear + (laneFar - laneNear) * dirs[i].focus;
     return { id: s.id, tx: lane * Math.cos(dirs[i].ang), ty: lane * Math.sin(dirs[i].ang), x: 0, y: 0, r: area.get(s.id)! };
   });
   pos.forEach((p) => ((p.x = p.tx), (p.y = p.ty)));
-  for (let it = 0; it < 300; it++) {
-    for (const p of pos) {
-      p.x += (p.tx - p.x) * 0.02;
-      p.y += (p.ty - p.y) * 0.02;
-    }
-    for (let i = 0; i < pos.length; i++) {
-      for (let j = i + 1; j < pos.length; j++) {
-        const a = pos[i];
-        const b = pos[j];
-        const dx = b.x - a.x || 0.01;
-        const dy = b.y - a.y;
-        const dist = Math.hypot(dx, dy);
-        const min = a.r + b.r + AREA_GAP;
+  const schemeItems = new Map(pos.map((p) => [p.id, p]));
+  const bridgeItems: Item[] = bridges.map((b) => {
+    const hs = b.homes.map((h) => schemeItems.get(h)).filter(Boolean) as Item[];
+    const cx = hs.reduce((a, h) => a + h.tx, 0) / hs.length;
+    const cy = hs.reduce((a, h) => a + h.ty, 0) / hs.length;
+    return { id: `bridge:${b.key}`, tx: cx, ty: cy, x: cx, y: cy, r: b.r, homes: b.homes };
+  });
+  const items = [...pos, ...bridgeItems];
+  const relax = (iterations: number, pull: boolean): number => {
+    let overlap = Infinity;
+    for (let it = 0; it < iterations && !(!pull && overlap < RELAX_TOLERANCE); it++) {
+      if (pull) for (const p of pos) {
+        p.x += (p.tx - p.x) * 0.02;
+        p.y += (p.ty - p.y) * 0.02;
+      }
+      // Pontes seguem a média dos seus esquemas (que se afastam uns dos outros).
+      if (pull) for (const b of bridgeItems) {
+        const hs = b.homes!.map((h) => schemeItems.get(h)!);
+        b.x += (hs.reduce((a, h) => a + h.x, 0) / hs.length - b.x) * 0.1;
+        b.y += (hs.reduce((a, h) => a + h.y, 0) / hs.length - b.y) * 0.1;
+      }
+      overlap = 0;
+      for (let i = 0; i < items.length; i++) {
+        for (let j = i + 1; j < items.length; j++) {
+          const a = items[i];
+          const b = items[j];
+          const min = a.r + b.r + AREA_GAP;
+          const dx = b.x - a.x || 0.01;
+          if (dx > min || dx < -min) continue; // longe demais (barato; evita o hypot)
+          const dy = b.y - a.y;
+          if (dy > min || dy < -min) continue;
+          const dist = Math.hypot(dx, dy);
+          if (dist < min) {
+            overlap = Math.max(overlap, min - dist);
+            const k = ((min - dist) / dist) * 0.5;
+            a.x -= dx * k;
+            a.y -= dy * k;
+            b.x += dx * k;
+            b.y += dy * k;
+          }
+        }
+      }
+      for (const p of items) {
+        const dist = Math.hypot(p.x, p.y) || 1;
+        const min = coreR + CORE_GAP + p.r;
         if (dist < min) {
-          const k = ((min - dist) / dist) * 0.5;
-          a.x -= dx * k;
-          a.y -= dy * k;
-          b.x += dx * k;
-          b.y += dy * k;
+          overlap = Math.max(overlap, min - dist);
+          p.x *= min / dist;
+          p.y *= min / dist;
         }
       }
     }
-    for (const p of pos) {
-      const dist = Math.hypot(p.x, p.y) || 1;
-      const min = CORE_RADIUS + CORE_GAP + p.r;
-      if (dist < min) {
-        p.x *= min / dist;
-        p.y *= min / dist;
-      }
-    }
+    return overlap;
+  };
+  // Se o limite de passos não bastar, amplia as faixas e continua de onde parou.
+  relax(RELAX_PULL_ITERS, true);
+  let overlap = relax(RELAX_SETTLE_ITERS, false);
+  for (let g = 0; g < RELAX_MAX_GROWTHS && overlap >= RELAX_TOLERANCE; g++) {
+    pos.forEach((p) => ((p.tx *= RELAX_GROWTH), (p.ty *= RELAX_GROWTH)));
+    layoutGeometry.laneFar *= RELAX_GROWTH;
+    relax(RELAX_PULL_ITERS, true);
+    overlap = relax(RELAX_SETTLE_ITERS, false);
   }
   pos.forEach((p) => targets.set(p.id, { x: p.x, y: p.y, area: p.r }));
+  const bridgeOf = new Map<string, { item: Item; dx: number; dy: number }>();
+  for (const b of bridgeItems) {
+    const hs = b.homes!.map((h) => schemeItems.get(h)!);
+    const dx = b.x - hs.reduce((a, h) => a + h.x, 0) / hs.length;
+    const dy = b.y - hs.reduce((a, h) => a + h.y, 0) / hs.length;
+    const g = bridgeGroups.get(b.id.slice('bridge:'.length))!;
+    g.ids.forEach((id) => bridgeOf.set(id, { item: b, dx, dy }));
+  }
 
   // 6. Demais entidades: luas espalhadas dentro da área do seu esquema;
   //    compartilhadas, no meio dos seus esquemas.
@@ -319,7 +428,7 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
     const hs = (home.get(n.id) ?? []).filter((h) => targets.has(h));
     if (!hs.length) {
       const a = hashUnit(n.id) * 2 * Math.PI;
-      targets.set(n.id, { x: (CORE_RADIUS + 300) * Math.cos(a), y: (CORE_RADIUS + 300) * Math.sin(a), home: [] });
+      targets.set(n.id, { x: (coreR + 300) * Math.cos(a), y: (coreR + 300) * Math.sin(a), home: [] });
       continue;
     }
     if (hs.length === 1) {
@@ -329,6 +438,19 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
       const d = sr + 40 + (s.area! - sr - 60) * (0.35 + 0.5 * hashUnit(`${n.id}#r`));
       targets.set(n.id, { x: s.x + d * Math.cos(a), y: s.y + d * Math.sin(a), home: hs });
     } else {
+      const br = bridgeOf.get(n.id);
+      if (br && hs.length === (home.get(n.id) ?? []).length) {
+        // Dentro da área reservada da ponte.
+        const a = hashUnit(n.id) * 2 * Math.PI;
+        const d = (br.item.r - 30) * 0.8 * Math.sqrt(hashUnit(`${n.id}#r`));
+        targets.set(n.id, {
+          x: br.item.x + d * Math.cos(a),
+          y: br.item.y + d * Math.sin(a),
+          home: hs,
+          bridge: { r: br.item.r, dx: br.dx, dy: br.dy },
+        });
+        continue;
+      }
       const cx = hs.reduce((acc, h) => acc + targets.get(h)!.x, 0) / hs.length;
       const cy = hs.reduce((acc, h) => acc + targets.get(h)!.y, 0) / hs.length;
       targets.set(n.id, { x: cx, y: cy, home: hs });
@@ -387,8 +509,23 @@ function forceTether(targets: Map<string, LayoutTarget>) {
           n.y -= dy * k * 0.5;
         }
       } else {
-        const cx = hs.reduce((a: number, h: any) => a + h.x, 0) / hs.length;
-        const cy = hs.reduce((a: number, h: any) => a + h.y, 0) / hs.length;
+        let cx = hs.reduce((a: number, h: any) => a + h.x, 0) / hs.length;
+        let cy = hs.reduce((a: number, h: any) => a + h.y, 0) / hs.length;
+        const br = targets.get(n.id)?.bridge;
+        if (br) {
+          // Prende na área reservada da ponte (segue os esquemas se arrastados).
+          cx += br.dx;
+          cy += br.dy;
+          const dx = n.x - cx;
+          const dy = n.y - cy;
+          const dist = Math.hypot(dx, dy) || 1;
+          const max = br.r - getNodeRadius(n.type, n) - 10;
+          if (dist > max) {
+            const k = (dist - max) / dist;
+            n.x -= dx * k;
+            n.y -= dy * k;
+          }
+        }
         n.vx += (cx - n.x) * TETHER_STRENGTH * alpha;
         n.vy += (cy - n.y) * TETHER_STRENGTH * alpha;
       }
@@ -453,7 +590,7 @@ export function applyLayoutForces(
       // 1 passada por passo: colisão e repulsão são ~metade do custo da física
       // cada; com 2 passadas o passo custava ~25% a mais e o resultado final
       // (dados de nov/2026) era o mesmo: nenhum círculo sobreposto.
-      .iterations(1)
+      .iterations(targets.size > 800 ? 2 : 1)
   );
   setForce('tether', forceTether(targets));
 

@@ -739,7 +739,9 @@ export default function NetworkGraph({
   const [readyData, setReadyData] = useState<GraphData | null>(null);
   useEffect(() => {
     const signal = { aborted: false };
-    prewarmLayout(graphData.nodes, graphData.links, layoutTargets, PREWARM_TICKS, {
+    // Mais nós → mais passos de pré-aquecimento (a base, 348 nós, não muda).
+    const ticks = PREWARM_TICKS + Math.round(Math.min(40, Math.max(0, (graphData.nodes.length - 350) / 50)));
+    prewarmLayout(graphData.nodes, graphData.links, layoutTargets, ticks, {
       alphaDecay: PREWARM_DECAY,
       velocityDecay: VELOCITY_DECAY,
       signal,
