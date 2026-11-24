@@ -35,6 +35,10 @@
  * ganham uma área reservada própria, que entra na mesma relaxação das áreas
  * dos esquemas: nenhuma área (esquema ou ponte) invade outra.
  *
+ * ESQUEMAS FLUTUAM: o alvo calculado aqui é só a âncora de uma mola
+ * (forceSchemeAreas); só os partidos ficam fixos. Arrastar um esquema o deixa
+ * fixo onde foi solto até os dados mudarem (ver seedPositions).
+ *
  * Custo: só os ~30 esquemas e os partidos têm posição calculada aqui
  * (geometria pura, poucos milissegundos). As demais entidades se acomodam
  * na animação normal da biblioteca, guiadas pelas forças de applyLayoutForces.
@@ -110,6 +114,9 @@ export const AREA_LABEL_PAD = 90;
  * entidades compartilhadas para o meio dos seus esquemas.
  */
 export const TETHER_STRENGTH = 0.08;
+
+/** Mola que prende cada esquema (flutuante) ao seu alvo: fração da distância por passo (0..1). */
+export const SCHEME_ANCHOR_STRENGTH = 0.15;
 
 /**
  * Âncora fraca de todo nó livre à posição inicial calculada (0..1): impede
@@ -466,17 +473,25 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
 }
 
 /**
- * Posiciona os nós: esquemas e partidos FIXOS no alvo (fx/fy) — sempre, para
- * acompanhar mudanças de filtro; os demais nascem no alvo só na 1ª vez (depois
- * ficam onde estão e as forças os levam ao novo lugar, com animação).
+ * Posiciona os nós: PARTIDOS FIXOS no alvo (fx/fy) — sempre, para acompanhar
+ * mudanças de filtro. Esquemas FLUTUAM, presos ao alvo por uma mola
+ * (forceSchemeAreas): nascem no alvo na 1ª vez e, depois, as forças os levam ao
+ * novo lugar com animação; um esquema que ficou fixo por arraste é solto aqui.
+ * Os demais nascem no alvo só na 1ª vez.
  */
 export function seedPositions(nodes: GraphNode[], targets: Map<string, LayoutTarget>) {
   for (const n of nodes) {
     const t = targets.get(n.id);
     if (!t) continue;
-    if (n.type === 'scheme' || n.type === 'party') {
+    if (n.type === 'party') {
       n.x = n.fx = t.x;
       n.y = n.fy = t.y;
+    } else if (n.type === 'scheme') {
+      n.fx = n.fy = undefined;
+      if (typeof n.x !== 'number' || typeof n.y !== 'number') {
+        n.x = t.x;
+        n.y = t.y;
+      }
     } else if (typeof n.x !== 'number' || typeof n.y !== 'number') {
       n.x = t.x;
       n.y = t.y;
@@ -545,6 +560,69 @@ function forceTether(targets: Map<string, LayoutTarget>) {
 }
 
 /**
+ * Esquemas flutuantes: cada um é puxado ao seu alvo (direção dos partidos e
+ * faixa de órbita; esquema sem partido tem ângulo estável, então não se solta)
+ * e as áreas protegidas de dois esquemas, e do núcleo, nunca se sobrepõem —
+ * calculado a cada passo, sobre as posições atuais. Ajusta x/y direto (como
+ * forceTether), sem depender do alpha: o esquema chega ao alvo em ~20 passos.
+ * Esquema fixo (arrastado pelo usuário) não é movido, mas empurra os outros.
+ * As ligações e a repulsão não movem esquemas (velocidade zerada a cada passo).
+ */
+function forceSchemeAreas(targets: Map<string, LayoutTarget>) {
+  let schemes: any[] = [];
+  const force: any = () => {
+    for (const s of schemes) {
+      // Só a mola e a separação movem o esquema: o puxão das ligações e a
+      // repulsão (que somam em dezenas de luas) são descartados. Esta força
+      // roda depois das demais, antes da integração das velocidades.
+      s.vx = 0;
+      s.vy = 0;
+      const t = targets.get(s.id);
+      if (!t || typeof s.fx === 'number') continue;
+      s.x += (t.x - s.x) * SCHEME_ANCHOR_STRENGTH;
+      s.y += (t.y - s.y) * SCHEME_ANCHOR_STRENGTH;
+    }
+    const radius = (s: any) => (targets.get(s.id)?.area ?? 0) + AREA_LABEL_PAD;
+    for (let i = 0; i < schemes.length; i++) {
+      for (let j = i + 1; j < schemes.length; j++) {
+        const a = schemes[i];
+        const b = schemes[j];
+        const min = radius(a) + radius(b) + AREA_GAP;
+        const dx = b.x - a.x || 0.01;
+        if (dx > min || dx < -min) continue;
+        const dy = b.y - a.y;
+        if (dy > min || dy < -min) continue;
+        const dist = Math.hypot(dx, dy);
+        if (dist >= min) continue;
+        const aFixed = typeof a.fx === 'number';
+        const bFixed = typeof b.fx === 'number';
+        if (aFixed && bFixed) continue;
+        const k = (min - dist) / dist;
+        const wa = aFixed ? 0 : bFixed ? 1 : 0.5;
+        const wb = bFixed ? 0 : aFixed ? 1 : 0.5;
+        a.x -= dx * k * wa;
+        a.y -= dy * k * wa;
+        b.x += dx * k * wb;
+        b.y += dy * k * wb;
+      }
+    }
+    for (const s of schemes) {
+      if (typeof s.fx === 'number') continue;
+      const dist = Math.hypot(s.x, s.y) || 1;
+      const min = layoutGeometry.coreR + CORE_GAP + radius(s);
+      if (dist < min) {
+        s.x *= min / dist;
+        s.y *= min / dist;
+      }
+    }
+  };
+  force.initialize = (ns: any[]) => {
+    schemes = ns.filter((n) => n.type === 'scheme');
+  };
+  return force;
+}
+
+/**
  * Força de deriva: empurrão senoidal suave, com fase própria por nó (média
  * zero → o nó oscila em torno do lugar). Nós fixos (fx) não são afetados.
  */
@@ -556,7 +634,7 @@ export function forceDrift(amplitude = DRIFT_AMPLITUDE, speed = DRIFT_SPEED) {
     const t = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
     for (let i = 0; i < nodes.length; i++) {
       const n = nodes[i];
-      if (typeof n.fx === 'number') continue;
+      if (typeof n.fx === 'number' || n.type === 'scheme') continue;
       n.vx += amplitude * Math.sin(t * speed + phases[i]);
       n.vy += amplitude * Math.cos(t * speed * 0.83 + phases[i] * 1.7);
     }
@@ -599,6 +677,7 @@ export function applyLayoutForces(
       .iterations(targets.size > 800 ? 2 : 1)
   );
   setForce('tether', forceTether(targets));
+  setForce('schemeAreas', forceSchemeAreas(targets));
 
   const link = setForce('link');
   if (link?.distance) {

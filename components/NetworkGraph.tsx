@@ -1923,11 +1923,16 @@ export default function NetworkGraph({
         onLinkHover={handleLinkHover}
         // Toque/clique no fundo limpa a seleção (e o botão "Exibir detalhes").
         onBackgroundClick={onClearSelection}
-        // Arrastar: a biblioteca já faz o comportamento desejado sozinha —
-        //   • esquema (fixo antes do arraste) → continua fixo onde foi solto;
-        //   • demais nós (livres) → são soltos e voltam a se acomodar na teia.
-        // Para fixar também os outros nós ao soltar, acrescente:
-        //   onNodeDragEnd={(node: any) => { node.fx = node.x; node.fy = node.y; }}
+        // Arrastar: esquema → fica fixo onde foi solto (até os dados mudarem;
+        // ver seedPositions); demais nós (livres) → são soltos e voltam a se
+        // acomodar na teia. Para fixar também os outros nós ao soltar, tire o
+        // `if` abaixo.
+        onNodeDragEnd={(node: any) => {
+          if (node.type === 'scheme') {
+            node.fx = node.x;
+            node.fy = node.y;
+          }
+        }}
         onEngineTick={handleEngineTick}
         onEngineStop={handleEngineStop}
         // Física: ver constantes no topo do arquivo e lib/layout.ts
