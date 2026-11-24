@@ -1244,4 +1244,37 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
       },
     },
   },
+
+  "esquema_ptolomeu": {
+    title: "Operação Ptolomeu",
+    reviewedAt: "2026-11-24",
+    context: "A Operação Ptolomeu nasceu de um inquérito aberto pela Polícia Federal em julho de 2021, a partir de relatórios de inteligência financeira que apontavam movimentações do governador do Acre, Gladson Cameli (PP), como a compra de carros de luxo e de lotes em condomínio; diligências feitas desde maio de 2020 sem autorização do STJ foram anuladas depois pelo STF. A 1ª fase foi deflagrada em 16 de dezembro de 2021, com apoio da CGU e autorização do STJ, foro dos governadores, e outras três fases se seguiram até setembro de 2026. Segundo o STJ e o MPF, as práticas investigadas começaram em 2019, primeiro ano de Cameli no governo.",
+    mechanism: "Segundo a denúncia da PGR, a Secretaria de Infraestrutura do Acre contratou sem licitação a Murano Construções, de Brasília, por adesão a uma ata de registro de preços de um instituto de Goiás; um dia depois, a Murano firmou parceria com a Construtora Rio Negro, que tinha como sócio Gledson Cameli, irmão do governador, e que passou a executar os serviços. A acusação aponta sobrepreço, superfaturamento e o pagamento de mais de R$ 6,1 milhões em vantagens indevidas ao governador, por meio de parcelas de um apartamento em São Paulo e de um carro de luxo. A defesa de Cameli nega que ele tenha interferido nos contratos e que tenha havido subcontratação irregular de empresa ligada a familiar.",
+    impact: "R$ 11.785.020,31 (indenização ao estado do Acre proposta pela relatora e acolhida na condenação de Gladson Cameli pelo STJ, que o MPF cita como R$ 11,7 milhões; cabe recurso). A PGR estimou o desvio no contrato da Murano em ao menos R$ 11,7 milhões, e análises da CGU, segundo o STJ, indicaram prejuízo superior a R$ 16 milhões; a PGR também afirma ter identificado ilegalidades em oito contratos, com prejuízo estimado de quase R$ 150 milhões, valor não submetido a julgamento. Em 2023, o STJ determinou o bloqueio de R$ 120 milhões em bens dos investigados.",
+    legalStatus: "Em maio de 2024, a Corte Especial do STJ tornou Gladson Cameli réu, e a acusação contra os outros 12 denunciados, entre eles os irmãos Gledson e Eládio Cameli Júnior, foi desmembrada para a primeira instância. Em dezembro de 2025, a 2ª Turma do STF anulou as provas produzidas entre maio de 2020 e janeiro de 2021, por usurpação da competência do STJ, e em 6 de maio de 2026 o STJ condenou Cameli, que havia renunciado ao governo em abril para disputar o Senado, a 25 anos e 9 meses de prisão, por 8 votos a 3 quanto à pena (o revisor propôs 16 anos, sem peculato e sem ressarcimento); os embargos de declaração foram negados em agosto, a defesa afirma que a decisão desconsiderou a anulação do STF e recorre, e o TRE-AC negou o registro de sua candidatura por inelegibilidade decorrente da condenação. Em setembro de 2026, ele foi alvo da Ptolomeu IV, que apura a obra da sede do Imac, e a defesa diz colaborar e afirma sua inocência. Situação em novembro de 2026: condenação sujeita a recurso e pena não iniciada; última atualização verificada em 24 de novembro de 2026.",
+    sources: [
+      { title: "Ptolomeu: entenda operação da PF que mira corrupção na cúpula do governo do Acre (g1, 2023)", url: "https://g1.globo.com/ac/acre/noticia/2023/03/09/ptolomeu-entenda-operacao-da-pf-que-mira-corrupcao-na-cupula-do-governo-do-acre.ghtml" },
+      { title: "PGR denuncia por corrupção e pede afastamento de governador do Acre (Agência Brasil, 2023)", url: "https://agenciabrasil.ebc.com.br/justica/noticia/2023-11/pgr-denuncia-por-corrupcao-e-pede-afastamento-de-governador-do-acre" },
+      { title: "Por unanimidade, STJ torna governador do AC réu em suposto esquema de corrupção e nega afastamento do cargo (g1, 2024)", url: "https://g1.globo.com/ac/acre/noticia/2024/05/15/por-unanimidade-stj-torna-governador-do-ac-reu-em-suposto-esquema-de-corrupcao.ghtml" },
+      { title: "Relatora vota para condenar governador do Acre a 25 anos de prisão; pedido de vista suspende julgamento (STJ, 2025)", url: "https://www.stj.jus.br/sites/portalp/Paginas/Comunicacao/Noticias/2025/18122025-Relatora-vota-para-condenar-governador-do-Acre-a-25-anos-de-prisao--pedido-de-vista-suspende-julgamento.aspx" },
+      { title: "STF anula parte das provas da Operação Ptolomeu contra governador do Acre (g1, 2025)", url: "https://g1.globo.com/ac/acre/noticia/2025/12/20/stf-anula-parte-das-provas-da-operacao-ptolomeu-contra-governador-do-acre-confiei-na-justica.ghtml" },
+      { title: "STJ acolhe pedido do MPF e condena ex-governador do Acre a 25 anos de prisão por corrupção e lavagem de dinheiro (MPF, 2026)", url: "https://www.mpf.mp.br/o-mpf/unidades/procuradoria-geral-da-republica-pgr/noticias/stj-acolhe-pedido-do-mpf-e-condena-ex-governador-do-acre-a-25-anos-de-prisao-por-corrupcao-e-lavagem-de-dinheiro" },
+      { title: "Condenado a mais de 25 anos de prisão, Gladson Camelí tem recurso negado pelo STJ (g1, 2026)", url: "https://g1.globo.com/ac/acre/noticia/2026/08/06/condenado-a-mais-de-25-anos-de-prisao-gladson-cameli-tem-recurso-negado-pelo-stj.ghtml" },
+      { title: "Ptolomeu IV: Ex-governador Gladson Camelí é alvo de operação no Acre (g1, 2026)", url: "https://g1.globo.com/ac/acre/noticia/2026/09/22/ex-governador-gladson-cameli-e-alvo-de-operacao-da-pf-em-rio-branco.ghtml" }
+    ],
+    timeline: {
+      start: {
+        date: "2019",
+        basis: "documented_start",
+        sourceUrl: "https://www.stj.jus.br/sites/portalp/Paginas/Comunicacao/Noticias/2025/18122025-Relatora-vota-para-condenar-governador-do-Acre-a-25-anos-de-prisao--pedido-de-vista-suspende-julgamento.aspx",
+        note: "STJ e MPF situam em 2019 o início das práticas, com a contratação da Murano pela Seinfra; o mês não é informado.",
+      },
+      end: {
+        date: "2021-12-16",
+        basis: "police_investigation",
+        sourceUrl: "https://g1.globo.com/ac/acre/noticia/2023/03/09/ptolomeu-entenda-operacao-da-pf-que-mira-corrupcao-na-cupula-do-governo-do-acre.ghtml",
+        note: "1ª fase da operação, autorizada pelo STJ. O inquérito da PF foi aberto em julho de 2021, sob sigilo, e houve diligências desde maio de 2020, anuladas pelo STF; não há data documentada de fim.",
+      },
+    },
+  },
 };
