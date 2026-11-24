@@ -55,7 +55,7 @@ export const CORE_RADIUS = 520;
 export const PARTY_GAP = 60;
 
 /** Fração da faixa de órbita que pode ser ocupada por áreas (empacotamento de círculos). */
-export const PACKING = 0.55;
+export const PACKING = 0.4;
 
 /** Área reservada de uma ponte = BRIDGE_BASE + AREA_PER_MEMBER × √(nº de entidades). */
 export const BRIDGE_BASE = 60;
@@ -97,7 +97,13 @@ export const AREA_BASE = 90;
 export const AREA_PER_MEMBER = 42;
 
 /** Folga mínima entre as áreas de dois esquemas. */
-export const AREA_GAP = 60;
+export const AREA_GAP = 120;
+
+/**
+ * Folga extra (só na relaxação, não para as luas) reservada em volta de cada
+ * esquema para o rótulo, que fica abaixo do círculo.
+ */
+export const AREA_LABEL_PAD = 90;
 
 /**
  * Força que prende as luas na área do seu esquema (0..1) e que puxa as
@@ -335,17 +341,17 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
 
   const dirs = directions(order);
   const maxArea = Math.max(0, ...area.values());
-  const laneNear = Math.max(LANE_NEAR, coreR + CORE_GAP + maxArea);
-  const areaSum = [...area.values(), ...bridges.map((b) => b.r)].reduce((a, r) => a + (r + AREA_GAP / 2) ** 2, 0);
+  const laneNear = Math.max(LANE_NEAR, coreR + CORE_GAP + maxArea + AREA_LABEL_PAD);
+  const areaSum = [...[...area.values()].map((a) => a + AREA_LABEL_PAD), ...bridges.map((b) => b.r)].reduce((a, r) => a + (r + AREA_GAP / 2) ** 2, 0);
   const laneFar = Math.max(LANE_FAR, laneNear + 1, Math.sqrt(laneNear ** 2 + areaSum / PACKING));
   layoutGeometry.coreR = coreR;
   layoutGeometry.laneNear = laneNear;
   layoutGeometry.laneFar = laneFar;
 
-  interface Item { id: string; tx: number; ty: number; x: number; y: number; r: number; homes?: string[] }
+  interface Item { id: string; tx: number; ty: number; x: number; y: number; r: number; a?: number; homes?: string[] }
   const pos: Item[] = schemes.map((s, i) => {
     const lane = laneNear + (laneFar - laneNear) * dirs[i].focus;
-    return { id: s.id, tx: lane * Math.cos(dirs[i].ang), ty: lane * Math.sin(dirs[i].ang), x: 0, y: 0, r: area.get(s.id)! };
+    return { id: s.id, tx: lane * Math.cos(dirs[i].ang), ty: lane * Math.sin(dirs[i].ang), x: 0, y: 0, r: area.get(s.id)! + AREA_LABEL_PAD, a: area.get(s.id)! };
   });
   pos.forEach((p) => ((p.x = p.tx), (p.y = p.ty)));
   const schemeItems = new Map(pos.map((p) => [p.id, p]));
@@ -411,7 +417,7 @@ export function computeLayoutTargets(nodes: GraphNode[], links: GraphLink[]): Ma
     relax(RELAX_PULL_ITERS, true);
     overlap = relax(RELAX_SETTLE_ITERS, false);
   }
-  pos.forEach((p) => targets.set(p.id, { x: p.x, y: p.y, area: p.r }));
+  pos.forEach((p) => targets.set(p.id, { x: p.x, y: p.y, area: p.a }));
   const bridgeOf = new Map<string, { item: Item; dx: number; dy: number }>();
   for (const b of bridgeItems) {
     const hs = b.homes!.map((h) => schemeItems.get(h)!);

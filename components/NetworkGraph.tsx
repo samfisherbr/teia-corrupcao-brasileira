@@ -1413,11 +1413,15 @@ export default function NetworkGraph({
     return scored.map((x) => x.node as any);
   }, [graphData.nodes, selectedNode, focusIds, litIds, hasFocus, adjacency]);
 
+  // Círculos dos nós (posição desenhada) para o rótulo de esquemas/partidos fugir deles; recalculado a cada chamada de drawLabels.
+  const circlesRef = useRef<{ frame: object; list: { id: string; x: number; y: number; r: number }[] } | null>(null);
+
   const drawLabels = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     const scale = globalScale > 0 ? globalScale : 1;
     const placed: { x0: number; x1: number; y0: number; y1: number }[] = [];
     const pad = 3 / scale;
     const toDraw: { node: any; lines: string[]; x: number; y: number; fontSize: number; px: number; weight: number }[] = [];
+    const circleFrame = {};
 
     ctx.save();
     ctx.textAlign = 'center';
@@ -1455,19 +1459,68 @@ export default function NetworkGraph({
       const { lines, widthPx } = wrapped;
 
       const [nx, ny] = pos(node);
-      const y = ny + getNodeRadius(node.type, node) + 6 / scale;
+      const nr = getNodeRadius(node.type, node);
       const lineStep = fontSize * LABEL_LINE_HEIGHT;
       const extraLine = node.type === 'politician' && node.party && (scale >= 1 || isSelected || (hasFocus && litIds.has(node.id))) ? 1 : 0;
-      const box = {
-        x0: nx - widthPx / 2 / scale - pad,
-        x1: nx + widthPx / 2 / scale + pad,
-        y0: y - pad,
-        y1: y + (lines.length + extraLine) * lineStep + pad,
-      };
+      const halfW = widthPx / 2 / scale;
+      const h = (lines.length + extraLine) * lineStep;
+      const gap = 6 / scale;
+      // Posições candidatas (x = centro do texto, y = topo): abaixo do círculo
+      // (padrão) e, só para esquemas e partidos, também acima, à direita e à
+      // esquerda — vence a que cobre menos círculos e nenhum outro rótulo.
+      const candidates: { x: number; y: number }[] = [{ x: nx, y: ny + nr + gap }];
+      const flexible = node.type === 'scheme' || node.type === 'party';
+      if (flexible) {
+        candidates.push(
+          { x: nx, y: ny - nr - gap - h },
+          { x: nx + nr + gap + halfW, y: ny - h / 2 },
+          { x: nx - nr - gap - halfW, y: ny - h / 2 },
+        );
+      }
+      const boxAt = (c: { x: number; y: number }) => ({ x0: c.x - halfW - pad, x1: c.x + halfW + pad, y0: c.y - pad, y1: c.y + h + pad });
+      const hitsLabel = (b: { x0: number; x1: number; y0: number; y1: number }) =>
+        placed.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+      let chosen = candidates[0];
+      let box = boxAt(chosen);
+      if (flexible && candidates.length > 1) {
+        if (!circlesRef.current || circlesRef.current.frame !== circleFrame) {
+          circlesRef.current = {
+            frame: circleFrame,
+            list: (graphData.nodes as any[])
+              .filter((m) => typeof m.x === 'number')
+              .map((m) => {
+                const [cx, cy] = pos(m);
+                return { id: m.id, x: cx, y: cy, r: getNodeRadius(m.type, m) };
+              }),
+          };
+        }
+        const circleHits = (b: { x0: number; x1: number; y0: number; y1: number }) => {
+          let n = 0;
+          for (const c of circlesRef.current!.list) {
+            if (c.id === node.id) continue;
+            const dx = c.x - Math.max(b.x0, Math.min(c.x, b.x1));
+            const dy = c.y - Math.max(b.y0, Math.min(c.y, b.y1));
+            if (dx * dx + dy * dy < c.r * c.r) n++;
+          }
+          return n;
+        };
+        // Menos círculos cobertos vence; rótulo sobre outro rótulo só vale se todas as posições colidirem (empate: a 1ª da lista).
+        let best = Infinity;
+        for (const c of candidates) {
+          const b = boxAt(c);
+          const score = circleHits(b) + (hitsLabel(b) ? 1000 : 0);
+          if (score < best) {
+            best = score;
+            chosen = c;
+            box = b;
+          }
+        }
+      }
+      const y = chosen.y;
       const mustShow = isSelected || focusIds.has(node.id);
-      if (!mustShow && placed.some((b) => box.x0 < b.x1 && box.x1 > b.x0 && box.y0 < b.y1 && box.y1 > b.y0)) continue;
+      if (!mustShow && hitsLabel(box)) continue;
       placed.push(box);
-      toDraw.push({ node, lines, x: nx, y, fontSize, px, weight });
+      toDraw.push({ node, lines, x: chosen.x, y, fontSize, px, weight });
     }
 
     // Desenha do menos para o mais importante (o centro do foco fica por cima).
@@ -1496,7 +1549,7 @@ export default function NetworkGraph({
     }
     ctx.restore();
     positionDetailsButtonRef.current(scale);
-  }, [labelOrder, selectedNode, wrapLabel, hasFocus, focusIds, litIds, pos]);
+  }, [labelOrder, selectedNode, wrapLabel, hasFocus, focusIds, litIds, pos, graphData.nodes]);
 
   /* -------------------------------------------------------------------------
    * 8a. QUADRO NO 2.5D
