@@ -126,6 +126,21 @@ const ALPHA_MIN = 0.01;
  */
 const RELEASE_ALPHA_DECAY = 0.05;
 const RELEASE_MS = 2500;
+/**
+ * Solto um nó livre, ele VOLTA ao lugar onde estava antes do arraste, com um
+ * balanço elástico (passa um pouco do ponto e volta) e PARA por completo no
+ * fim: nenhum movimento residual depois. Sem animação se o usuário pediu
+ * "reduzir movimento" (ele só volta ao lugar).
+ *   - ELASTIC_MS: duração do balanço
+ *   - ELASTIC_DECAY: ↑ amortece mais rápido (menos balanço); 6 ≈ 16% de ultrapassagem
+ *   - ELASTIC_CYCLES: nº de oscilações completas durante ELASTIC_MS
+ */
+const ELASTIC_MS = 900;
+const ELASTIC_DECAY = 6;
+const ELASTIC_CYCLES = 1.5;
+/** 0 → 1 com ultrapassagem; 1 exato no fim (t = 1). */
+const easeElastic = (t: number) =>
+  t >= 1 ? 1 : 1 - Math.exp(-ELASTIC_DECAY * t) * Math.cos(2 * Math.PI * ELASTIC_CYCLES * t);
 const COOLDOWN_MS = 4000;
 const VELOCITY_DECAY = 0.35;
 /** Grafo vazio estável (a biblioteca recebe isto até o pré-aquecimento terminar). */
@@ -401,7 +416,49 @@ export default function NetworkGraph({
   const driftEnabled = DRIFT_ENABLED;
   const [lively, setLively] = useState(false);
   const livelyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (livelyTimer.current) clearTimeout(livelyTimer.current); }, []);
+  /** Balanços em andamento: id do nó → id do requestAnimationFrame. */
+  const elasticRef = useRef(new Map<string, number>());
+  const cancelElastic = useCallback((id?: string) => {
+    const map = elasticRef.current;
+    for (const [nid, raf] of [...map]) {
+      if (id !== undefined && nid !== id) continue;
+      cancelAnimationFrame(raf);
+      map.delete(nid);
+    }
+  }, []);
+  useEffect(() => () => {
+    if (livelyTimer.current) clearTimeout(livelyTimer.current);
+    cancelElastic();
+  }, [cancelElastic]);
+  // Dados novos: nós antigos não devem ser mexidos por um balanço pendente.
+  useEffect(() => { cancelElastic(); }, [graphData, cancelElastic]);
+  /** Balanço elástico de volta a (rx, ry); `fx/fy` seguram o nó, então os vizinhos reagem pelas ligações. */
+  const releaseElastic = useCallback((node: any, rx: number, ry: number) => {
+    cancelElastic(node.id);
+    const reduced = typeof window !== 'undefined' && window.matchMedia(REDUCED_MOTION_QUERY).matches;
+    const x0 = node.x as number;
+    const y0 = node.y as number;
+    if (reduced || !Number.isFinite(x0 + y0 + rx + ry)) {
+      node.x = rx; node.y = ry; node.vx = 0; node.vy = 0;
+      return;
+    }
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / ELASTIC_MS);
+      const e = easeElastic(t);
+      node.fx = node.x = x0 + (rx - x0) * e;
+      node.fy = node.y = y0 + (ry - y0) * e;
+      if (t < 1) {
+        elasticRef.current.set(node.id, requestAnimationFrame(step));
+      } else {
+        elasticRef.current.delete(node.id);
+        node.fx = node.fy = undefined;
+        node.vx = 0;
+        node.vy = 0;
+      }
+    };
+    elasticRef.current.set(node.id, requestAnimationFrame(step));
+  }, [cancelElastic]);
   const canHover = useHoverPointer();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -1937,12 +1994,15 @@ export default function NetworkGraph({
         // ver seedPositions); demais nós (livres) → são soltos e voltam a se
         // acomodar na teia. Para fixar também os outros nós ao soltar, tire o
         // `if` abaixo.
-        onNodeDragEnd={(node: any) => {
+        onNodeDrag={(node: any) => cancelElastic(node.id)}
+        onNodeDragEnd={(node: any, translate: { x: number; y: number }) => {
           if (node.type === 'scheme') {
             node.fx = node.x;
             node.fy = node.y;
-          } else {
-            // Solto: acomodação mais lenta e visível (ver RELEASE_ALPHA_DECAY).
+          } else if (node.type !== 'party') {
+            // Solto: volta ao lugar de antes do arraste, com balanço elástico
+            // (ver ELASTIC_*), e a física decai mais devagar enquanto isso.
+            releaseElastic(node, node.x - translate.x, node.y - translate.y);
             setLively(true);
             if (livelyTimer.current) clearTimeout(livelyTimer.current);
             livelyTimer.current = setTimeout(() => setLively(false), RELEASE_MS);
