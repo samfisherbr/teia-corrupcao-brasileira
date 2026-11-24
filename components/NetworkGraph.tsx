@@ -30,6 +30,8 @@ import { computeLayoutTargets, seedPositions, applyLayoutForces, isPartyLink, pr
 import { createIsoState, depthOf, fullIsoOffset, morphForZoom, project, resolveLifts, setMorph, unprojectGround, zoomForFull25D } from '@/lib/iso';
 import { drawFloor, drawGroundMarks, getGlossSprite, getSphereSprite, SPHERE_PHOTO_INSET } from '@/components/graph25d';
 import { createVortex, drawVortex, VortexState } from '@/components/graphVortex';
+import { drawTimelineAxis, drawTimelineTwins } from '@/components/graphTimeline';
+import { computeTimelineLayout, YEAR_PX, type TimelineLayout } from '@/lib/timelineLayout';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { GraphGlow } from '@/components/BorderGlow';
 import { resizedPhotoUrl } from '@/lib/photoUrl';
@@ -119,6 +121,49 @@ const PREWARM_DECAY = 0.045;
 const WARMUP_TICKS = 10;
 const ALPHA_DECAY = 1 - Math.pow(0.25, 1 / WARMUP_TICKS); // ≈ 0,129
 const ALPHA_MIN = 0.01;
+/**
+ * Depois de soltar um nó arrastado, a física decai mais devagar por
+ * RELEASE_MS: ~70 quadros (~1,2 s) em vez de ~25 (~0,4 s), para os vizinhos
+ * reagirem e o nó se acomodar de forma visível. Só vale depois de arrastar.
+ */
+const RELEASE_ALPHA_DECAY = 0.05;
+const RELEASE_MS = 2500;
+/**
+ * Solto um nó livre, ele VOLTA ao lugar onde estava antes do arraste, com um
+ * balanço elástico (passa um pouco do ponto e volta) e PARA por completo no
+ * fim: nenhum movimento residual depois. Sem animação se o usuário pediu
+ * "reduzir movimento" (ele só volta ao lugar).
+ *   - ELASTIC_MS: duração do balanço
+ *   - ELASTIC_DECAY: ↑ amortece mais rápido (menos balanço); 6 ≈ 16% de ultrapassagem
+ *   - ELASTIC_CYCLES: nº de oscilações completas durante ELASTIC_MS
+ */
+/**
+ * LINHA DO TEMPO (interruptor ao lado do 2.5D; ver lib/timelineLayout.ts)
+ *   - TIMELINE_ANIM_MS: duração de ida e volta entre a teia e a linha do tempo
+ *   - TIMELINE_STAGGER: 0..1 — quanto cada nó se atrasa, por um sorteio fixo do id,
+ *     para as entidades "escorrerem" para o lugar em vez de irem todas juntas
+ *   - TIMELINE_RELAYOUT_MS: duração da reacomodação ao abrir/fechar um esquema
+ */
+const TIMELINE_ANIM_MS = 1100;
+const TIMELINE_STAGGER = 0.35;
+const TIMELINE_RELAYOUT_MS = 500;
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+/** Sorteio fixo (0..1) a partir do id: o mesmo nó sempre se atrasa igual. */
+const idUnit = (id: string) => {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 10000) / 10000;
+};
+
+const ELASTIC_MS = 900;
+const ELASTIC_DECAY = 6;
+const ELASTIC_CYCLES = 1.5;
+/** 0 → 1 com ultrapassagem; 1 exato no fim (t = 1). */
+const easeElastic = (t: number) =>
+  t >= 1 ? 1 : 1 - Math.exp(-ELASTIC_DECAY * t) * Math.cos(2 * Math.PI * ELASTIC_CYCLES * t);
 const COOLDOWN_MS = 4000;
 const VELOCITY_DECAY = 0.35;
 /** Grafo vazio estável (a biblioteca recebe isto até o pré-aquecimento terminar). */
@@ -392,6 +437,51 @@ export default function NetworkGraph({
 }: NetworkGraphProps) {
   const { t, href } = useI18n();
   const driftEnabled = DRIFT_ENABLED;
+  const [lively, setLively] = useState(false);
+  const livelyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Balanços em andamento: id do nó → id do requestAnimationFrame. */
+  const elasticRef = useRef(new Map<string, number>());
+  const cancelElastic = useCallback((id?: string) => {
+    const map = elasticRef.current;
+    for (const [nid, raf] of [...map]) {
+      if (id !== undefined && nid !== id) continue;
+      cancelAnimationFrame(raf);
+      map.delete(nid);
+    }
+  }, []);
+  useEffect(() => () => {
+    if (livelyTimer.current) clearTimeout(livelyTimer.current);
+    cancelElastic();
+  }, [cancelElastic]);
+  // Dados novos: nós antigos não devem ser mexidos por um balanço pendente.
+  useEffect(() => { cancelElastic(); }, [graphData, cancelElastic]);
+  /** Balanço elástico de volta a (rx, ry); `fx/fy` seguram o nó, então os vizinhos reagem pelas ligações. */
+  const releaseElastic = useCallback((node: any, rx: number, ry: number) => {
+    cancelElastic(node.id);
+    const reduced = typeof window !== 'undefined' && window.matchMedia(REDUCED_MOTION_QUERY).matches;
+    const x0 = node.x as number;
+    const y0 = node.y as number;
+    if (reduced || !Number.isFinite(x0 + y0 + rx + ry)) {
+      node.x = rx; node.y = ry; node.vx = 0; node.vy = 0;
+      return;
+    }
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / ELASTIC_MS);
+      const e = easeElastic(t);
+      node.fx = node.x = x0 + (rx - x0) * e;
+      node.fy = node.y = y0 + (ry - y0) * e;
+      if (t < 1) {
+        elasticRef.current.set(node.id, requestAnimationFrame(step));
+      } else {
+        elasticRef.current.delete(node.id);
+        node.fx = node.fy = undefined;
+        node.vx = 0;
+        node.vy = 0;
+      }
+    };
+    elasticRef.current.set(node.id, requestAnimationFrame(step));
+  }, [cancelElastic]);
   const canHover = useHoverPointer();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -448,6 +538,41 @@ export default function NetworkGraph({
   // ser chamado de qualquer lugar sem depender da ordem das declarações).
   const positionDetailsButtonRef = useRef<(scale: number) => void>(() => {});
   const [active25d, setActive25d] = useState(false);
+  // LINHA DO TEMPO. timelineMode = interruptor; timelineActive = o layout existe
+  // (ligado, ou ainda animando a volta). timelineRawRef = progresso linear 0..1
+  // da ida/volta; cada nó usa uma versão suavizada e atrasada dele (tlE).
+  const [timelineMode, setTimelineMode] = useState(false);
+  const [timelineActive, setTimelineActive] = useState(false);
+  const [expandedSchemes, setExpandedSchemes] = useState<Set<string>>(() => new Set());
+  const timelineModeRef = useRef(false);
+  const timelineRawRef = useRef(0);
+  const timelineAnimRef = useRef(0);
+  const timelineLayoutRef = useRef<TimelineLayout | null>(null);
+  const timelineTweenRef = useRef(0);
+  const timelineMountedRef = useRef(false);
+  const focusSchemeRef = useRef<string | null>(null);
+  const timelineHighlightRef = useRef<ReadonlySet<string>>(new Set());
+  const nodeTypeOf = useMemo(() => new Map(graphData.nodes.map((n) => [n.id, n.type])), [graphData.nodes]);
+  const saved25dRef = useRef(false);
+  const timelineLayout = useMemo(
+    () => (timelineActive ? computeTimelineLayout(graphData.nodes, graphData.links, expandedSchemes) : null),
+    [timelineActive, graphData, expandedSchemes]
+  );
+  timelineLayoutRef.current = timelineLayout;
+  /** Progresso (0..1, com atraso e suavização) da mistura teia → linha do tempo deste nó. */
+  const tlE = useCallback((n: any): number => {
+    const raw = timelineRawRef.current;
+    if (raw <= 0) return 0;
+    if (raw >= 1) return 1;
+    const d = n.__tlDelay ?? (n.__tlDelay = idUnit(String(n.id)));
+    return easeInOutCubic(clamp01(raw * (1 + TIMELINE_STAGGER) - d * TIMELINE_STAGGER));
+  }, []);
+  /** Opacidade do nó por causa da linha do tempo (1 = visível; entidades recolhidas somem). */
+  const tlVis = useCallback((n: any): number => {
+    if (timelineRawRef.current <= 0) return 1;
+    const v = typeof n.__tv === 'number' ? n.__tv : 1;
+    return 1 + (v - 1) * tlE(n);
+  }, [tlE]);
   // clearHover é definido mais abaixo (seção 0); o ref evita depender da ordem.
   const clearHoverRef = useRef<() => void>(() => {});
   /** Ponto (mundo, com altura) do item selecionado: o nó, ou o meio da linha. Atualizado a cada render. */
@@ -494,12 +619,23 @@ export default function NetworkGraph({
 
   /** Posição no chão já com o afastamento dos grupos, para um m (padrão: o atual). */
   const spreadXY = useCallback((n: any, m: number = isoRef.current.m): [number, number] => {
-    if (m === 0) return [n.x, n.y];
-    const k = (SPREAD_25D - 1) * m;
-    const [ax, ay] = groupAnchor(n);
-    const c = spreadCentreRef.current;
-    return [n.x + k * (ax - c.x), n.y + k * (ay - c.y)];
-  }, [groupAnchor]);
+    let x = n.x as number;
+    let y = n.y as number;
+    if (m !== 0) {
+      const k = (SPREAD_25D - 1) * m;
+      const [ax, ay] = groupAnchor(n);
+      const c = spreadCentreRef.current;
+      x += k * (ax - c.x);
+      y += k * (ay - c.y);
+    }
+    // Linha do tempo: mistura com a posição do nó nela (n.__tx/__ty).
+    if (timelineRawRef.current > 0 && typeof n.__tx === 'number') {
+      const e = tlE(n);
+      x += (n.__tx - x) * e;
+      y += (n.__ty - y) * e;
+    }
+    return [x, y];
+  }, [groupAnchor, tlE]);
 
   /** Posição desenhada de um nó: projetada (e com grupos afastados) no 2.5D; no 2D, o próprio x/y. */
   const pos = useCallback((n: any): [number, number] => {
@@ -558,6 +694,7 @@ export default function NetworkGraph({
   }, [cancelFocusAnim, graphRef]);
 
   const toggle25d = useCallback(() => {
+    if (timelineModeRef.current) return; // exclusivo com a linha do tempo
     // A teia se move sob o cursor parado: sem isso o destaque de hover
     // "pularia" para o que passasse por baixo dele.
     suppressHoverUntilRef.current = Date.now() + SWITCH_ANIM_MS + 300;
@@ -686,6 +823,16 @@ export default function NetworkGraph({
   }, [focus, adjacency]);
 
   const hasFocus = focusIds.size > 0;
+  // Linha do tempo: esquemas em foco (mouse > seleção) têm a faixa do período acesa.
+  const timelineHighlight = useMemo(() => {
+    const out = new Set<string>();
+    if (hasFocus) for (const id of litIds) if (nodeTypeOf.get(id) === 'scheme') out.add(id);
+    return out;
+  }, [hasFocus, litIds, nodeTypeOf]);
+  timelineHighlightRef.current = timelineHighlight;
+  useEffect(() => {
+    if (timelineRawRef.current > 0) requestFrame(); // repinta o eixo quando o foco muda
+  }, [timelineHighlight, requestFrame]);
   const isNodeLit = useCallback((id: string) => !hasFocus || litIds.has(id), [hasFocus, litIds]);
   const focusLinkKey = focus && 'link' in focus ? getLinkKey(focus.link) : null;
   const isLinkLit = useCallback(
@@ -739,7 +886,9 @@ export default function NetworkGraph({
   const [readyData, setReadyData] = useState<GraphData | null>(null);
   useEffect(() => {
     const signal = { aborted: false };
-    prewarmLayout(graphData.nodes, graphData.links, layoutTargets, PREWARM_TICKS, {
+    // Mais nós → mais passos de pré-aquecimento (a base, 348 nós, não muda).
+    const ticks = PREWARM_TICKS + Math.round(Math.min(40, Math.max(0, (graphData.nodes.length - 350) / 50)));
+    prewarmLayout(graphData.nodes, graphData.links, layoutTargets, ticks, {
       alphaDecay: PREWARM_DECAY,
       velocityDecay: VELOCITY_DECAY,
       signal,
@@ -798,10 +947,31 @@ export default function NetworkGraph({
    * de cada tipo), então o cálculo é refeito com os tipos que passam a ter
    * nome no zoom encontrado (no máximo 3 voltas).
    */
-  const computeFit = useCallback(() => {
+  const computeFit = useCallback((mode?: 'timeline' | 'network') => {
     const box = containerRef.current?.getBoundingClientRect();
-    const nodes = (graphData.nodes as any[]).filter((n) => typeof n.x === 'number' && typeof n.y === 'number');
+    // Na linha do tempo enquadra as posições dela (só o que está visível + o eixo).
+    const TL = (mode ?? (timelineModeRef.current ? 'timeline' : 'network')) === 'timeline' ? timelineLayoutRef.current : null;
+    const nodes = (graphData.nodes as any[]).filter((n) =>
+      TL ? !!TL.pos.get(n.id)?.visible : typeof n.x === 'number' && typeof n.y === 'number'
+    );
     if (!box || box.width === 0 || box.height === 0 || nodes.length === 0) return null;
+
+    // Linha do tempo: faixa larga e baixa. O enquadramento por painéis da teia
+    // empurraria tudo para um canto; aqui só centraliza a caixa na tela, com
+    // margem (mais embaixo, por causa dos controles de câmera).
+    if (TL) {
+      const b = TL.bounds;
+      const padX = 60;
+      const padTop = 90;
+      const padBottom = 130;
+      const k = Math.min(
+        FOCUS_MAX_ZOOM,
+        (box.width - 2 * padX) / Math.max(1, b.maxX - b.minX),
+        (box.height - padTop - padBottom) / Math.max(1, b.maxY - b.minY)
+      );
+      const sy = (padTop + box.height - padBottom) / 2; // y da tela onde o centro da caixa deve ficar
+      return { k, cx: (b.minX + b.maxX) / 2, cy: (b.minY + b.maxY) / 2 - (sy - box.height / 2) / k };
+    }
 
     const overlays: Rect[] = [];
     document.querySelectorAll<HTMLElement>('[data-graph-overlay]').forEach((el) => {
@@ -833,8 +1003,13 @@ export default function NetworkGraph({
       const items: FitItem[] = nodes.map((n) => {
         const labelled = (NODE_STYLE[n.type as NodeType]?.minZoom ?? 0.5) <= k;
         const lb = labelled ? labelBox(n) : null;
-        return { x: n.x, y: n.y, r: getNodeRadius(n.type, n), labelHalfW: lb?.halfW ?? 0, labelBelow: lb?.below ?? 0 };
+        const tp = TL?.pos.get(n.id);
+        return { x: tp ? tp.x : n.x, y: tp ? tp.y : n.y, r: getNodeRadius(n.type, n), labelHalfW: lb?.halfW ?? 0, labelBelow: lb?.below ?? 0 };
       });
+      if (TL) {
+        items.push({ x: TL.axis.x0, y: TL.axis.y, r: 1, labelHalfW: 0, labelBelow: 0 });
+        items.push({ x: TL.axis.x1, y: TL.axis.y, r: 1, labelHalfW: 0, labelBelow: 0 });
+      }
       const next = fitToView(items, box.width, box.height, overlays, fitPadding);
       if (!next) break;
       fit = next;
@@ -853,6 +1028,163 @@ export default function NetworkGraph({
     fg.centerAt(fit.cx, fit.cy, ms);
     fg.zoom(fit.k, ms);
   }, [graphRef, computeFit]);
+
+  /* 3b. LINHA DO TEMPO — posições, ida e volta
+   *     1) Cada vez que o layout muda (ligar, abrir/fechar esquema, filtros), os
+   *        nós vão da posição atual (n.__tx/__ty/__tv) para a nova em
+   *        TIMELINE_RELAYOUT_MS; ao ligar, nascem direto no lugar (a mistura
+   *        com a teia, tlE, é que anima).
+   *     2) Ligar/desligar: anima timelineRawRef (0..1) e a câmera, e devolve o
+   *        2.5D ao que era (exclusivos). Ao terminar de voltar, libera o layout. */
+  useEffect(() => {
+    cancelAnimationFrame(timelineTweenRef.current);
+    const L = timelineLayout;
+    if (!L) return;
+    const snap = timelineRawRef.current < 0.01;
+    const jobs: [any, number, number, number, number, number, number][] = [];
+    for (const n of graphData.nodes as any[]) {
+      const t = L.pos.get(n.id);
+      const tx = t ? t.x : n.x ?? 0;
+      const ty = t ? t.y : n.y ?? 0;
+      const tv = t && t.visible ? 1 : 0;
+      n.__tlHost = L.host.get(n.id);
+      if (snap || typeof n.__tx !== 'number') {
+        n.__tx = tx;
+        n.__ty = ty;
+        n.__tv = tv;
+      } else if (n.__tx !== tx || n.__ty !== ty || n.__tv !== tv) {
+        jobs.push([n, n.__tx, n.__ty, n.__tv, tx, ty, tv]);
+      }
+    }
+    if (!jobs.length) {
+      requestFrame();
+      return;
+    }
+    const start = performance.now();
+    const step = (now: number) => {
+      const e = easeInOutCubic(clamp01((now - start) / TIMELINE_RELAYOUT_MS));
+      for (const [n, x0, y0, v0, x1, y1, v1] of jobs) {
+        n.__tx = x0 + (x1 - x0) * e;
+        n.__ty = y0 + (y1 - y0) * e;
+        n.__tv = v0 + (v1 - v0) * e;
+      }
+      requestFrame();
+      if (e < 1) timelineTweenRef.current = requestAnimationFrame(step);
+    };
+    timelineTweenRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(timelineTweenRef.current);
+  }, [timelineLayout, graphData, requestFrame]);
+
+  // Esquema recém-aberto: a câmera enquadra o esquema e o leque dele.
+  useEffect(() => {
+    const id = focusSchemeRef.current;
+    const L = timelineLayout;
+    const fg = graphRef.current;
+    const box = containerRef.current?.getBoundingClientRect();
+    if (!id || !L || !fg || !box) return;
+    focusSchemeRef.current = null;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    const grow = (x: number, y: number, r: number) => {
+      minX = Math.min(minX, x - r); maxX = Math.max(maxX, x + r);
+      minY = Math.min(minY, y - r); maxY = Math.max(maxY, y + r);
+    };
+    for (const n of graphData.nodes as any[]) {
+      const p = L.pos.get(n.id);
+      if (!p || !p.visible || (n.id !== id && L.host.get(n.id) !== id)) continue;
+      grow(p.x, p.y, getNodeRadius(n.type, n));
+    }
+    if (!Number.isFinite(minX)) return;
+    const padX = 90;
+    const padY = 150;
+    const k = Math.min(FOCUS_MAX_ZOOM, (box.width - 2 * padX) / (maxX - minX), (box.height - 2 * padY) / (maxY - minY));
+    userMovedCameraRef.current = true;
+    cameraBusyUntilRef.current = performance.now() + 700;
+    fg.centerAt((minX + maxX) / 2, (minY + maxY) / 2, 600);
+    fg.zoom(k, 600);
+    window.setTimeout(() => {
+      cameraBusyUntilRef.current = 0;
+      positionDetailsButtonRef.current(graphRef.current?.zoom?.() ?? 1);
+    }, 720);
+  }, [timelineLayout, graphData.nodes, graphRef]);
+
+  useEffect(() => {
+    if (!timelineMountedRef.current) {
+      timelineMountedRef.current = true;
+      return;
+    }
+    // Nada a animar (ex.: o 2º disparo do Strict Mode no desenvolvimento).
+    if ((timelineMode ? 1 : 0) === timelineRawRef.current) return;
+    cancelAnimationFrame(timelineAnimRef.current);
+    suppressHoverUntilRef.current = Date.now() + TIMELINE_ANIM_MS + 300;
+    clearHoverRef.current();
+    cancelFocusAnim();
+    userMovedCameraRef.current = false;
+    const reduced = window.matchMedia(REDUCED_MOTION_QUERY).matches;
+    const ms = reduced ? 0 : TIMELINE_ANIM_MS;
+    const fg = graphRef.current;
+    const fit = fg ? computeFit(timelineMode ? 'timeline' : 'network') : null;
+    if (fg && fit) {
+      fg.centerAt(fit.cx, fit.cy, ms);
+      fg.zoom(fit.k, ms);
+    }
+    const from = timelineRawRef.current;
+    const to = timelineMode ? 1 : 0;
+    const switchFrom = switchTRef.current;
+    const switchTo = enabled25dRef.current ? 1 : 0;
+    const dur = ms * Math.max(0.3, Math.abs(to - from));
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = dur > 0 ? clamp01((now - start) / dur) : 1;
+      timelineRawRef.current = from + (to - from) * t;
+      switchTRef.current = switchFrom + (switchTo - switchFrom) * easeInOutCubic(t);
+      requestFrame();
+      if (t < 1) {
+        timelineAnimRef.current = requestAnimationFrame(step);
+      } else if (!timelineModeRef.current) {
+        timelineRawRef.current = 0;
+        setTimelineActive(false);
+      }
+    };
+    timelineAnimRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(timelineAnimRef.current);
+    // Só quando o interruptor muda (computeFit/requestFrame são estáveis o bastante para isso).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timelineMode]);
+
+  /** Liga/desliga a linha do tempo: exclusiva com o 2.5D (que volta ao que era ao desligar). */
+  const toggleTimeline = useCallback(() => {
+    const next = !timelineModeRef.current;
+    timelineModeRef.current = next;
+    if (next) {
+      saved25dRef.current = enabled25dRef.current;
+      enabled25dRef.current = false;
+      setEnabled25d(false);
+      setTimelineActive(true);
+    } else {
+      enabled25dRef.current = saved25dRef.current;
+      setEnabled25d(saved25dRef.current);
+    }
+    setTimelineMode(next);
+  }, []);
+
+  /** Clique: na linha do tempo, um esquema abre/fecha o leque de entidades (e é selecionado como sempre). */
+  const handleNodeClick = useCallback((node: any, ev?: MouseEvent) => {
+    if (timelineModeRef.current && node?.type === 'scheme') {
+      setExpandedSchemes((prev) => {
+        const next = new Set(prev);
+        const opening = !next.delete(node.id);
+        if (opening) next.add(node.id);
+        focusSchemeRef.current = opening ? node.id : null; // câmera vai para o leque aberto
+        return next;
+      });
+    }
+    (onSelectNode as any)(node, ev);
+  }, [onSelectNode]);
+
+  useEffect(() => () => {
+    cancelAnimationFrame(timelineTweenRef.current);
+    cancelAnimationFrame(timelineAnimRef.current);
+  }, []);
 
   useEffect(() => {
     const fg = graphRef.current;
@@ -955,7 +1287,7 @@ export default function NetworkGraph({
   const selectionKey = selectedNode ? `n:${selectedNode.id}` : selectedLink ? `l:${getLinkKey(selectedLink)}` : '';
   useEffect(() => {
     const fg = graphRef.current;
-    if (!fg || !selectionKey) return;
+    if (!fg || !selectionKey || timelineModeRef.current) return;
     userMovedCameraRef.current = true; // não reenquadrar a teia inteira depois
     // Durante o enquadramento, ignora o hover e solta o que estava, para o
     // destaque ficar no item selecionado.
@@ -1075,7 +1407,7 @@ export default function NetworkGraph({
     setPhotosEnabled(true);
     recomputeLifts();
     const fg = graphRef.current;
-    if (!fg || userMovedCameraRef.current) return;
+    if (!fg || userMovedCameraRef.current || timelineModeRef.current) return;
     const fit = computeFit();
     if (fit && Math.abs(fit.k / fg.zoom() - 1) > SETTLE_REFIT_MIN_CHANGE) fitGraph(400);
   }, [recomputeLifts, graphRef, computeFit, fitGraph]);
@@ -1173,7 +1505,8 @@ export default function NetworkGraph({
     const size = getNodeRadius(node.type, node);
     const isFocusCentre = focusIds.has(node.id);
     const isScheme = node.type === 'scheme';
-    const alpha = nodeAlpha(node, globalScale);
+    const alpha = nodeAlpha(node, globalScale) * tlVis(node);
+    if (alpha < 0.01) return;
     const photo = !isScheme && node.image_url ? imgCacheRef.current.get(node.image_url) : undefined;
 
     ctx.save();
@@ -1238,23 +1571,24 @@ export default function NetworkGraph({
     ctx.stroke();
 
     ctx.restore();
-  }, [selectedNode, focusIds, nodeAlpha]);
+  }, [selectedNode, focusIds, nodeAlpha, tlVis]);
 
   // Chamado pela biblioteca para cada nó. No 2.5D não desenha nada aqui: as
   // esferas são pintadas depois, de trás para frente (ver renderFramePost).
   const drawNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    if (isoRef.current.m > 0) return;
+    if (isoRef.current.m > 0 || timelineRawRef.current > 0) return; // desenhados em renderFramePost
     drawNodeAt(node, ctx, globalScale, node.x, node.y, 0);
   }, [drawNodeAt]);
 
   // Área de clique = raio desenhado + folga (antes era menor que o círculo).
   const paintPointerArea = useCallback((node: any, color: string, ctx: CanvasRenderingContext2D) => {
+    if (tlVis(node) < 0.3) return; // recolhido na linha do tempo: não recebe clique
     ctx.fillStyle = color;
     ctx.beginPath();
     const [x, y] = pos(node);
     ctx.arc(x, y, getNodeRadius(node.type, node) + CLICK_PADDING, 0, 2 * Math.PI);
     ctx.fill();
-  }, [pos]);
+  }, [pos, tlVis]);
 
   /* -------------------------------------------------------------------------
    * 7. DESENHO DAS LINHAS
@@ -1273,6 +1607,17 @@ export default function NetworkGraph({
     // Pontas na posição desenhada (projetada no 2.5D).
     const [sx, sy] = pos(start);
     const [ex, ey] = pos(end);
+
+    // Linha do tempo: só a ligação esquema–entidade do esquema que ABRIGA a
+    // entidade continua (o "raio" do leque); as demais somem com a mistura.
+    let tlFactor = 1;
+    if (timelineRawRef.current > 0) {
+      const sch = start.type === 'scheme' ? start : end.type === 'scheme' ? end : null;
+      const ent = sch === start ? end : start;
+      const spoke = !!sch && ent.type !== 'scheme' && ent.__tlHost === sch.id;
+      tlFactor = spoke ? Math.min(tlVis(start), tlVis(end)) : 1 - Math.max(tlE(start), tlE(end));
+      if (tlFactor < 0.02) return;
+    }
 
     const style = statusStyle(link.status);
     const color = style?.color ?? FALLBACK_COLOR;
@@ -1294,7 +1639,7 @@ export default function NetworkGraph({
     ctx.save();
     // Fora do foco → quase transparente; sem foco → acende com o zoom, junto
     // com partidos e empresas (LINK_BRIGHT_ZOOM).
-    ctx.globalAlpha = !isLinkLit(link) ? FADED_LINK_ALPHA : hasFocus ? 1 : zoomBrightness(safeScale, LINK_BRIGHT_ZOOM);
+    ctx.globalAlpha = tlFactor * (!isLinkLit(link) ? FADED_LINK_ALPHA : hasFocus ? 1 : zoomBrightness(safeScale, LINK_BRIGHT_ZOOM));
     ctx.beginPath();
     ctx.moveTo(sx + ux * r0, sy + uy * r0);
     ctx.lineTo(ex - ux * r1, ey - uy * r1);
@@ -1310,7 +1655,7 @@ export default function NetworkGraph({
     ctx.setLineDash(style?.dashed ? [12, 10] : []);
     ctx.stroke();
     ctx.restore();
-  }, [isLinkSelected, isLinkLit, hasFocus, pos]);
+  }, [isLinkSelected, isLinkLit, hasFocus, pos, tlE, tlVis]);
 
   // Área de clique da linha: a mesma da biblioteca (largura + folga), mas
   // entre as posições desenhadas — no 2.5D a linha não está mais em x/y.
@@ -1411,11 +1756,15 @@ export default function NetworkGraph({
     return scored.map((x) => x.node as any);
   }, [graphData.nodes, selectedNode, focusIds, litIds, hasFocus, adjacency]);
 
+  // Círculos dos nós (posição desenhada) para o rótulo de esquemas/partidos fugir deles; recalculado a cada chamada de drawLabels.
+  const circlesRef = useRef<{ frame: object; list: { id: string; x: number; y: number; r: number }[] } | null>(null);
+
   const drawLabels = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     const scale = globalScale > 0 ? globalScale : 1;
     const placed: { x0: number; x1: number; y0: number; y1: number }[] = [];
     const pad = 3 / scale;
     const toDraw: { node: any; lines: string[]; x: number; y: number; fontSize: number; px: number; weight: number }[] = [];
+    const circleFrame = {};
 
     ctx.save();
     ctx.textAlign = 'center';
@@ -1424,6 +1773,7 @@ export default function NetworkGraph({
 
     for (const node of labelOrder) {
       if (typeof node.x !== 'number') continue;
+      if (timelineRawRef.current > 0 && tlVis(node) < 0.5) continue; // recolhido na linha do tempo
       const style = NODE_STYLE[node.type as NodeType];
       const isSelected = selectedNode?.id === node.id;
       // Com foco: só os nós em destaque têm rótulo — todos eles, mesmo com a
@@ -1453,19 +1803,68 @@ export default function NetworkGraph({
       const { lines, widthPx } = wrapped;
 
       const [nx, ny] = pos(node);
-      const y = ny + getNodeRadius(node.type, node) + 6 / scale;
+      const nr = getNodeRadius(node.type, node);
       const lineStep = fontSize * LABEL_LINE_HEIGHT;
       const extraLine = node.type === 'politician' && node.party && (scale >= 1 || isSelected || (hasFocus && litIds.has(node.id))) ? 1 : 0;
-      const box = {
-        x0: nx - widthPx / 2 / scale - pad,
-        x1: nx + widthPx / 2 / scale + pad,
-        y0: y - pad,
-        y1: y + (lines.length + extraLine) * lineStep + pad,
-      };
+      const halfW = widthPx / 2 / scale;
+      const h = (lines.length + extraLine) * lineStep;
+      const gap = 6 / scale;
+      // Posições candidatas (x = centro do texto, y = topo): abaixo do círculo
+      // (padrão) e, só para esquemas e partidos, também acima, à direita e à
+      // esquerda — vence a que cobre menos círculos e nenhum outro rótulo.
+      const candidates: { x: number; y: number }[] = [{ x: nx, y: ny + nr + gap }];
+      const flexible = node.type === 'scheme' || node.type === 'party';
+      if (flexible) {
+        candidates.push(
+          { x: nx, y: ny - nr - gap - h },
+          { x: nx + nr + gap + halfW, y: ny - h / 2 },
+          { x: nx - nr - gap - halfW, y: ny - h / 2 },
+        );
+      }
+      const boxAt = (c: { x: number; y: number }) => ({ x0: c.x - halfW - pad, x1: c.x + halfW + pad, y0: c.y - pad, y1: c.y + h + pad });
+      const hitsLabel = (b: { x0: number; x1: number; y0: number; y1: number }) =>
+        placed.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+      let chosen = candidates[0];
+      let box = boxAt(chosen);
+      if (flexible && candidates.length > 1) {
+        if (!circlesRef.current || circlesRef.current.frame !== circleFrame) {
+          circlesRef.current = {
+            frame: circleFrame,
+            list: (graphData.nodes as any[])
+              .filter((m) => typeof m.x === 'number' && tlVis(m) > 0.3)
+              .map((m) => {
+                const [cx, cy] = pos(m);
+                return { id: m.id, x: cx, y: cy, r: getNodeRadius(m.type, m) };
+              }),
+          };
+        }
+        const circleHits = (b: { x0: number; x1: number; y0: number; y1: number }) => {
+          let n = 0;
+          for (const c of circlesRef.current!.list) {
+            if (c.id === node.id) continue;
+            const dx = c.x - Math.max(b.x0, Math.min(c.x, b.x1));
+            const dy = c.y - Math.max(b.y0, Math.min(c.y, b.y1));
+            if (dx * dx + dy * dy < c.r * c.r) n++;
+          }
+          return n;
+        };
+        // Menos círculos cobertos vence; rótulo sobre outro rótulo só vale se todas as posições colidirem (empate: a 1ª da lista).
+        let best = Infinity;
+        for (const c of candidates) {
+          const b = boxAt(c);
+          const score = circleHits(b) + (hitsLabel(b) ? 1000 : 0);
+          if (score < best) {
+            best = score;
+            chosen = c;
+            box = b;
+          }
+        }
+      }
+      const y = chosen.y;
       const mustShow = isSelected || focusIds.has(node.id);
-      if (!mustShow && placed.some((b) => box.x0 < b.x1 && box.x1 > b.x0 && box.y0 < b.y1 && box.y1 > b.y0)) continue;
+      if (!mustShow && hitsLabel(box)) continue;
       placed.push(box);
-      toDraw.push({ node, lines, x: nx, y, fontSize, px, weight });
+      toDraw.push({ node, lines, x: chosen.x, y, fontSize, px, weight });
     }
 
     // Desenha do menos para o mais importante (o centro do foco fica por cima).
@@ -1494,7 +1893,7 @@ export default function NetworkGraph({
     }
     ctx.restore();
     positionDetailsButtonRef.current(scale);
-  }, [labelOrder, selectedNode, wrapLabel, hasFocus, focusIds, litIds, pos]);
+  }, [labelOrder, selectedNode, wrapLabel, hasFocus, focusIds, litIds, pos, graphData.nodes, tlVis]);
 
   /* -------------------------------------------------------------------------
    * 8a. QUADRO NO 2.5D
@@ -1560,6 +1959,8 @@ export default function NetworkGraph({
       }
       // Sem partidos na tela (filtro): segue a regra de brilho dos partidos mesmo assim.
       if (!parties) alpha = hasFocus ? FADED_ALPHA : zoomBrightness(globalScale, BRIGHT_ZOOM.party);
+      // Na linha do tempo o núcleo some: o vórtice apaga junto.
+      alpha *= 1 - Math.min(1, timelineRawRef.current * 1.6);
       const snap = { transform: ctx.getTransform(), scale: globalScale, cx: -k * sc.x, cy: -k * sc.y, w: ctx.canvas.width, h: ctx.canvas.height, alpha };
       vortexSnapRef.current = snap;
       // Com a física andando, o giro fica pausado: só redesenha se a câmera,
@@ -1568,6 +1969,13 @@ export default function NetworkGraph({
       const same = !!last && last.w === snap.w && last.h === snap.h && last.alpha === snap.alpha && last.cx === snap.cx && last.cy === snap.cy
         && last.transform.a === snap.transform.a && last.transform.d === snap.transform.d && last.transform.e === snap.transform.e && last.transform.f === snap.transform.f;
       if (!settlingRef.current || !same) paintVortex();
+    }
+    // Linha do tempo: eixo dos anos, faixas dos períodos e cópias das entidades compartilhadas.
+    const TL = timelineLayoutRef.current;
+    if (TL && timelineRawRef.current > 0) {
+      const a = easeInOutCubic(timelineRawRef.current);
+      drawTimelineAxis(ctx, TL, globalScale, a, YEAR_PX, (id) => TL.pos.get(id)?.y ?? null, timelineHighlightRef.current);
+      drawTimelineTwins(ctx, TL, globalScale, a * a);
     }
     const on = st.m > 0;
     if (on !== active25dRef.current) {
@@ -1623,7 +2031,7 @@ export default function NetworkGraph({
 
   const renderFramePost = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     const st = isoRef.current;
-    if (st.m > 0) {
+    if (st.m > 0 || timelineRawRef.current > 0) {
       // Profundidade guardada no próprio nó e lista reaproveitada entre quadros.
       const order = depthOrderRef.current;
       order.length = 0;
@@ -1760,10 +2168,10 @@ export default function NetworkGraph({
   // Só nas linhas em FOCO (nó/linha selecionado ou sob o mouse): enquanto houver
   // uma partícula na tela, a biblioteca redesenha o grafo inteiro a cada quadro.
   // Sem foco, sem partículas — a teia assentada fica parada e não gasta CPU.
-  // No 2.5D, sem partículas: a biblioteca as desenha em x/y (no plano), não na linha projetada.
+  // No 2.5D e na linha do tempo, sem partículas: a biblioteca as desenha em x/y (na teia), não na linha projetada.
   const linkParticles = useCallback(
-    (link: any) => (!active25d && hasFocus && isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0),
-    [isLinkLit, active25d, hasFocus]
+    (link: any) => (!active25d && !timelineActive && hasFocus && isLinkLit(link) ? statusStyle(link.status)?.particles ?? 0 : 0),
+    [isLinkLit, active25d, timelineActive, hasFocus]
   );
   const linkParticleColor = useCallback((link: any) => statusColor(link.status), []);
   // Hover (só com mouse; ver HOVER_POINTER_QUERY e suppressHoverUntilRef).
@@ -1852,7 +2260,7 @@ export default function NetworkGraph({
         onRenderFramePost={renderFramePost}
         // No 2.5D o arrasto de nós fica desligado: o ponteiro está no espaço
         // projetado e o nó "pularia" para outra posição no plano.
-        enableNodeDrag={!active25d}
+        enableNodeDrag={!active25d && !timelineMode}
         // No modo 'replace' a cor/tracejado vêm de drawLink; linkWidth ainda
         // define a área de clique da linha, por isso acompanha a espessura.
         linkWidth={linkWidth}
@@ -1862,17 +2270,30 @@ export default function NetworkGraph({
         linkDirectionalParticleWidth={5}
         linkDirectionalParticleColor={linkParticleColor}
         // Interação (funções em 8c). No celular, o toque seleciona.
-        onNodeClick={onSelectNode as any}
+        onNodeClick={handleNodeClick as any}
         onLinkClick={onSelectLink as any}
         onNodeHover={handleNodeHover}
         onLinkHover={handleLinkHover}
         // Toque/clique no fundo limpa a seleção (e o botão "Exibir detalhes").
         onBackgroundClick={onClearSelection}
-        // Arrastar: a biblioteca já faz o comportamento desejado sozinha —
-        //   • esquema (fixo antes do arraste) → continua fixo onde foi solto;
-        //   • demais nós (livres) → são soltos e voltam a se acomodar na teia.
-        // Para fixar também os outros nós ao soltar, acrescente:
-        //   onNodeDragEnd={(node: any) => { node.fx = node.x; node.fy = node.y; }}
+        // Arrastar: esquema → fica fixo onde foi solto (até os dados mudarem;
+        // ver seedPositions); demais nós (livres) → são soltos e voltam a se
+        // acomodar na teia. Para fixar também os outros nós ao soltar, tire o
+        // `if` abaixo.
+        onNodeDrag={(node: any) => cancelElastic(node.id)}
+        onNodeDragEnd={(node: any, translate: { x: number; y: number }) => {
+          if (node.type === 'scheme') {
+            node.fx = node.x;
+            node.fy = node.y;
+          } else if (node.type !== 'party') {
+            // Solto: volta ao lugar de antes do arraste, com balanço elástico
+            // (ver ELASTIC_*), e a física decai mais devagar enquanto isso.
+            releaseElastic(node, node.x - translate.x, node.y - translate.y);
+            setLively(true);
+            if (livelyTimer.current) clearTimeout(livelyTimer.current);
+            livelyTimer.current = setTimeout(() => setLively(false), RELEASE_MS);
+          }
+        }}
         onEngineTick={handleEngineTick}
         onEngineStop={handleEngineStop}
         // Física: ver constantes no topo do arquivo e lib/layout.ts
@@ -1880,7 +2301,7 @@ export default function NetworkGraph({
         // Com DRIFT_ENABLED = false (padrão), a simulação para depois de
         // COOLDOWN_MS e a teia fica em repouso em todos os aparelhos.
         cooldownTime={driftEnabled ? Infinity : COOLDOWN_MS}
-        d3AlphaDecay={ALPHA_DECAY}
+        d3AlphaDecay={lively ? RELEASE_ALPHA_DECAY : ALPHA_DECAY}
         d3AlphaMin={ALPHA_MIN}
         d3VelocityDecay={VELOCITY_DECAY} // "atrito": ↑ nós param mais cedo, menos tremedeira
         // Transparente: o fundo vem do contêiner (bg-surface-canvas = BG_COLOR),
@@ -1972,8 +2393,9 @@ export default function NetworkGraph({
         aria-checked={enabled25d}
         aria-label={t.graph.toggle25dAria}
         title={t.graph.toggle25dAria}
+        disabled={timelineMode}
         onClick={toggle25d}
-        className="flex items-center gap-2 rounded-[inherit] pl-2 pr-3 py-2.5 md:py-2 text-xs font-mono font-semibold"
+        className="flex items-center gap-2 rounded-[inherit] pl-2 pr-3 py-2.5 md:py-2 text-xs font-mono font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <span
           aria-hidden="true"
@@ -1984,6 +2406,30 @@ export default function NetworkGraph({
           />
         </span>
         <span className={enabled25d ? 'text-cyan-200' : 'text-slate-400'}>2.5D</span>
+      </button>
+      </GraphGlow>
+
+      {/* INTERRUPTOR LINHA DO TEMPO — troca a teia pela linha do tempo dos
+          esquemas (ver lib/timelineLayout.ts); exclusivo com o 2.5D. */}
+      <GraphGlow className="backdrop-blur-md">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={timelineMode}
+        aria-label={t.graph.toggleTimelineAria}
+        title={t.graph.toggleTimelineAria}
+        onClick={toggleTimeline}
+        className="flex items-center gap-2 rounded-[inherit] pl-2 pr-3 py-2.5 md:py-2 text-xs font-mono font-semibold"
+      >
+        <span
+          aria-hidden="true"
+          className={`relative inline-block w-8 h-[18px] rounded-full transition-colors duration-300 ${timelineMode ? 'bg-cyan-500/85' : 'bg-slate-700'}`}
+        >
+          <span
+            className={`absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-slate-50 shadow-sm transition-transform duration-300 ${timelineMode ? 'translate-x-[14px]' : ''}`}
+          />
+        </span>
+        <span className={timelineMode ? 'text-cyan-200' : 'text-slate-400'}>{t.graph.toggleTimeline}</span>
       </button>
       </GraphGlow>
 

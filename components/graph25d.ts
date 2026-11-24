@@ -10,7 +10,7 @@
  * ============================================================================
  */
 import { IsoState, project, unprojectGround, groundSquashFor } from '@/lib/iso';
-import { CORE_RADIUS, LANE_NEAR, LANE_FAR } from '@/lib/layout';
+import { layoutGeometry } from '@/lib/layout';
 
 /** Lado (px) dos sprites de esfera. ↑ = mais nitidez com zoom alto, mais memória. */
 const SPHERE_SPRITE_PX = 256;
@@ -221,7 +221,7 @@ export function drawFloor(
   const ox = -spread.k * spread.x;
   const oy = -spread.k * spread.y;
   const grow = 1 + spread.k;
-  const ext = Math.max(Math.abs(x0), Math.abs(x1), Math.abs(y0), Math.abs(y1), LANE_FAR * 1.4) * grow + Math.hypot(ox, oy);
+  const ext = Math.max(Math.abs(x0), Math.abs(x1), Math.abs(y0), Math.abs(y1), layoutGeometry.laneFar * 1.4) * grow + Math.hypot(ox, oy);
   ctx.beginPath();
   for (const [dx, dy] of [[1, 1], [1, -1]]) {
     const [ax, ay] = project(st, ox - ext * dx, oy - ext * dy, 0);
@@ -233,7 +233,7 @@ export function drawFloor(
   ctx.stroke();
   ctx.strokeStyle = CONSTRUCTION;
   ctx.setLineDash([6 * px, 6 * px]);
-  for (const r of [CORE_RADIUS, LANE_NEAR, LANE_FAR]) {
+  for (const r of [layoutGeometry.coreR, layoutGeometry.laneNear, layoutGeometry.laneFar]) {
     groundCircle(ctx, st, ox, oy, r * grow);
     ctx.stroke();
   }

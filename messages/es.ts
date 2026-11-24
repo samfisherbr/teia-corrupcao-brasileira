@@ -114,6 +114,8 @@ export const es: Messages = {
     legalMenuAria: 'Menú de páginas legales',
     termsAndPrivacy: 'Términos y privacidad',
     toggle25dAria: 'Vista 2.5D al acercar',
+    toggleTimeline: 'Línea de tiempo',
+    toggleTimelineAria: 'Alternar entre la red y la línea de tiempo de los esquemas',
   },
 
   inspector: {
