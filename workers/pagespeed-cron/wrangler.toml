@@ -5,7 +5,7 @@
 #   npx wrangler d1 create teia_pagespeed_db      # cole o database_id abaixo
 #   npx wrangler d1 migrations apply teia_pagespeed_db --remote
 #   npx wrangler secret put PSI_API_KEY            # chave da API PageSpeed Insights
-#   npx wrangler secret put READ_TOKEN             # opcional: habilita GET /history
+#   npx wrangler secret put API_TOKEN             # token do plugin: habilita POST /run e GET /history
 #   npx wrangler deploy
 name = "teia-pagespeed-cron"
 main = "src/index.js"

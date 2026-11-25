@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS pagespeed_runs (
   lighthouse_version TEXT,
   note TEXT,
   issues_json TEXT,
-  source TEXT NOT NULL DEFAULT 'cron' -- 'cron' | 'import'
+  source TEXT NOT NULL DEFAULT 'cron' -- 'cron' | 'plugin' | 'import'
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_runs_unique ON pagespeed_runs (url, strategy, analyzed_at);
 CREATE INDEX IF NOT EXISTS idx_runs_lookup ON pagespeed_runs (strategy, analyzed_at DESC);
