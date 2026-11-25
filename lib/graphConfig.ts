@@ -71,7 +71,7 @@ export const getNodeRadius = (type: string | undefined, node?: { __radius?: numb
  *  - color      cor da linha, do ponto da legenda e do fundo/borda da etiqueta
  *  - labelColor cor do TEXTO da etiqueta. Igual a `color` quando ela já é
  *               legível no fundo escuro; mais clara quando não é (contraste
- *               mínimo de 4,5:1 — WCAG AA — sobre o fundo da etiqueta).
+ *  - dashed  linha tracejada = investigação em andamento.
  *  - dashed  linha tracejada = caso ainda em aberto (sem decisão definitiva).
  *  - particles  quantidade de "partículas" animadas correndo na linha
  *               (0 desliga; muitos links com partículas pesam em celulares).
@@ -81,7 +81,7 @@ export const getNodeRadius = (type: string | undefined, node?: { __radius?: numb
 export const STATUS_STYLE: Record<LinkStatus, { color: string; labelColor: string; dashed: boolean; particles: number }> = {
   confirmed:           { color: '#60a5fa', labelColor: '#60a5fa', dashed: false, particles: 0 },
   under_investigation: { color: '#f59e0b', labelColor: '#f59e0b', dashed: true,  particles: 2 },
-  convicted_appealing: { color: '#f97316', labelColor: '#f97316', dashed: true,  particles: 0 },
+  convicted_appealing: { color: '#f97316', labelColor: '#f97316', dashed: false, particles: 0 },
   convicted_final:     { color: '#e11d48', labelColor: '#fb7185', dashed: false, particles: 0 },
   annulled:            { color: '#9333ea', labelColor: '#c084fc', dashed: false, particles: 0 },
   acquitted:           { color: '#10b981', labelColor: '#10b981', dashed: false, particles: 0 },
