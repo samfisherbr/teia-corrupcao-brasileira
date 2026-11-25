@@ -1,0 +1,27 @@
+# Worker que roda o PageSpeed Insights uma vez por dia e guarda o resultado no D1.
+# Separado do Worker do site (../../wrangler.toml): outro deploy, outro banco.
+#
+#   cd workers/pagespeed-cron
+#   npx wrangler d1 create teia_pagespeed_db      # cole o database_id abaixo
+#   npx wrangler d1 migrations apply teia_pagespeed_db --remote
+#   npx wrangler secret put PSI_API_KEY            # chave da API PageSpeed Insights
+#   npx wrangler secret put API_TOKEN             # token do plugin: habilita POST /run e GET /history
+#   npx wrangler deploy
+name = "teia-pagespeed-cron"
+main = "src/index.js"
+compatibility_date = "2026-10-26"
+workers_dev = true
+
+[triggers]
+crons = ["17 6 * * *"]   # todo dia às 06:17 UTC (03:17 em Brasília)
+
+[vars]
+TARGET_URLS = "https://teiadacorrupcao.io/"   # várias URLs: separe por vírgula
+
+[[d1_databases]]
+binding = "DB"
+database_name = "teia_pagespeed_db"
+database_id = "COLE_O_ID_AQUI"
+
+[observability]
+enabled = true
