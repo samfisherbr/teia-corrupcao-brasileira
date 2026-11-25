@@ -20,8 +20,8 @@ TARGET_URLS = "https://teiadacorrupcao.io/"   # várias URLs: separe por vírgul
 
 [[d1_databases]]
 binding = "DB"
-database_name = "teia_pagespeed_db"
-database_id = "COLE_O_ID_AQUI"
+database_name = "pagespeed-storage"
+database_id = "bc3e0100-007c-46a0-b617-7756553a45b6"
 
 [observability]
 enabled = true
