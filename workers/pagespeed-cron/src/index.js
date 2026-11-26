@@ -5,11 +5,14 @@
  *  - Cron diário: roda TARGET_URLS e grava (source = 'cron').
  *  - POST /run   (plugin teia-pagespeed): roda sob demanda, grava e devolve o
  *    relatório condensado + a resposta bruta (para get_audit_details).
+ *  - GET /: painel com os gráficos (a página não traz dados; pede o token no navegador).
  *  - GET /history?strategy=&url=&limit=: últimas execuções, da mais antiga para a mais nova.
  *
  * As rotas exigem `Authorization: Bearer <API_TOKEN>`; sem o segredo API_TOKEN
  * respondem 404.
  */
+
+import { DASHBOARD_HTML } from './dashboard.js';
 
 const API = 'https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed';
 const STRATEGIES = ['mobile', 'desktop'];
@@ -222,6 +225,17 @@ const worker = {
 
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (request.method === 'GET' && url.pathname === '/') {
+      return new Response(DASHBOARD_HTML, {
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'content-security-policy': "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'",
+          'x-content-type-options': 'nosniff',
+          'referrer-policy': 'no-referrer',
+          'cache-control': 'no-store',
+        },
+      });
+    }
     const isRun = request.method === 'POST' && url.pathname === '/run';
     const isHistory = request.method === 'GET' && url.pathname === '/history';
     if (!env.API_TOKEN || !(isRun || isHistory)) return new Response('Not found', { status: 404 });
