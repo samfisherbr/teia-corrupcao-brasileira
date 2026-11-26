@@ -324,6 +324,15 @@ export const en: Messages = {
     translationPending:
       'This dossier has been updated in Portuguese and the English translation is being revised. The original text is shown in the meantime.',
     sourcesInPortuguese: 'The sources cited are in Portuguese.',
+    share: {
+      label: 'Share this dossier',
+      whatsapp: 'WhatsApp',
+      telegram: 'Telegram',
+      x: 'X',
+      copy: 'Copy link',
+      copied: 'Link copied',
+      copyFailed: 'Could not copy',
+    },
   },
 
   corrections: {

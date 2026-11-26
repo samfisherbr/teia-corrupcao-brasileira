@@ -325,6 +325,15 @@ export const es: Messages = {
     translationPending:
       'Este dosier se ha actualizado en portugués y la traducción al español está en revisión. Mientras tanto se muestra el texto original.',
     sourcesInPortuguese: 'Las fuentes citadas están en portugués.',
+    share: {
+      label: 'Compartir este dosier',
+      whatsapp: 'WhatsApp',
+      telegram: 'Telegram',
+      x: 'X',
+      copy: 'Copiar enlace',
+      copied: 'Enlace copiado',
+      copyFailed: 'No se pudo copiar',
+    },
   },
 
   corrections: {

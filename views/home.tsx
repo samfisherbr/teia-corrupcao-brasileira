@@ -56,7 +56,15 @@ export function homeMetadata(locale: Locale): Metadata {
     title: `${SITE_NAME} — ${t.site.tagline}`,
     description: t.site.description,
     alternates: alternatesFor(locale, '/'),
-    openGraph: { title: SITE_NAME, description: t.site.description, url: localePath(locale, '/'), type: 'website' },
+    // `openGraph` da página SUBSTITUI o do layout (mescla rasa do Next): repita siteName e locale.
+    openGraph: {
+      title: SITE_NAME,
+      description: t.site.description,
+      url: localePath(locale, '/'),
+      type: 'website',
+      siteName: SITE_NAME,
+      locale: LOCALE_INFO[locale].og,
+    },
   };
 }
 

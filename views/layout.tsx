@@ -49,6 +49,14 @@ export function layoutMetadata(locale: Locale): Metadata {
     // página pode sobrescrever. A imagem vem de views/og-image.tsx.
     openGraph: { siteName: SITE_NAME, locale: LOCALE_INFO[locale].og, type: 'website' },
     twitter: { card: 'summary_large_image' },
+    // Libera prévia grande de imagem e trecho sem limite nos resultados do
+    // Google: sem `max-image-preview:large` o Discover não mostra o cartão com
+    // imagem grande.
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
+    },
     other: { 'google-adsense-account': ADSENSE_CLIENT },
   };
 }
