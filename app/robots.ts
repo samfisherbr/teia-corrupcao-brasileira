@@ -2,6 +2,11 @@
  * /robots.txt — instruções gerais para robôs (Google, Bing, AdSense…).
  *  - Todos liberados, exceto a API de dados (JSON bruto, sem valor para a
  *    busca). Também informa onde está o sitemap.
+ *  - Exceção: /api/graph e /api/consent-region ficam liberados. A página
+ *    inicial os busca no navegador; bloqueados, o Googlebot renderiza a home
+ *    com "Falha ao carregar os dados" (visto na Inspeção de URL do Search
+ *    Console em 26/11/2026). Para o Google, vale o caminho mais específico, então
+ *    o Allow vence o Disallow: /api/. Não os remova sem refazer essa inspeção.
  *  - O controle de robôs de IA (quem bloquear, quem liberar) fica só no
  *    Cloudflare: AI Crawl Control → regra do WAF por User-Agent. Robôs de
  *    treino de IA (GPTBot, CCBot, Bytespider etc.) são bloqueados; os que
@@ -18,7 +23,13 @@ import { SITE_DOMAIN } from '@/lib/site';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: '*', allow: '/', disallow: '/api/' }],
+    rules: [
+      {
+        userAgent: '*',
+        allow: ['/', '/api/graph', '/api/consent-region'],
+        disallow: '/api/',
+      },
+    ],
     sitemap: `https://${SITE_DOMAIN}/sitemap.xml`,
   };
 }

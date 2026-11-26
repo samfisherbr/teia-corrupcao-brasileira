@@ -37,8 +37,10 @@ export default function InArticleAd() {
   }, []);
 
   return (
-    <aside aria-label={t.common.advertising} className="space-y-1">
-      <span className="block text-[10px] font-mono text-muted uppercase tracking-widest">{t.common.advertising}</span>
+    <aside aria-label={t.common.advertising} className="group space-y-1">
+      {/* O rótulo só aparece quando o AdSense preenche o bloco (data-ad-status="filled"):
+          sem anúncio (conta em análise, sem consentimento, sem lance) ele ficava sozinho sobre um espaço vazio. */}
+      <span className="hidden group-has-[ins[data-ad-status=filled]]:block text-[10px] font-mono text-muted uppercase tracking-widest">{t.common.advertising}</span>
       <ins
         className="adsbygoogle"
         style={{ display: 'block', textAlign: 'center' }}
