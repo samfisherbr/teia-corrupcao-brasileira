@@ -348,6 +348,15 @@ export const pt = {
     translationPending: '',
     /** Aviso de que as fontes citadas estão em português (não aparece em português). */
     sourcesInPortuguese: '',
+    share: {
+      label: 'Compartilhar este dossiê',
+      whatsapp: 'WhatsApp',
+      telegram: 'Telegram',
+      x: 'X',
+      copy: 'Copiar link',
+      copied: 'Link copiado',
+      copyFailed: 'Não foi possível copiar',
+    },
   },
 
   corrections: {

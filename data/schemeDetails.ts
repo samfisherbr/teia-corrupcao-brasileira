@@ -53,6 +53,13 @@ import type { SchemeTimeline } from '@/types/graph';
 /** Formato de cada registro (Glossário, páginas de dossiê, sitemap). */
 export interface SchemeDetail {
   title: string;
+  /**
+   * Data (AAAA-MM-DD) em que o dossiê foi PUBLICADO no site pela primeira vez.
+   * Opcional e NUNCA muda nas revisões (quem muda é o reviewedAt). Sem ela, o
+   * dado estruturado omite `datePublished` — o Google a recomenda para
+   * Discover/Top Stories, mas não vale chutar: preencha só com a data real.
+   */
+  publishedAt?: string;
   reviewedAt: string;
   context: string;
   mechanism: string;

@@ -36,6 +36,7 @@ import { CalendarCheck, Coins, ExternalLink, Languages, Network } from 'lucide-r
 import { FALLBACK_COLOR, NODE_STYLE, STATUS_STYLE, badgeStyle, entityChipStyle } from '@/lib/graphConfig';
 import { NODE_ICONS } from '@/lib/nodeIcons';
 import InArticleAd from '@/components/InArticleAd';
+import ShareButtons from '@/components/ShareButtons';
 import { loadScheme, type SchemeConnection } from '@/lib/db';
 import { fallbackSchemeTitle, loadSchemeDetails } from '@/lib/dossiers';
 import { formatDate } from '@/lib/format';
@@ -80,6 +81,10 @@ export async function dossierMetadata(locale: Locale, slug: string): Promise<Met
       description: s.summary ?? undefined,
       type: 'article',
       url: localePath(locale, schemePath(s.id)),
+      // `openGraph` da página SUBSTITUI o do layout (mescla rasa do Next): repita siteName e locale.
+      siteName: SITE_NAME,
+      locale: LOCALE_INFO[locale].og,
+      publishedTime: s.details?.publishedAt,
       modifiedTime: s.details?.reviewedAt,
     },
   };
@@ -289,6 +294,7 @@ export default async function DossierView({ locale, slug }: { locale: Locale; sl
       headline: title,
       description: summary ?? undefined,
       inLanguage: LOCALE_INFO[details?.translationPending ? DEFAULT_LOCALE : locale].tag,
+      datePublished: details?.publishedAt,
       dateModified: details?.reviewedAt,
       mainEntityOfPage: url,
       author: {
@@ -345,6 +351,7 @@ export default async function DossierView({ locale, slug }: { locale: Locale; sl
               </Link>
             </p>
           )}
+          <ShareButtons url={url} title={title} />
         </header>
 
         {details?.translationPending && (
