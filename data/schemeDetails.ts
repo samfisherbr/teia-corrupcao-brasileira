@@ -93,6 +93,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_pc_farias": {
     title: "Esquema PC Farias",
+    publishedAt: "2026-11-04",
     reviewedAt: "2026-11-04",
     context: "Fernando Collor de Mello, eleito presidente em 1989 pelo PRN, manteve no centro do governo o empresário alagoano Paulo César Cavalcante Farias, o PC Farias, tesoureiro de suas campanhas de 1986 e 1989. Em maio de 1992, Pedro Collor de Mello acusou, em entrevista à revista Veja, o irmão de se beneficiar de uma rede de tráfico de influência intermediada por PC Farias. A denúncia originou o Requerimento 52 de 1992, que criou a Comissão Parlamentar Mista de Inquérito do chamado esquema PC Farias, instalada em 1º de junho de 1992 com presidência do deputado Benito Gama, vice-presidência do senador Maurício Corrêa e relatoria do senador Amir Lando.",
     mechanism: "Conforme o relatório final da CPMI, aprovado por 16 votos a 5 em 26 de agosto de 1992, empresários pagavam a PC Farias para obter contratos, nomeações e decisões do governo, e os recursos circulavam por empresas ligadas ao tesoureiro, entre elas a EPC e a Brasil-Jet, e por contas bancárias abertas com nomes fictícios, as chamadas contas fantasmas. O relatório dedica capítulos próprios à CEME, às operações externas, aos aspectos tributários do esquema e à chamada Operação Uruguai. Depoimentos à comissão, entre eles o do ex-motorista Francisco Eriberto Freire França, indicaram que despesas pessoais do presidente e da Casa da Dinda eram quitadas por esse circuito; Collor negou as acusações e sustentou que os valores eram sobras de recursos de campanha.",
@@ -125,6 +126,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_anoes_orcamento": {
     title: "Anões do Orçamento",
+    publishedAt: "2026-11-04",
     reviewedAt: "2026-11-04",
     context: "A Constituição de 1988 permitiu que deputados e senadores incluíssem verbas no Orçamento da União por meio de emendas, e um grupo de parlamentares de baixa estatura e pouca projeção passou a controlar a Comissão Mista de Orçamento. Uma reportagem de O Globo sobre verbas para Serra Dourada (BA), base do relator João Alves, derrubou-o da relatoria. O caso só veio a público em 1993, quando o assessor técnico José Carlos Alves dos Santos, preso pelo assassinato da mulher, passou a denunciar o esquema. As denúncias originaram a CPMI do Orçamento, presidida por Jarbas Passarinho e relatada por Roberto Magalhães.",
     mechanism: "Parlamentares aprovavam emendas para obras e usavam influência para que determinada empreiteira vencesse a licitação, recebendo de volta parte dos recursos. A palavra final cabia ao relator-geral, apoiado pelo conhecimento técnico da assessoria da comissão. Segundo a CPI, João Alves lavava o dinheiro comprando bilhetes de loteria já premiados, o que ele atribuiu à sorte. A subcomissão de bancos apontou movimentações incompatíveis com a renda de deputados e cheques repassados entre eles.",
@@ -158,6 +160,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_sivam": {
     title: "Caso Sivam",
+    publishedAt: "2026-11-04",
     reviewedAt: "2026-11-13",
     context: "O Sistema de Vigilância da Amazônia foi concebido em 1990 e contratado com dispensa de licitação, depois que 16 embaixadas indicaram empresas. As resoluções do Senado de 1994 nomearam a Raytheon como fornecedora e a ESCA como integradora nacional. O escândalo veio a público em novembro de 1995, quando a revista IstoÉ publicou trechos de um grampo da Polícia Federal no telefone do chefe do Cerimonial da Presidência.",
     mechanism: "A PF obteve autorização judicial para grampear o embaixador Júlio César Gomes dos Santos alegando suspeita de tráfico de drogas. As conversas, gravadas em setembro de 1995, mostram José Afonso Assumpção, dono da Líder Táxi Aéreo e representante da Raytheon, pedindo que o embaixador ajudasse a destravar o Sivam no Senado. O embaixador viajou aos EUA em avião do empresário. Um agente da PF entregou a fita a Xico Graziano, que a levou ao presidente. Embaixador, empresário e Raytheon negaram lobby ou suborno.",
@@ -189,6 +192,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_trt_sp": {
     title: "Escândalo do TRT-SP",
+    publishedAt: "2026-11-04",
     reviewedAt: "2026-11-15",
     context: "Em 1992, o Tribunal Regional do Trabalho da 2ª Região, presidido pelo juiz Nicolau dos Santos Neto, abriu a licitação para construir o Fórum Trabalhista da Barra Funda, em São Paulo, vencida pela construtora Incal. O caso veio a público em 1998, depois que um ex-genro do juiz denunciou ao Ministério Público Federal seu patrimônio incompatível com o salário de magistrado. A CPI do Judiciário, em 1999, quebrou sigilos e chegou às empresas do senador Luiz Estevão, cassado pelo Senado em junho de 2000.",
     mechanism: "Segundo o MPF, a Incal Incorporações, de Fábio Monteiro de Barros e José Eduardo Ferraz, e o Grupo OK, de Luiz Estevão, combinaram-se para disputar a licitação, e a execução da obra teve superfaturamento de materiais, pagamentos antecipados e transferências ilícitas para contas no Brasil e no exterior. Uma auditoria constatou que, seis anos após a licitação, só 64% da obra estava pronta, embora toda a verba já tivesse sido liberada. A quebra de sigilos mostrou transferências da Incal para o Grupo OK coincidentes com os pagamentos do tribunal. Os réus negam os desvios.",
@@ -222,6 +226,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_compra_reeleicao": {
     title: "Compra de Votos da Reeleição",
+    publishedAt: "2026-11-04",
     reviewedAt: "2026-11-15",
     context: "A emenda constitucional que permitiu a reeleição para presidente, governadores e prefeitos foi articulada desde 1995 e aprovada em primeiro turno na Câmara em 28 de janeiro de 1997, por 336 votos a 17. Em 13 e 14 de maio de 1997, a Folha de S.Paulo divulgou gravações feitas a pedido do jornal em que deputados do Acre admitiam ter vendido o voto.",
     mechanism: "Nas fitas, os deputados Ronivon Santiago e João Maia, do PFL do Acre, diziam ter recebido R$ 200 mil cada um. Ronivon descrevia repasses do governador do Amazonas, Amazonino Mendes, ao governador do Acre, Orleir Cameli, e citava os colegas Chicão Brígido, Zila Bezerra e Osmir Lima; a reportagem apontava ainda o ministro Sérgio Motta e o deputado Luís Eduardo Magalhães como operadores. Os citados negaram, e Ronivon disse que a conversa fora uma brincadeira. Em delação de 2016, sem prova judicial, Pedro Corrêa afirmou que mais de 50 deputados venderam o voto.",
@@ -254,6 +259,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_grampos_bndes": {
     title: "Grampos do BNDES",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-05",
     context: "Em 29 de julho de 1998, o governo Fernando Henrique Cardoso privatizou o Sistema Telebrás em doze leilões na Bolsa de Valores do Rio de Janeiro, na maior venda de estatal da história brasileira. O modelo havia sido desenhado pelo ministro das Comunicações Sérgio Motta, morto em abril daquele ano e substituído por Luiz Carlos Mendonça de Barros, que deixou a presidência do BNDES para o cargo. Semanas depois do leilão, fitas gravadas por meio de grampo ilegal em telefones do BNDES vieram a público e levantaram suspeitas de favorecimento a um dos consórcios. A autoria do grampo nunca foi estabelecida.",
     mechanism: "As gravações divulgadas pela imprensa mostravam Mendonça de Barros, o presidente do BNDES André Lara Resende, o vice Pio Borges e o sócio do Opportunity Pérsio Arida articulando a adesão do Previ, fundo de pensão dos funcionários do Banco do Brasil, ao consórcio liderado pelo banco de Daniel Dantas. Para conseguir essa adesão, os interlocutores mencionavam recorrer à influência do presidente da República, a quem chamavam de \"bomba atômica\". Em paralelo, o Banco do Brasil concedeu 30 cartas de fiança a licitantes, uma delas ao Opportunity a pedido do ministro. O diretor do banco envolvido nas conversas sustenta que os empréstimos-ponte e as fianças visavam ampliar a concorrência e o ágio, e que nunca manipulou fundos de pensão.",
@@ -290,6 +296,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_mensalao_mineiro": {
     title: "Mensalão Mineiro",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-05",
     context: "O caso nasceu na campanha de reeleição de Eduardo Azeredo (PSDB) ao governo de Minas Gerais em 1998, disputa que ele perdeu para Itamar Franco. O esquema só veio a público sete anos depois, como subproduto das investigações do mensalão federal, quando se constatou que Marcos Valério já operava em Minas um circuito semelhante. A peça que destravou a apuração foi a chamada \"Lista Cláudio Mourão\", elaborada pelo tesoureiro da campanha. Em 2007 o procurador-geral da República Antônio Fernando de Souza denunciou quinze pessoas por peculato e lavagem de dinheiro; doze se tornaram rés por decisão do STF em dezembro de 2009.",
     mechanism: "Segundo o voto do relator no STF, empréstimos tidos como fictícios obtidos pelas agências SMP&B e DNA Propaganda no Banco Rural foram usados para aplicar na campanha recursos públicos da Copasa, da Comig e do Bemge, repassados a título de patrocínio ao Enduro Internacional da Independência. Um ato do governo mineiro autorizou o uso de contrato público como garantia dos mútuos, viabilizando o crédito. A ocultação se deu por pagamentos em espécie, transferências entre empresas dos próprios acusados e cheques da SMP&B nominais a ela mesma, tendo como beneficiários reais os prestadores de serviço da campanha. A Carbo, empresa do candidato a vice Clésio Andrade, recebeu R$ 325 mil da SMP&B e repassou R$ 200 mil à conta de campanha como doação.",
@@ -329,6 +336,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_sudam_sudene": {
     title: "Fraudes na Sudam e na Sudene",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-05",
     context: "A Sudam e a Sudene administravam o Finam e o Finor, fundos alimentados por renúncia fiscal que financiavam projetos privados na Amazônia e no Nordeste com fiscalização frágil sobre a execução das obras. Em 2000, um Grupo Especial de Trabalho do Ministério da Integração Nacional auditou a Sudam e encontrou irregularidades em 29 empreendimentos. O caso ganhou dimensão nacional pela rivalidade entre o então presidente do Senado, Jader Barbalho, e Antônio Carlos Magalhães, e levou a Câmara a instalar a CPI do Finor sobre o lado nordestino do mesmo mecanismo.",
     mechanism: "A empresa apresentava projeto em que se comprometia a aportar recursos próprios em proporção ao financiamento público. Para sacar as parcelas sem investir, simulava o aporte com notas fiscais, cheques, recibos e contratos falsos, repassando parte do dinheiro a laranjas e empresas de fachada. Sobre essa camada operacional havia a intermediação política: segundo o MPF, empresários acertavam com agentes políticos a interveniência junto a servidores da Sudam para aprovar projetos e liberar recursos, mediante percentual da verba. Os acusados negam.",
@@ -367,6 +375,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_vampiro": {
     title: "Operação Vampiro",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-15",
     context: "Desde o início dos anos 90 a Polícia Federal investigava irregularidades em licitações do Ministério da Saúde. Em 2003, o ministro Humberto Costa pediu averiguação à PF e ao MPF, e as investigações se intensificaram após denúncia de uma fornecedora sobre licitação de hemoderivados. Em maio de 2004 a PF deflagrou a Operação Vampiro e prendeu 17 pessoas, entre servidores, lobistas e empresários.",
     mechanism: "Segundo o MPF, servidores cooptados ocupavam postos estratégicos e facilitavam fraudes nas concorrências em troca de propina, com lobistas ligados a políticos como intermediários. A PF comprovou fraudes em quatro concorrências no primeiro inquérito, e a acusação de 2006 descreve pagamentos em dinheiro vivo e em malas. Em ação de improbidade, o MPF também aponta acordo de divisão do mercado de hemoderivados entre empresários; as defesas contestam as interceptações.",
@@ -400,6 +409,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_banestado": {
     title: "Caso Banestado",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-05",
     context: "As contas CC-5, criadas pelo Banco Central em 1965 para não residentes, foram liberalizadas em 1992 e viraram canal de remessa ao exterior. Em 10 de abril de 1996 o então diretor da Área Internacional do BC, Gustavo Franco, assinou a Circular 2.677 e, em seguida, autorizou cinco bancos a aceitar depósitos em espécie acima de R$ 10 mil em Foz do Iguaçu, até o limite de R$ 100 mil. O caso veio à tona pelo próprio Banco Central, cujos fiscais notaram que os depósitos superavam o dinheiro transportado pelos carros-fortes que cruzavam a Ponte da Amizade.",
     mechanism: "O dinheiro entrava em contas-correntes comuns abertas em nome de laranjas nas agências do Banestado em Foz do Iguaçu, era transferido para contas CC5 de casas de câmbio e bancos estrangeiros e saía do país pela filial do banco em Nova York. A maior CC5 do esquema era a do Banco del Paraná. No exterior, boa parte dos recursos passava pela Beacon Hill Services Corporation, uma conta-ônibus de subcontas brasileiras em Nova York, fechada por ordem da Justiça americana. A venda do Banestado ao Itaú em 2000 abriu os cadastros da agência nova-iorquina à polícia.",
@@ -433,6 +443,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_waldomiro_diniz": {
     title: "Caso Waldomiro Diniz",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-05",
     context: "O caso veio a público em fevereiro de 2004, quando a revista Época divulgou gravação de 2002 em que Waldomiro Diniz, então presidente da Loterj, pedia propina e dinheiro de campanha ao empresário Carlinhos Cachoeira. Waldomiro era subchefe de Assuntos Parlamentares da Casa Civil e foi exonerado em 13 de fevereiro de 2004, no primeiro escândalo do governo Lula. A gravação levou à CPI da Loterj, à CPI dos Bingos e a investigações sobre a renovação do contrato da Caixa com a Gtech.",
     mechanism: "Na Loterj, em fevereiro de 2002, Waldomiro solicitou 1% do contrato com o Consórcio Combralog, representado por Cachoeira, e ajuda a campanhas eleitorais, segundo a denúncia do MP-RJ. Em 2003, já na Casa Civil, participou de três reuniões com dirigentes da Gtech sobre a renovação do contrato de loterias da Caixa. Segundo o TRF-1, ele condicionou a assinatura à contratação do advogado Rogério Buratti como consultor, que teria exigido valores milionários; Waldomiro alega ter sido chantageado e Buratti nega ter sido intermediário.",
@@ -465,6 +476,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_santo_andre": {
     title: "Esquema de Propinas de Santo André",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-05",
     context: "Celso Daniel (PT) foi prefeito de Santo André em 1989-1992, 1997-2000 e no mandato iniciado em 2001. Em 18 de janeiro de 2002 foi sequestrado ao sair de um jantar com o empresário Sérgio Gomes da Silva, o Sombra, e executado com oito tiros dois dias depois, em Juquitiba. A Polícia Civil tratou o caso como crime comum; o Ministério Público de São Paulo sustentou motivação política, ligada a um esquema de propinas na prefeitura. Desse segundo fio nasceram uma ação penal, uma ação de improbidade e, mais de uma década depois, um desdobramento da Operação Lava Jato.",
     mechanism: "Segundo a denúncia do MP-SP, concessionárias de transporte coletivo pagavam propina mensal sob ameaça de ter os contratos com a prefeitura suspensos, contribuindo na proporção do número de ônibus de cada frota. O núcleo apontado reunia o secretário de Serviços Municipais e vereador Klinger Luiz de Oliveira Sousa, o assessor pessoal do prefeito Sérgio Gomes da Silva e o empresário de ônibus Ronan Maria Pinto, com intermediação de um funcionário da associação das empresas de transporte. Em 2004, segundo o MPF, um empréstimo simulado de R$ 12,1 milhões do Banco Schahin a José Carlos Bumlai levou recursos à Expresso Nova Santo André, tendo Ronan como destinatário final — operação que a Procuradoria descreveu como compra de silêncio, hipótese que o próprio TRF4 registrou não ter sido esclarecida nos autos.",
@@ -502,6 +514,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
   },
   "esquema_dolares_na_cueca": {
     title: "Caso dos Dólares na Cueca",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-05",
     context: "Em 8 de julho de 2005, a Polícia Federal prendeu no Aeroporto de Congonhas, em São Paulo, José Adalberto Vieira da Silva, assessor parlamentar na Assembleia do Ceará e dirigente do PT cearense, com R$ 209 mil e US$ 100.559 sem origem comprovada. O Ministério Público Federal sustentou que o dinheiro era propina ligada a um financiamento do Banco do Nordeste ao consórcio Sistema de Transmissão Nordeste. Adalberto alegou que o dinheiro veio de um amigo não identificado, para abrir dois negócios, e que nada tinha a ver com o financiamento.",
     mechanism: "Segundo o MPF, o consórcio STN, que tem a Alusa como acionista majoritária, obteve do BNB, com recursos do FNE, um financiamento aprovado em 25 de junho de 2004, após alteração de regras internas. O assessor especial da Presidência do banco, Kennedy Moura Ramos, teria articulado o contrato por indicação do então deputado estadual José Guimarães, e a consultora Enphase teria recebido cerca de R$ 1,97 milhão contra R$ 20 mil previstos. As defesas negam, e o TCU atestou em dezembro de 2005 a regularidade da operação.",
@@ -535,6 +548,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_mensalao": {
     title: "Mensalão (Ação Penal 470)",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-05",
     context: "Em maio de 2005, a revista Veja divulgou um vídeo de propina nos Correios que citava o deputado Roberto Jefferson (PTB). Em 6 de junho de 2005, Jefferson disse à Folha que o PT pagava mesadas a parlamentares da base aliada. A CPMI dos Correios foi instalada em 9 de junho, e Jefferson e José Dirceu perderam o mandato na Câmara em 2005. A PGR denunciou 40 pessoas ao STF em 2006 e a Ação Penal 470 foi aberta em 2007.",
     mechanism: "Segundo a PGR, uma organização com núcleos político-partidário, publicitário e financeiro usava as agências de Marcos Valério (SMP&B e DNA Propaganda), contratos com a Câmara e o Banco do Brasil, verbas do fundo Visanet e empréstimos simulados do Banco Rural para repassar dinheiro a partidos aliados. Parte dos réus sustentou tratar-se de caixa dois eleitoral, tese rejeitada pela maioria do STF. Não se constatou o pagamento mensal que deu nome ao caso.",
@@ -568,6 +582,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_sanguessugas": {
     title: "Máfia dos Sanguessugas",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-05",
     context: "Em maio de 2006 a Polícia Federal deflagrou a Operação Sanguessuga, que investigou fraudes na compra de ambulâncias e equipamentos de saúde por prefeituras e entidades com recursos de emendas parlamentares ao Orçamento da União. A colaboração premiada de Luiz Antônio Vedoin, sócio da Planam, levou à criação de uma CPI, cujo relatório final foi aprovado em dezembro de 2006.",
     mechanism: "Segundo o MPF e a PF, a Planam, empresa da família Vedoin em Mato Grosso, vencia licitações direcionadas e pagava propina a parlamentares em troca de emendas. Os pedidos de liberação seguiam ao Ministério da Saúde, onde, segundo a CPI, uma assessora aprovava convênios e facilitava a liberação dos recursos; ela nega ter sido indicada pelos Vedoin e diz que foi usada pela família. Os parlamentares citados que se manifestaram negam as acusações ou afirmam que os valores eram ajuda de campanha.",
@@ -601,6 +616,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_operacao_navalha": {
     title: "Operação Navalha / Máfia das Obras",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-19",
     context: "A Operação Navalha foi deflagrada pela Polícia Federal em maio de 2007 para desarticular uma rede de corrupção voltada a fraudes em licitações, superfaturamento e repasses de propinas em obras públicas federais e estaduais (como no PAC e no programa Luz Para Todos). O centro empresarial do esquema era a Construtora Gautama, pertencente ao empresário Zuleido Soares de Veras. Conduzida por ordem da ministra Eliana Calmon, do STJ, a operação teve 48 mandados de prisão preventiva e 84 de busca e apreensão e levou à prisão de 46 pessoas, entre elas o chefe de gabinete do Ministério de Minas e Energia, um ex-governador do Maranhão, um deputado distrital, cinco secretários do governo de Alagoas e um conselheiro do Tribunal de Contas de Sergipe.",
     mechanism: "A Construtora Gautama direcionava editais de licitação públicos em governos estaduais (Maranhão, Alagoas, Sergipe, Piauí) e órgãos federais. Executivos da empresa pagavam vantagens indevidas a servidores e assessores públicos (como Ivo Almeida Costa no Ministério de Minas e Energia) para acelerar liberações orçamentárias, aprovar aditivos contratuais e atestar medições irregulares. Segundo a investigação, a rede atuou em obras do programa Luz para Todos, de saneamento, estradas e pontes, com recursos dos ministérios de Minas e Energia, da Integração Nacional, das Cidades e do Planejamento e do Dnit, em nove estados e no Distrito Federal, e usava como meios de aliciamento o custeio de viagens, presentes como carros de luxo e pagamentos em dinheiro.",
@@ -633,6 +649,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_caixa_pandora": {
     title: "Operação Caixa de Pandora / Mensalão do DF",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-18",
     context: "A Operação Caixa de Pandora (Mensalão do DF) foi deflagrada pela Polícia Federal em novembro de 2009. A investigação desarticulou uma ampla rede de corrupção instalada no Governo do Distrito Federal durante a gestão do governador José Roberto Arruda (DEM) e do vice Paulo Octávio (DEM).",
     mechanism: "Empresas prestadoras de serviços (especialmente de tecnologia e logística) repassavam entre 10% e 20% do valor de faturas e contratos públicos como retorno ilícito. O ex-secretário Durval Barbosa centralizava a arrecadação e distribuía o dinheiro vivo em mesadas para deputados distritais e secretários para garantir apoio parlamentar e aprovação de contas. A operação teve enorme repercussão pública por contar com dezenas de vídeos gravados pelo próprio delator registrando o recebimento de propina.",
@@ -663,6 +680,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_operacao_porto_seguro": {
     title: "Operação Porto Seguro",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-19",
     context: "A Operação Porto Seguro foi deflagrada pela Polícia Federal e pelo Ministério Público Federal em novembro de 2012 para desarticular uma organização criminosa incrustada na administração pública federal encarregada da negociação, encomenda e elaboração de pareceres técnicos e jurídicos fraudulentos. A investigação partiu do relato de um auditor do Tribunal de Contas da União, Cyonil da Cunha Borges, que disse à PF ter recebido de Paulo Vieira, em 2007, uma oferta de R$ 300 mil para emitir parecer favorável à Tecondi, operadora de um terminal de contêineres no Porto de Santos; o próprio auditor passou a ser acusado de receber propina. Deflagrada em 23 de novembro de 2012, a operação mobilizou 180 agentes em Brasília e em cidades paulistas, cumpriu 43 mandados de busca e apreensão e prendeu seis pessoas; 18 foram indiciadas.",
     mechanism: "O grupo utilizava a influência de Rosemary Noronha, chefe do escritório da Presidência em SP, para nomear e manter aliados em cargos diretivos de agências reguladoras (como Paulo Vieira na ANA e Rubens Vieira na ANAC). A rede cooptou autoridades como o vice-advogado-geral da União, José Weber Holanda, expedindo pareceres sob encomenda para beneficiar empresas privadas em contratos no Porto de Santos e empreendimentos nas ilhas de Bagre e das Cabras. Segundo a PF, Paulo Vieira aproximava empresários com pendências em órgãos públicos de servidores dispostos a favorecê-los, e Rosemary Noronha costumava marcar as reuniões, recebendo em troca, segundo a investigação, viagens de navio, apoio jurídico e dinheiro.",
@@ -696,6 +714,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_trensalao": {
     title: "Trensalão / Máfia dos Trens de SP",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "O Trensalão (ou Máfia dos Trens de SP) veio a público em maio de 2013, quando a multinacional alemã Siemens assinou acordo de leniência com o CADE e o Ministério Público Federal. A empresa revelou a existência de um cartel formado por fabricantes globais para manipular licitações de compra, modernização e manutenção de trens da CPTM e do Metrô de SP entre 1998 e 2008.",
     mechanism: "As multinacionais envolvidas (Siemens, Alstom, CAF, Bombardier, entre outras) reuniam-se previamente para definir o consórcio vencedor de cada edital, apresentando propostas de cobertura inflacionadas para simular concorrência. As empresas derrotadas eram compensadas por subcontratações cruzadas. Os repasses de propinas a diretores estatais e políticos ocorriam via contratos simulados de consultoria com empresas de fachada (como a Procint) e contas bancárias secretas na Suíça.",
@@ -732,6 +751,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_lava_jato": {
     title: "Operação Lava Jato / Escândalo do Petrolão",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "A Operação Lava Jato foi deflagrada pela Polícia Federal em março de 2014, com a prisão do doleiro Alberto Youssef, e expôs um esquema de corrupção em contratos da Petrobras. Em delação homologada pelo STF em setembro de 2014, o ex-diretor de Abastecimento Paulo Roberto Costa, que disse ter sido indicado ao cargo pelo PP, descreveu repasses de contratos da estatal a partidos.",
     mechanism: "Segundo colaboradores, empreiteiras pagavam percentuais sobre contratos de diretorias da Petrobras distribuídas entre partidos, e o dinheiro chegava a políticos e a caixa dois de campanhas por meio de operadores e doleiros como Alberto Youssef e Fernando Baiano. Em depoimento de 2014, Costa afirmou que o PT recebia 3% de contratos pela Diretoria de Serviços e que PMDB e PP também se beneficiavam; são alegações de colaboradores.",
@@ -765,6 +785,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_operacao_zelotes": {
     title: "Operação Zelotes / Escândalo do CARF",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "A Operação Zelotes foi deflagrada pela Polícia Federal em março de 2015 para desarticular um esquema criminoso atuante no Conselho Administrativo de Recursos Fiscais (CARF), órgão do Ministério da Fazenda responsável por julgar recursos tributários. Em fases subsequentes, a operação expandiu seu escopo para apurar a suposta compra e venda de Medidas Provisórias destinadas à concessão de incentivos fiscais ao setor automotivo.",
     mechanism: "O esquema no CARF funcionava mediante o vazamento de informações sigilosas sobre pautas de julgamento por conselheiros e servidores cooptados para escritórios de advocacia e consultorias privadas (como S3 Gestão). Intermediários contatavam grandes devedores do Fisco oferecendo decisões favoráveis e anulação de autuações bilionárias mediante pagamento de propinas maquiadas como honorários. Na frente legislativa, investigaram-se pagamentos de montadoras a escritórios de consultoria para obter prorrogações de benefícios tributários via Medidas Provisórias (como a MP 471/2009 e a MP 627/2013).",
@@ -796,6 +817,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_operacao_greenfield": {
     title: "Operação Greenfield / Fraudes nos Fundos de Pensão",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "A Operação Greenfield foi deflagrada pela Polícia Federal e pelo Ministério Público Federal em setembro de 2016 com base em auditorias e investigações da CPI dos Fundos de Pensão. O objetivo foi desarticular esquemas de gestão temerária, superfaturamento de ativos e fraudes em aportes efetuados pelos quatro maiores fundos de previdência de estatais do país: Funcef, Petros, Previ e Postalis.",
     mechanism: "Diretores e conselheiros de investimentos dos fundos de pensão estatais — indicados politicamente por legendas como PT e PMDB — atuavam em conluio com gestores de Fundos de Investimento em Participações (FIPs) e executivos de grandes conglomerados privados (como o Grupo J&F). O grupo aprovava a compra de quotas de participação e aportes bilionários em ativos sobreavaliados mediante laudos técnicos simulados, recebendo em troca vantagens ilícitas e taxas de intermediação dissimuladas em contratos de consultoria.",
@@ -828,6 +850,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_jbs_mala_rocha_loures": {
     title: "Escândalo da JBS / Mala do Rocha Loures",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "O Escândalo da JBS e o episódio da Mala do Rocha Loures vieram a público em maio de 2017 após a homologação das delações premiadas dos executivos do Grupo J&F (Joesley Batista, Wesley Batista e Ricardo Saud) no STF. As apurações da Operação Patmos revelaram gravações de conversas entre Joesley e o presidente Michel Temer no Palácio do Jaburu e ações controladas de entregas de propina efetuadas pela Polícia Federal.",
     mechanism: "De acordo com a denúncia, o presidente Michel Temer teria indicado o deputado e assessor especial Rodrigo Rocha Loures para atuar em benefício do Grupo J&F perante o CADE em processo relativo ao preço do gás fornecido à termelétrica Âmbar Energia. Para intermediar o pleito, acertou-se o repasse semanal de R$ 500 mil em propina durante 20 anos, tendo a Polícia Federal filmado a entrega da primeira parcela em uma mala carregada por Rocha Loures em São Paulo.",
@@ -861,6 +884,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_operacao_cadeia_velha": {
     title: "Operação Cadeia Velha",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "A Operação Cadeia Velha foi deflagrada pela Polícia Federal e pelo Ministério Público Federal em novembro de 2017 como desdobramento da Lava Jato no Rio de Janeiro. A investigação mirou um esquema institucionalizado de propinas na Assembleia Legislativa do Estado do Rio de Janeiro (Alerj) mantido pela cúpula do PMDB fluminense em conluio com empresas de transporte urbano e empreiteiras.",
     mechanism: "A Federação das Empresas de Transportes de Passageiros (Fetranspor) operava uma caixinha de propinas em dinheiro vivo para garantir a aprovação de leis de isenção fiscal (IPVA e ICMS) e manter tarifas favoráveis. A cúpula da Alerj (composta pelos deputados Jorge Picciani, Paulo Melo e Edson Albertassi) direcionava a pauta legislativa em troca de mesadas ilícitas, cujos valores eram lavados por meio de vendas fictícias de gado superfaturado pela empresa Agrobilara.",
@@ -897,6 +921,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_caso_queiroz_rachadinhas": {
     title: "Escândalo das Rachadinhas / Caso Queiroz",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "O Escândalo das Rachadinhas (Caso Queiroz) veio à tona em dezembro de 2018 a partir da divulgação de um relatório do Coaf produzido no âmbito dos desdobramentos da Lava Jato no Rio de Janeiro. O documento apontou movimentações atípicas de R$ 1,2 milhão na conta bancária de Fabrício Queiroz, ex-assessor do então deputado estadual Flávio Bolsonaro na Alerj.",
     mechanism: "De acordo com as investigações do MP-RJ, assessores parlamentares nomeados no gabinete do deputado estadual sacavam em dinheiro vivo a maior parte de seus proventos e devolviam as quantias ao ex-PM Fabrício Queiroz. O operador financeiro centralizava os recursos arrecadados para pagar despesas pessoais do parlamentar e lavar os valores mediante aquisições imobiliárias e depósitos em espécie em uma franquia comercial de chocolates.",
@@ -930,6 +955,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_laranjas_do_psl": {
     title: "Escândalo dos Laranjas do PSL",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "O Escândalo dos Laranjas do PSL veio à tona em fevereiro de 2019 em reportagens investigativas da Folha de S.Paulo. As matérias apontaram que o Partido Social Liberal (PSL) lançou candidaturas femininas fictícias nas eleições de 2018 para simular o cumprimento da cota compulsória de 30% de mulheres fixada pelo TSE e desviar verbas públicas do Fundo Especial de Financiamento de Campanha.",
     mechanism: "Dirigentes estaduais do PSL registravam mulheres como candidatas sem que houvesse atos efetivos de campanha. Repasses expressivos do fundo eleitoral eram feitos a essas candidatas e rapidamente transferidos para gráficas de fachada ou empresas vinculadas a assessores de lideranças partidárias em Minas Gerais e Pernambuco, retornando para o caixa dois de campanhas masculinas ou enriquecimento ilícito.",
@@ -962,6 +988,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_operacao_placebo": {
     title: "Operação Placebo / Compras da Pandemia no RJ",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-19",
     context: "A Operação Placebo foi deflagrada pela Polícia Federal em maio de 2020 por ordem do Superior Tribunal de Justiça. As investigações apuraram esquemas de corrupção, fraudes em compras emergenciais sem licitação e loteamento de cargos na Secretaria de Estado de Saúde do Rio de Janeiro durante a pandemia de Covid-19. Em paralelo, o Ministério Público do Rio investigou contratos da mesma Secretaria na Operação Mercadores do Caos, que levou à prisão do ex-subsecretário executivo Gabriell Neves, em maio de 2020, e do ex-secretário Edmar Santos, exonerado em maio, em 10 de julho de 2020; Edmar foi solto por decisão do STJ em 7 de agosto do mesmo ano.",
     mechanism: "A Secretaria de Saúde do RJ dispensou concorrências públicas e efetuou contratos milionários com dispensa de licitação para a construção de hospitais de campanha e aquisição de respiradores superfaturados. Paralelamente, uma rede de operadores e agentes públicos centralizava o recolhimento de propinas junto a Organizações Sociais (como o IABAS) e fornecedores privados, maquiando os repasses ilícitos por meio de contratos simulados de serviços advocatícios. Dos sete hospitais de campanha prometidos para a Covid-19, apenas dois foram inaugurados. Para a compra de mil respiradores, contratada por R$ 183,3 milhões em três contratos, auditoria da própria Secretaria de Saúde concluída em julho de 2020 apontou fraude, prejuízo de R$ 123 milhões e omissão do então secretário, e registrou que as empresas escolhidas valiam menos de 1% do valor dos contratos; segundo a Agência Brasil, só 52 aparelhos foram entregues, e nenhum servia para pacientes graves de Covid-19. Procurados à época, Edmar Santos e Gabriell Neves não se manifestaram.",
@@ -997,6 +1024,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_orcamento_secreto_rp9": {
     title: "Orçamento Secreto / Emendas de Relator",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "O Escândalo do Orçamento Secreto consistiu no uso intensivo das emendas do relator-geral do Orçamento da União (rubrica RP9) entre os anos de 2020 e 2022, durante a gestão do ex-presidente Jair Bolsonaro. O mecanismo permitia a distribuição de bilhões de reais do orçamento federal a parlamentares aliados do Congresso Nacional sem a obrigatoriedade de identificação do deputado ou senador que solicitava o repasse.",
     mechanism: "Ao contrário das emendas individuais e de bancada, a indicação formal dos recursos RP9 era assinada genericamente pelo Relator-Geral da Comissão Mista de Orçamento (CMO). A cúpula do Congresso e do Governo Federal utilizava as cotas orçamentárias como barganha política para garantir maiorias em votações parlamentares. Verbas expressivas foram canalizadas para estatais (como a Codevasf) e fundos municipais de saúde (SUS), gerando investigações policiais sobre fraudes em exames médicos e superfaturamento em obras de pavimentação.",
@@ -1030,6 +1058,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_bolsolao_do_mec": {
     title: "Escândalo do Ministério da Educação / \"Bolsolão do MEC\"",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "O Escândalo do Ministério da Educação (Bolsolão do MEC) veio a público em março de 2022 após reportagens investigativas revelarem a atuação de um gabinete paralelo operado por pastores evangélicos sem cargo público na destinação de verbas orçamentárias do FNDE. O caso ganhou forte repercussão com a divulgação de áudio em que o então ministro Milton Ribeiro afirmava repassar recursos a municípios indicados por pastores a pedido do presidente Jair Bolsonaro.",
     mechanism: "Pastores sem vínculo formal com o governo controlavam a agenda de autoridades do MEC e organizavam encontros com prefeitos no interior do país, cobrando propinas em dinheiro vivo, Bíblias personalizadas com suas fotos e até pedidos de 1 kg de ouro em troca do destravamento de recursos do FNDE para obras educacionais. Servidores da pasta atuavam na triagem das prefeituras favorecidas.",
@@ -1062,6 +1091,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_operacao_venire_joias_presidencia": {
     title: "Operação Venire e Caso das Joias da Presidência",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-18",
     context: "A Operação Venire e o Caso das Joias da Presidência são investigações conexas deflagradas pela Polícia Federal no Supremo Tribunal Federal entre 2023 e 2024. As apurações miraram o núcleo próximo do ex-presidente Jair Bolsonaro por fraudes nos sistemas vacinais da Covid-19 e pelo desvio e alienação clandestina de joias e presentes de estado recebidos de governos do Oriente Médio.",
     mechanism: "Na Operação Venire, assessores da Ajudantaria de Ordens acionaram intermediários em municípios fluminenses e goianos para inserir registros falsos de vacinação no sistema SI-PNI/ConecteSUS, emitindo certificados para viagens aos EUA e apagando os dados em seguida. No caso das joias, o grupo omitiu o registro de bens de alto valor (como relógios Rolex e Patek Philippe e kits Chopard) ou reclassificou-os indevidamente como bens personalíssimos, transportando-os em aviões oficiais para serem avaliados e leiloados nos EUA com recebimento em dinheiro vivo. Diante de ordens do TCU, montou-se uma operação resgate para recomprar itens vendidos.",
@@ -1094,6 +1124,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_banco_master_inss": {
     title: "Caso Banco Master / BRB",
+    publishedAt: "2026-11-05",
     reviewedAt: "2026-11-17",
     context: "A Operação Compliance Zero, da Polícia Federal, foi deflagrada em 18 de novembro de 2025, a partir de investigação iniciada em 2024 a pedido do MPF sobre suspeitas de venda de carteiras de crédito sem lastro pelo Banco Master ao Banco de Brasília (BRB), banco público do Distrito Federal. No mesmo dia, o Banco Central decretou a liquidação extrajudicial do Master; o banqueiro Daniel Vorcaro havia sido preso na noite anterior no Aeroporto de Guarulhos. O BRB anunciara em março de 2025 a compra de parte do Master, operação vetada pelo Banco Central em setembro de 2025. Em paralelo, o INSS apura consignados do Master a aposentados, tema distinto da Operação Sem Desconto.",
     mechanism: "Segundo a PF, a Tirreno, que uma perícia descreve como vinda de uma empresa de prateleira sem estrutura nem funcionários, aparecia como originadora de créditos consignados que o Master cedia ao BRB, e as operações fictícias foram estruturadas com produção massiva de documentos falsos. O Master cedeu ao BRB R$ 17,5 bilhões em carteiras entre julho de 2024 e outubro de 2025, inclusive depois do veto do Banco Central. A PF suspeita que o então presidente do BRB, Paulo Henrique Costa, recebeu de Vorcaro imóveis avaliados em R$ 146 milhões como propina; a defesa de Costa afirma que ele não cometeu crime algum, e a posição de Vorcaro sobre esse ponto não foi localizada. No INSS, contratos do cartão Credcesta e de outros consignados do Master estão sob apuração por falta de informações sobre juros e falhas na validação de assinaturas; a defesa de Vorcaro afirma que o banco sempre seguiu as normas do INSS.",
@@ -1127,6 +1158,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_inss_sem_desconto": {
     title: "Operação Sem Desconto",
+    publishedAt: "2026-11-11",
     reviewedAt: "2026-11-17",
     context: "A Operação Sem Desconto foi deflagrada pela Polícia Federal e pela CGU em 23 de abril de 2025, a partir de investigação iniciada em 2023, contra um esquema nacional de descontos de mensalidades associativas não autorizados em aposentadorias e pensões do INSS. Seis servidores foram afastados, entre eles o então presidente do INSS.",
     mechanism: "Entidades associativas com Acordos de Cooperação Técnica com o INSS lançavam mensalidades nos benefícios de aposentados e pensionistas; segundo PF e CGU, a grande maioria dos descontos era fraudada, com falsificação de assinaturas e outros artifícios para simular a autorização. A PF afirma que dirigentes do INSS receberam propina para não fiscalizar ou permitir os descontos, o que os investigados negam.",
@@ -1157,6 +1189,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_faroeste": {
     title: "Operação Faroeste",
+    publishedAt: "2026-11-17",
     reviewedAt: "2026-11-17",
     context: "A Operação Faroeste foi deflagrada pela Polícia Federal em 19 de novembro de 2019 para apurar um esquema de venda de decisões judiciais ligado à grilagem de terras no oeste da Bahia, com afastamento de seis magistrados, entre eles o presidente do TJ-BA da época. Segundo o CNJ, as apurações remontam a 2015, no âmbito do Ministério Público da Bahia, e o caso envolve disputas por áreas rurais em Formosa do Rio Preto e Santa Rita de Cássia.",
     mechanism: "Segundo o STJ, o grupo usava ordens judiciais de bloqueio e anulação de matrículas de imóveis, obtidas mediante propina a magistrados, para transformar produtores rurais em ocupantes irregulares das áreas reivindicadas pelo grupo, que os forçava a acordos milionários de destinação da produção, parte dos quais custeava a propina. O pagamento era ocultado por meio de terceiros, inclusive uma pessoa em situação de vulnerabilidade usada como laranja; o relator afirmou que o esquema começou com a pretensão de um borracheiro a extensas áreas rurais e foi replicado na Fazenda do Estrondo, em Formosa do Rio Preto.",
@@ -1189,6 +1222,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
   },
   "esquema_operacao_calicute": {
     title: "Operação Calicute",
+    publishedAt: "2026-11-24",
     reviewedAt: "2026-11-24",
     context: "A Operação Calicute foi deflagrada pela Polícia Federal em 17 de novembro de 2016, em ação coordenada das forças-tarefa da Lava Jato no Rio de Janeiro e no Paraná, e prendeu o ex-governador Sérgio Cabral (PMDB), que governou o estado de 2007 a 2014. A investigação partiu das delações de executivos da Andrade Gutierrez feitas no caso Eletronuclear e se apoiou também nas colaborações da Carioca Engenharia e de Fernando Cavendish, ex-dono da Delta. O nome faz referência à região da Índia onde Pedro Álvares Cabral enfrentou uma de suas maiores tormentas.",
     mechanism: "Segundo a PF, o esquema tinha quatro núcleos: um econômico, formado por um cartel de empreiteiras; um político, liderado por Cabral; um administrativo, com os secretários Wilson Carlos e Hudson Braga; e um operacional, com Carlos Miranda, Luiz Carlos Bezerra e Wagner Jordão Garcia. Delatores relataram a cobrança de 5% sobre o valor de grandes contratos, como a reforma do Maracanã, o PAC Favelas e o Arco Metropolitano, com entregas de dinheiro em espécie. Segundo a sentença, a lavagem ocorria pela compra de joias sem nota fiscal e por contratos fictícios de consultoria e do escritório Ancelmo Advogados.",
@@ -1221,6 +1255,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
   },
   esquema_operacao_unha_e_carne: {
     title: "Operação Unha e Carne",
+    publishedAt: "2026-11-24",
     reviewedAt: "2026-11-24",
     context: "A Operação Unha e Carne foi deflagrada pela Polícia Federal em 3 de dezembro de 2025, por ordem do ministro Alexandre de Moraes, do STF, no inquérito aberto a partir da ADPF 635 (ADPF das Favelas) para apurar conexões de grupos criminosos violentos do Rio de Janeiro com agentes públicos. O alvo inicial foi o então presidente da Alerj, Rodrigo Bacellar (União Brasil), suspeito de ter vazado ao então deputado TH Joias informações sigilosas da Operação Zargun, que prendeu TH Joias em setembro de 2025. Até outubro de 2026, a operação teve nove fases, que se estenderam a compras da Seeduc, ao jogo do bicho e a uma rede de postos de combustíveis.",
     mechanism: "Segundo a denúncia da PGR, o desembargador Macário Júdice Neto, relator do caso Zargun no TRF-2, repassou a Bacellar num jantar informações sobre as medidas sigilosas, e Bacellar alertou TH Joias, cuja casa e cujo gabinete foram esvaziados na véspera. Nas fases seguintes, a PF passou a investigar o direcionamento de contratações de escolas da Seeduc para empresas ligadas ao deputado Thiago Rangel (Avante), pagamentos do jogo do bicho e da Máfia do Cigarro a agentes públicos e o uso de uma rede de postos de combustíveis como plataforma de lavagem de dinheiro, com o ex-prefeito de Belford Roxo Márcio Canella (União Brasil) apontado como articulador político; na frente do jogo do bicho, o ex-deputado federal Marco Antônio Cabral (MDB) foi alvo de buscas. Os citados negam irregularidades ou disseram que só se manifestariam após ter acesso aos autos.",
@@ -1254,6 +1289,7 @@ export const SCHEME_DETAILS: Record<string, SchemeDetail> = {
 
   "esquema_ptolomeu": {
     title: "Operação Ptolomeu",
+    publishedAt: "2026-11-24",
     reviewedAt: "2026-11-24",
     context: "A Operação Ptolomeu nasceu de um inquérito aberto pela Polícia Federal em julho de 2021, a partir de relatórios de inteligência financeira que apontavam movimentações do governador do Acre, Gladson Cameli (PP), como a compra de carros de luxo e de lotes em condomínio; diligências feitas desde maio de 2020 sem autorização do STJ foram anuladas depois pelo STF. A 1ª fase foi deflagrada em 16 de dezembro de 2021, com apoio da CGU e autorização do STJ, foro dos governadores, e outras três fases se seguiram até setembro de 2026. Segundo o STJ e o MPF, as práticas investigadas começaram em 2019, primeiro ano de Cameli no governo.",
     mechanism: "Segundo a denúncia da PGR, a Secretaria de Infraestrutura do Acre contratou sem licitação a Murano Construções, de Brasília, por adesão a uma ata de registro de preços de um instituto de Goiás; um dia depois, a Murano firmou parceria com a Construtora Rio Negro, que tinha como sócio Gledson Cameli, irmão do governador, e que passou a executar os serviços. A acusação aponta sobrepreço, superfaturamento e o pagamento de mais de R$ 6,1 milhões em vantagens indevidas ao governador, por meio de parcelas de um apartamento em São Paulo e de um carro de luxo. A defesa de Cameli nega que ele tenha interferido nos contratos e que tenha havido subcontratação irregular de empresa ligada a familiar.",
