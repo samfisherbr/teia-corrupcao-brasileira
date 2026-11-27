@@ -132,7 +132,7 @@ function FactBody({ c, t, locale }: { c: SchemeConnection; t: Messages; locale: 
           {c.amount_note ? ` — ${c.amount_note}` : ''}
         </p>
       )}
-      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted mb-[3px]">
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
         <span
           className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-sm border"
           style={badgeStyle(st)}

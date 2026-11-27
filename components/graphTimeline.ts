@@ -14,10 +14,8 @@ import { getNodeRadius, NODE_STYLE } from '@/lib/graphConfig';
 import type { NodeType } from '@/types/graph';
 
 const AXIS = '#ffffff';
-const BAR_DIM = 'rgba(255, 0, 200, 0.22)';
 const BAR_ON = '#ff00c8';
 const BAR_LABEL = '#ff9cec';
-const STEM_DIM = 'rgba(255, 0, 200, 0.16)';
 const STEM_ON = 'rgba(255, 92, 224, 0.9)';
 const LABEL_BG = '#080d16';
 
@@ -50,7 +48,7 @@ export function drawTimelineAxis(
   ctx.globalAlpha = alpha;
   ctx.lineCap = 'round';
 
-  // Faixas apagadas + hastes até o círculo; as em foco depois, por cima.
+  // Só as faixas em foco são desenhadas; sem foco, fica apenas o eixo.
   const stem = (b: TimelineLayout['bars'][number], color: string, width: number) => {
     const sy = schemeY(b.id);
     if (sy == null) return;
@@ -66,12 +64,6 @@ export function drawTimelineAxis(
     ctx.roundRect(b.x0, y - (h * px) / 2, Math.max(b.x1 - b.x0, 8 * px), h * px, (h * px) / 2);
     ctx.fill();
   };
-  ctx.fillStyle = BAR_DIM;
-  for (const b of L.bars) {
-    if (highlight.has(b.id)) continue;
-    bar(b, 6);
-    stem(b, STEM_DIM, 1);
-  }
   const on = L.bars.filter((b) => highlight.has(b.id));
   ctx.fillStyle = BAR_ON;
   for (const b of on) {
