@@ -67,12 +67,13 @@ export function drawTimelineAxis(
   const on = L.bars.filter((b) => highlight.has(b.id));
   ctx.fillStyle = BAR_ON;
   for (const b of on) {
+    // Brilho padrão do site (0 0 10px na cor da faixa) no lugar do contorno branco.
+    // shadowBlur é em pixels do canvas e ignora a transformação → usa o DPR.
+    ctx.shadowColor = BAR_ON;
+    ctx.shadowBlur = 10 * (typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1);
     bar(b, 10);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.lineWidth = px;
-    ctx.beginPath();
-    ctx.roundRect(b.x0, y - 5 * px, Math.max(b.x1 - b.x0, 8 * px), 10 * px, 5 * px);
-    ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
     stem(b, STEM_ON, 1.5);
   }
 
