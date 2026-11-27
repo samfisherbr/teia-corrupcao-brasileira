@@ -2353,7 +2353,7 @@ export default function NetworkGraph({
                 {st.dashed ? (
                   <span className="w-5 h-0 border-b-2 border-dashed inline-block" style={{ borderColor: st.color }} />
                 ) : (
-                  <span className="w-5 h-0.5 inline-block rounded-full" style={{ backgroundColor: st.color, boxShadow: `0 0 8px ${st.color}` }} />
+                  <span className="w-5 h-0.5 inline-block rounded-full" style={{ backgroundColor: st.color, boxShadow: `0 0 10px ${st.color}` }} />
                 )}
                 <span className="text-slate-200">{t.status[key]}</span>
               </div>
@@ -2371,7 +2371,7 @@ export default function NetworkGraph({
                   borderColor: NODE_STYLE[key].color,
                   // Esquemas são círculos sólidos no grafo; os demais, anéis.
                   backgroundColor: key === 'scheme' ? NODE_STYLE[key].color : undefined,
-                  boxShadow: `0 0 8px ${NODE_STYLE[key].color}`,
+                  boxShadow: `0 0 10px ${NODE_STYLE[key].color}`,
                 }}
               />
               <span className="text-slate-200">{t.nodeType[key].label}</span>

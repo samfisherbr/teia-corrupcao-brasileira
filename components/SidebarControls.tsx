@@ -159,7 +159,7 @@ export default function SidebarControls({
                   aria-pressed={active}
                   className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg border text-xs transition-all ${
                     active
-                      ? 'bg-slate-800/80 border-cyan-500/60 text-slate-100 shadow-[0_0_10px_rgba(34,211,238,0.15)]'
+                      ? 'bg-slate-800/80 border-cyan-500/60 text-slate-100 shadow-[0_0_10px_#22d3ee]'
                       : 'bg-slate-950/40 border-slate-900 text-muted hover:text-slate-300 hover:border-slate-700'
                   }`}
                 >
@@ -191,7 +191,7 @@ export default function SidebarControls({
                 aria-pressed={statusFilters[st.key]}
                 className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg border text-xs transition-all ${
                   statusFilters[st.key]
-                    ? 'bg-slate-800/80 border-cyan-500/60 text-slate-100 shadow-[0_0_10px_rgba(34,211,238,0.15)]'
+                    ? 'bg-slate-800/80 border-cyan-500/60 text-slate-100 shadow-[0_0_10px_#22d3ee]'
                     : 'bg-slate-950 border-slate-900 text-muted hover:text-slate-300 hover:border-slate-700'
                 }`}
               >
@@ -241,7 +241,7 @@ export default function SidebarControls({
                         ? {
                             backgroundColor: `${NODE_STYLE.scheme.color}1f`,
                             borderColor: `${NODE_STYLE.scheme.color}cc`,
-                            boxShadow: `0 0 10px ${NODE_STYLE.scheme.color}33`,
+                            boxShadow: `0 0 10px ${NODE_STYLE.scheme.color}`,
                           }
                         : undefined
                     }
