@@ -59,9 +59,17 @@ export function drawTimelineAxis(
     ctx.lineWidth = width * px;
     ctx.stroke();
   };
+  // Barra e linha do eixo partilham o mesmo centro, alinhado à grade de pixels do
+  // aparelho, e têm espessura em pixels PARES: assim as bordas caem em pixels
+  // inteiros e a linha fica exatamente no meio da barra (sem meio-pixel de desvio).
+  const T = ctx.getTransform();
+  const dev = Math.abs(T.d) * px; // pixels do aparelho por pixel CSS
+  const yc = dev > 0 ? (Math.round(T.d * y + T.f) - T.f) / T.d : y;
+  const evenPx = (css: number) => (dev > 0 ? (2 * Math.max(1, Math.round((css * dev) / 2))) / Math.abs(T.d) : css * px);
   const bar = (b: TimelineLayout['bars'][number], h: number) => {
+    const hw = evenPx(h);
     ctx.beginPath();
-    ctx.roundRect(b.x0, y - (h * px) / 2, Math.max(b.x1 - b.x0, 8 * px), h * px, (h * px) / 2);
+    ctx.roundRect(b.x0, yc - hw / 2, Math.max(b.x1 - b.x0, 8 * px), hw, hw / 2);
     ctx.fill();
   };
   const on = L.bars.filter((b) => highlight.has(b.id));
@@ -79,10 +87,10 @@ export function drawTimelineAxis(
 
   // Eixo e extremidades.
   ctx.strokeStyle = AXIS;
-  ctx.lineWidth = 1.5 * px;
+  ctx.lineWidth = evenPx(1.5);
   ctx.beginPath();
-  ctx.moveTo(x0, y);
-  ctx.lineTo(x1, y);
+  ctx.moveTo(x0, yc);
+  ctx.lineTo(x1, yc);
   ctx.stroke();
   ctx.lineWidth = 2 * px;
   for (const x of [x0, x1]) {
