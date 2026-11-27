@@ -14,10 +14,10 @@ import { getNodeRadius, NODE_STYLE } from '@/lib/graphConfig';
 import type { NodeType } from '@/types/graph';
 
 const AXIS = '#ffffff';
-const BAR_DIM = 'rgba(255, 0, 200, 0.22)';
+const BAR_DIM = 'rgba(200, 205, 215, 0.22)';
 const BAR_ON = '#ff00c8';
 const BAR_LABEL = '#ff9cec';
-const STEM_DIM = 'rgba(255, 0, 200, 0.16)';
+const STEM_DIM = 'rgba(200, 205, 215, 0.16)';
 const STEM_ON = 'rgba(255, 92, 224, 0.9)';
 const LABEL_BG = '#080d16';
 
