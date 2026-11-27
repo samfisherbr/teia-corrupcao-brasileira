@@ -132,7 +132,7 @@ function FactBody({ c, t, locale }: { c: SchemeConnection; t: Messages; locale: 
           {c.amount_note ? ` — ${c.amount_note}` : ''}
         </p>
       )}
-      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted mb-[3px]">
         <span
           className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-sm border"
           style={badgeStyle(st)}
@@ -150,12 +150,12 @@ function FactBody({ c, t, locale }: { c: SchemeConnection; t: Messages; locale: 
             <ExternalLink size={12} className="w-3 h-3 shrink-0" aria-hidden="true" />
           </a>
         )}
-        {reviewed && c.reviewed_at && (
-          <span>
-            {t.dossier.statusCheckedOn} <time dateTime={c.reviewed_at.slice(0, 10)}>{reviewed}</time>
-          </span>
-        )}
       </p>
+      {reviewed && c.reviewed_at && (
+        <p className="text-xs text-muted">
+          {t.dossier.statusCheckedOn} <time dateTime={c.reviewed_at.slice(0, 10)}>{reviewed}</time>
+        </p>
+      )}
     </div>
   );
 }
